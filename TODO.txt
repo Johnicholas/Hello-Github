@@ -1,0 +1,63 @@
+People and projects to search for on Github:
+Torben Mogensen
+Michael Feathers
+Steve Freeman
+Nat Pryce
+John Tromp
+Freek Wiedijk (Automath)
+Fabrice Bellard (QEMU, jslinux, tcc)
+IOCCC
+Steven Skiena
+Don Libes
+Richard Hipp
+DrPetter
+Benjamin Pierce
+Van Noord (FSATools)
+Peter Clark's TaleSpin
+Mark Miller
+Robin Hanson (market scoring rule)
+Steven Ganz (trampolined interpreter)
+Lennart Augustsson
+Russ Cox
+Doug McIlroy
+Diomadis Spinellis
+ncurses
+cairo
+haru
+partial evaluation
+curry howard isomorphism
+nesC
+cec / esterel
+love
+tame/tamer
+the CMAes optimization evolutionary strategy
+VeryTinyProlog
+Ken Kahn's Prolog-in-lisp
+HotDraw / CoolDraw
+LittleSmalltalk
+ed
+Cardelli and Pike's Squeak: A language for communicating with mice.
+DeltaBlue
+Cassowary
+Python Koans
+Ruby Koans
+Lua Missions
+Sequitur
+Datalog (one implementation using bdds, another using lua)
+buddy, bddbddb, other bdd libraries
+minisat
+lua
+supermemo
+busybox
+quines (biquines? multiquines)
+literate programming
+batchelder's cog
+Ken Forbus
+Peter Norvig
+Dave Hanson
+Todd Proebsting
+rpcgen
+Andreas Zeller (delta debugging)
+Stephanie Weirich
+Melanie Mitchell
+gtk-server
