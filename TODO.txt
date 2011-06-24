@@ -1,53 +1,85 @@
 Searched:
+
+David Cope
+* Emmy / EMI / Emily Howell
+Diomidis Spinellis
+* dds.c
+* UMLgraph
 Don Libes
 * expect
+Doug McIlroy
+* Engineering a sort function
+* McIlroy-Hunt diff
+* Suffix Array
 DrPetter
 * sfxr
 * musagi
+Farbrausch
+* kkrunchy
+* werkkzeug?
+Freek Wiedijk
+* Automath
+* Coq
 IOCCC
 John Tromp
 * Fhourstones connect four benchmark
 * ioccc maze
 * ioccc tetris
 * the lazy-k language
+Lennart Augustsson
+* LPC
+* IOCCC
+* NetBSD
+* Djinn and lots of other Haskell things
+Marc Stiegler
+* David's Sling
+* Earthweb
+* Caja
+Mark S Miller
+* E language
+* Agorics
+* Caja
 Michael Feathers
 * CppUnitLite
+Peter Clark
+* TaleSpin
+* CN2
 Richard Hipp
+* SQLite
+* mkheaders
+* Fossil
+* lemon
+Robin Hanson
+* Market scoring rule
 Steve Freeman
+Steven Ganz
+* trampoline interpreter
 Steven Skiena
+* Programming Challenges
+* Algorithm Design Manual
+* Calculated Bets
 Torben Mogensen
 * Nicolas Devillard and the fast median search
 * Basics of Compiler Design
-Freek Wiedijk
-* Automath
-* Coq
-Farbrausch
-* kkrunchy
-* werkkzeug?
-David Cope
-* Emmy / EMI / Emily Howell
 Benjamin Pierce
 * Pict
-* Unison
+* Unison and lens combinators
 * TAPL
+Van Noord
+* FSATools (http://www.let.rug.nl/~vannoord/Fsa/)
+ncurses
+* Thomas Dickey
+cairo
+agg
+* Maxim Shemanarev
+haru
+Curry-Howard isomorphism
 
 People and projects to search for on Github:
-Van Noord (FSATools)
-Peter Clark's TaleSpin
-Mark Miller
-Marc Stiegler (capability security, David's Sling, and Earthweb)
-Robin Hanson (market scoring rule)
-Steven Ganz (trampolined interpreter)
-Lennart Augustsson
-Russ Cox (did he have a regexp automata library?)
-Doug McIlroy
-Diomadis Spinellis
-ncurses
-cairo
-agg (Maxim Shemanarev)
-haru
 partial evaluation
-curry howard isomorphism
+* c-mix
+* similix
+* pypy
 nesC
 cec / esterel
 love
@@ -56,7 +88,8 @@ the CMAes optimization evolutionary strategy
 VeryTinyProlog
 Ken Kahn's Prolog-in-lisp
 HotDraw / CoolDraw
-LittleSmalltalk
+Timothy Budd
+* LittleSmalltalk
 ed
 Cardelli and Pike's Squeak: A language for communicating with mice.
 DeltaBlue
@@ -98,7 +131,7 @@ geordi (C++ irc bot)
 a tiny occam compiler / interpreter?
 Chris Pressey
 John Tromp and the gecode constraint solver?
-djb
+Daniel J Bernstein
 fishwick's simpack
 Fabrice Bellard
 * lzexe
@@ -116,3 +149,28 @@ other demoscene groups? rgba?
 Kragen Sitaker
 * torus
 * bicycleta
+Kevin Reid
+googlemock
+Simon Tatham
+The J incunabulum
+Russ Cox
+* plan9/thread/task/coroutine libraries, go lang stuff
+* regexp / finite automata stuff
+Soar
+* John Laird
+* Bob Mariner
+* Joseph Wu
+* Miller Tinkerhess
+Andrew Appel
+* Rogomatic
+* Compiling with Continuations
+* Modern Compiler implementation? in C/Java/ML
+That literate programming book that is a renderer...
+Cosma and Kristina Shalizi
+MagicHaskeller
+Sean Barrett
+QuickCheck
+SmallCheck
+matplotlib
+zlib/libpng
+Agda
