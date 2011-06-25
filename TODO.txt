@@ -1,5 +1,9 @@
 Searched:
 
+agg
+* Maxim Shemanarev
+cairo
+Curry-Howard isomorphism
 David Cope
 * Emmy / EMI / Emily Howell
 Diomidis Spinellis
@@ -20,6 +24,7 @@ Farbrausch
 Freek Wiedijk
 * Automath
 * Coq
+haru
 IOCCC
 John Tromp
 * Fhourstones connect four benchmark
@@ -41,6 +46,8 @@ Mark S Miller
 * Caja
 Michael Feathers
 * CppUnitLite
+ncurses
+* Thomas Dickey
 Peter Clark
 * TaleSpin
 * CN2
@@ -67,13 +74,6 @@ Benjamin Pierce
 * TAPL
 Van Noord
 * FSATools (http://www.let.rug.nl/~vannoord/Fsa/)
-ncurses
-* Thomas Dickey
-cairo
-agg
-* Maxim Shemanarev
-haru
-Curry-Howard isomorphism
 
 People and projects to search for on Github:
 partial evaluation
@@ -174,3 +174,9 @@ SmallCheck
 matplotlib
 zlib/libpng
 Agda
+Zarf Plotkin
+* a z-machine interpreter or two
+* Shade, Hunter in Darkness and other if games
+Newell Rose
+* Runestone Wisp
+Jackson Structured Programming
