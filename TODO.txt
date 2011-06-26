@@ -2,6 +2,10 @@ Searched:
 
 agg
 * Maxim Shemanarev
+Benjamin Pierce
+* Pict
+* Unison and lens combinators
+* TAPL
 cairo
 Curry-Howard isomorphism
 David Cope
@@ -50,6 +54,8 @@ ncurses
 * Thomas Dickey
 Peter Clark
 * TaleSpin
+Tim Budd
+* LittleSmalltalk
 * CN2
 Richard Hipp
 * SQLite
@@ -57,7 +63,7 @@ Richard Hipp
 * Fossil
 * lemon
 Robin Hanson
-* Market scoring rule
+* market scoring rule
 Steve Freeman
 Steven Ganz
 * trampoline interpreter
@@ -68,28 +74,27 @@ Steven Skiena
 Torben Mogensen
 * Nicolas Devillard and the fast median search
 * Basics of Compiler Design
-Benjamin Pierce
-* Pict
-* Unison and lens combinators
-* TAPL
 Van Noord
 * FSATools (http://www.let.rug.nl/~vannoord/Fsa/)
 
 People and projects to search for on Github:
 partial evaluation
 * c-mix
+** Lars Ole Anderson
 * similix
+** Bondorf and Olivier Danvy
 * pypy
+** Armin Rigo? cfbolz? tav? 
 nesC
 cec / esterel
 love
 tame/tamer and those okcupid guys
 the CMAes optimization evolutionary strategy
 VeryTinyProlog
-Ken Kahn's Prolog-in-lisp
+Ken Kahn
+* Prolog-in-maclisp
+* ToonTalk
 HotDraw / CoolDraw
-Timothy Budd
-* LittleSmalltalk
 ed
 Cardelli and Pike's Squeak: A language for communicating with mice.
 DeltaBlue
@@ -125,6 +130,7 @@ concordance
 Olin Shivers
 Olivier Danvy
 Oleg Kiselyov
+* Hansei (with Chung-chieh Shan)
 Daniel Friedman
 nulkukel (haskell irc bot)
 geordi (C++ irc bot)
@@ -165,7 +171,7 @@ Andrew Appel
 * Rogomatic
 * Compiling with Continuations
 * Modern Compiler implementation? in C/Java/ML
-That literate programming book that is a renderer...
+Physically Based Rendering
 Cosma and Kristina Shalizi
 MagicHaskeller
 Sean Barrett
@@ -180,3 +186,15 @@ Zarf Plotkin
 Newell Rose
 * Runestone Wisp
 Jackson Structured Programming
+Norman Ramsey
+* C--
+* noweb
+Peter Schickele
+Raymond Smullyan
+Edmund Grimley-Evans
+* bcompiler
+* cc500
+Greaser's Autotracker-C
+Turchin supercompilation project
+* Sergei Romanenko?
+Mike Thyer's lazy specialization
