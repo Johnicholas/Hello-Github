@@ -6,7 +6,15 @@ Benjamin Pierce
 * Pict
 * Unison and lens combinators
 * TAPL
+Bjorn Freeman-Benson
+* DeltaBlue
+** Cassowary
+* CoolDraw
+** HotDraw
+*** Ward Cunningham and Kent Beck
 cairo
+cmaes, the covariance matrix adaptation evolution strategy
+* Nikolaus Hansen
 Curry-Howard isomorphism
 David Cope
 * Emmy / EMI / Emily Howell
@@ -36,6 +44,9 @@ John Tromp
 * ioccc maze
 * ioccc tetris
 * the lazy-k language
+Ken Kahn
+* Prolog-in-maclisp
+* ToonTalk
 Lennart Augustsson
 * LPC
 * IOCCC
@@ -57,6 +68,14 @@ ncurses
 * Thomas Dickey
 Peter Clark
 * TaleSpin
+* CN2
+Maxwell Krohn
+* tame
+* tamer
+** Eddie Kohler
+* okcupid
+** Chris Coyne
+*** Context Free Art
 Tim Budd
 * LittleSmalltalk
 * CN2
@@ -79,19 +98,12 @@ Torben Mogensen
 * Basics of Compiler Design
 Van Noord
 * FSATools (http://www.let.rug.nl/~vannoord/Fsa/)
+VeryTinyProlog
+* Bill and Bev Thompson
 
 People and projects to search for on Github:
-tame/tamer and those okcupid guys
-the CMAes optimization evolutionary strategy
-VeryTinyProlog
-Ken Kahn
-* Prolog-in-maclisp
-* ToonTalk
-HotDraw / CoolDraw
 ed
 Cardelli and Pike's Squeak: A language for communicating with mice.
-DeltaBlue
-Cassowary
 Python Koans
 Ruby Koans
 Lua Missions
@@ -160,6 +172,11 @@ Soar
 * Bob Mariner
 * Joseph Wu
 * Miller Tinkerhess
+* Nate Derbinsky
+* Randy Jones
+* Shiwali Mohan
+* Rete/UL
+** Doorenbos
 Andrew Appel
 * Rogomatic
 * Compiling with Continuations
@@ -200,3 +217,4 @@ partial evaluation
 ** Armin Rigo? cfbolz? tav? 
 Project Euler
 Rosetta Code
+jsprolog

@@ -47,15 +47,7 @@
 #else
 #define	USED
 #endif
-#if defined (SU3)
 static const char sccsid[] USED = "@(#)ed_su3.sl	1.99 (gritter) 7/27/06";
-#elif defined (SUS)
-static const char sccsid[] USED = "@(#)ed_sus.sl	1.99 (gritter) 7/27/06";
-#elif defined (S42)
-static const char sccsid[] USED = "@(#)ed_s42.sl	1.99 (gritter) 7/27/06";
-#else	/* !SU3, !SUS, !S42 */
-static const char sccsid[] USED = "@(#)ed.sl	1.99 (gritter) 7/27/06";
-#endif	/* !SU3, !SUS, !S42 */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -253,7 +245,6 @@ static void	help(void);
 #define	ERROR(c)	cmplerr(c)
 static wint_t	GETWC(char *);
 
-#if defined (SUS) || defined (S42) || defined (SU3)
 
 #include <regex.h>
 
@@ -269,11 +260,6 @@ static int	nodelim;
 static char	*compile(char *, char *, const char *, int);
 static int	step(const char *, const char *);
 
-#else	/* !SUS, !S42, !SU3 */
-
-#include <regexp.h>
-
-#endif	/* !SUS, !S42, !SU3 */
 
 int
 main(int argc, char **argv)
@@ -282,9 +268,7 @@ main(int argc, char **argv)
 	void (*oldintr)(int);
 
 	progname = basename(argv[0]);
-#if defined (SUS) || defined (S42) || defined (SU3)
 	setlocale(LC_COLLATE, "");
-#endif
 	setlocale(LC_CTYPE, "");
 	mb_cur_max = MB_CUR_MAX;
 	myuid = getuid();
@@ -448,19 +432,15 @@ commands(void)
 		continue;
 
 	case 'c':
-#if defined (SU3)
 		if (addr1 == zero && addr1+1 <= dol) {
 			if (addr1 == addr2)
 				addr2++;
 			addr1++;
 		}
-#endif	/* SU3 */
 		delete();
 		append(gettty, addr1-1);
-#if defined (SUS) || defined (SU3)
 		if (dot == addr1-1 && addr1 <= dol)
 			dot = addr1;
-#endif	/* SUS || SU3 */
 		continue;
 
 	case 'd':
@@ -517,7 +497,6 @@ commands(void)
 
 	case 'i':
 		setdot();
-#if defined (SU3)
 		if (addr1 == zero) {
 			if (addr1 == addr2)
 				addr2++;
@@ -525,7 +504,6 @@ commands(void)
 			if (dol != zero)
 				nonzero();
 		} else
-#endif	/* SU3 */
 			nonzero();
 		newline();
 		checkpoint();
@@ -1106,10 +1084,6 @@ gettty(void)
 	linebuf[i++] = 0;
 	if (linebuf[0]=='.' && linebuf[1]==0)
 		return(EOF);
-#if !defined (SUS) && !defined (SU3)
-	if (linebuf[0]=='\\' && linebuf[1]=='.' && linebuf[2]==0)
-		linebuf[0]='.', linebuf[1]=0;
-#endif
 	return(0);
 }
 
@@ -1275,7 +1249,7 @@ callunix(void)
 		sigset(SIGHUP, oldhup);
 		sigset(SIGQUIT, oldquit);
 		sigset(SIGPIPE, oldpipe);
-		execl(SHELL, "sh", "-c", line, NULL);
+		execl("/bin/bash", "sh", "-c", line, NULL);
 		_exit(0100);
 	} else if (pid < 0)
 		error("fork failed - try again");
@@ -1783,7 +1757,6 @@ dosub(int really)
 	}
 	i = loc2 - linebuf;
 	loc2 = j + linebuf;
-#if defined (SUS) || defined (SU3) || defined (S42)
 	if (loc1 == &linebuf[i]) {
 		int	n;
 		wchar_t	wc;
@@ -1792,7 +1765,6 @@ dosub(int really)
 		else
 			loc2++;
 	}
-#endif	/* SUS || SU3 || S42 */
 	while (genbuf[j++] = linebuf[i++])
 		if (j >= LBSIZE)
 			growlb("line too long");
@@ -1920,9 +1892,6 @@ cmplerr(int c)
 {
 	const char	*msg;
 
-#if !defined (SUS) && !defined (S42) && !defined (SU3)
-	expbuf[0] = 0;
-#endif
 	switch (c) {
 	case 11:
 		msg = "Range endpoint too large";
@@ -2043,9 +2012,7 @@ list(const char *lp)
 			putchr('\n');
 		}
 		if (n<0 ||
-#if defined (SUS) || defined (S42) || defined (SU3)
 				c == '\\' ||
-#endif	/* SUS || S42 || SU3 */
 				!(mb_cur_max>1 ? iswprint(c) : isprint(c))) {
 			if (n<0)
 				n = 1;
@@ -2060,9 +2027,7 @@ list(const char *lp)
 			col++;
 		}
 	}
-#if defined (SUS) || defined (S42) || defined (SU3)
 	putchr('$');
-#endif
 	putchr('\n');
 }
 
@@ -2071,24 +2036,6 @@ lstchr(int c)
 {
 	int	cad = 1, d;
 
-#if !defined (SUS) && !defined (S42) && !defined (SU3)
-	if (c=='\t') {
-		c = '>';
-		goto esc;
-	}
-	if (c=='\b') {
-		c = '<';
-	esc:
-		putchr('-');
-		putchr('\b');
-		putchr(c);
-	} else if (c == '\n') {
-		putchr('\\');
-		putchr('0');
-		putchr('0');
-		putchr('0');
-		cad = 4;
-#else	/* !SUS, !S42, !SU3 */
 	if (c == '\n')
 		c = '\0';
 	if (c == '\\') {
@@ -2119,7 +2066,6 @@ lstchr(int c)
 		putchr('\\');
 		putchr('v');
 		cad = 2;
-#endif	/* !SUS, !S42, !SU3 */
 	} else {
 		putchr('\\');
 		putchr(((c&~077)>>6)+'0');
@@ -2235,7 +2181,7 @@ sopen(const char *fn, int rdwr)
 			sigset(SIGHUP, oldhup);
 			sigset(SIGQUIT, oldquit);
 			sigset(SIGPIPE, oldpipe);
-			execl(SHELL, "sh", "-c", fn, NULL);
+			execl("/bin/bash", "sh", "-c", fn, NULL);
 			_exit(0100);
 		default:
 			close(pf[rdwr == READ ? 1 : 0]);
@@ -2577,7 +2523,6 @@ growfn(const char *msg)
 		file[0] = savedfile[0] = 0;
 }
 
-#if defined (SUS) || defined (S42) || defined (SU3)
 union	ptrstore {
 	void	*vp;
 	char	bp[sizeof (void *)];
@@ -2749,7 +2694,6 @@ step(const char *lp, const char *ep)
 	}
 	return res == 0;
 }
-#endif	/* SUS || S42 || SU3 */
 
 static void
 help(void)
