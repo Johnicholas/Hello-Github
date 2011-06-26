@@ -22,6 +22,7 @@ Doug McIlroy
 DrPetter
 * sfxr
 * musagi
+esterel / cec-0.4
 Farbrausch
 * kkrunchy
 * werkkzeug?
@@ -40,6 +41,7 @@ Lennart Augustsson
 * IOCCC
 * NetBSD
 * Djinn and lots of other Haskell things
+love
 Marc Stiegler
 * David's Sling
 * Earthweb
@@ -50,6 +52,7 @@ Mark S Miller
 * Caja
 Michael Feathers
 * CppUnitLite
+nesC
 ncurses
 * Thomas Dickey
 Peter Clark
@@ -78,16 +81,6 @@ Van Noord
 * FSATools (http://www.let.rug.nl/~vannoord/Fsa/)
 
 People and projects to search for on Github:
-partial evaluation
-* c-mix
-** Lars Ole Anderson
-* similix
-** Bondorf and Olivier Danvy
-* pypy
-** Armin Rigo? cfbolz? tav? 
-nesC
-cec / esterel
-love
 tame/tamer and those okcupid guys
 the CMAes optimization evolutionary strategy
 VeryTinyProlog
@@ -198,3 +191,12 @@ Greaser's Autotracker-C
 Turchin supercompilation project
 * Sergei Romanenko?
 Mike Thyer's lazy specialization
+partial evaluation
+* c-mix
+** Lars Ole Anderson
+* similix
+** Bondorf and Olivier Danvy
+* pypy
+** Armin Rigo? cfbolz? tav? 
+Project Euler
+Rosetta Code
