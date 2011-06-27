@@ -11,7 +11,8 @@
 #define zfactor 1.0
 #define addr_(p) ((addr) (size_t) (p) )
 #define logpagesize 12
-#define memsize (1<<29)
+//#define memsize (1<<29)
+#define memsize (1<<28) // Johnicholas says: problem was allocating too much memory?
 #define pagesize (1<<logpagesize)
 #define pagemask (pagesize-1)
 #define pageints (pagesize/sizeof(int) )
@@ -108,7 +109,7 @@ typedef struct memo_struct {
 
 FILE* infile;
 int verbose= -1;
-/*
+
 unsigned long long mems, rmems, zmems;
 
 char mem[memsize];
@@ -2402,7 +2403,6 @@ void math_print(node*p) {
     fprintf(outfile, "g%x\n", id(p));
     fclose(outfile);
 }
-*/
 
 int main(int argc, char* argv[])
 {
@@ -2420,8 +2420,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Usage: %s [commandfile]\n", argv[0]);
         exit(-1);
     }
-    exit(0); // Johnicholas adds this for debugging purposes only
-    /*
+
     gb_init_rand(0);
 
     if (sizeof(long long) != 8) {
@@ -2782,6 +2781,5 @@ alldone:
     k= topofmem-pageptr;
     printf("  %llu bytes of memory (%d nodes,  %d pages)\n",
            ((long long)j)*sizeof(node)+((long long)k)*sizeof(page), j, k);
-    */
     return 0;
 }

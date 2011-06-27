@@ -1,6 +1,9 @@
 LDLIBS=-L. -lgb
 
-default: bdd15
+default: test
+
+test: bdd15 run_tests.sh
+	./run_tests.sh
 
 clean:
 	rm bdd15
