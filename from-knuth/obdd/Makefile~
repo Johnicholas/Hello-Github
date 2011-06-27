@@ -1,0 +1,7 @@
+LDLIBS=-lgb
+LDFLAGS=-L.
+
+obdd: obdd.c gb_graph.h gb_basic.h libgb.a
+
+
+
