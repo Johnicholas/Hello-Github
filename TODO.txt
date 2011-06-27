@@ -15,7 +15,12 @@ Bjorn Freeman-Benson
 cairo
 cmaes, the covariance matrix adaptation evolution strategy
 * Nikolaus Hansen
-Curry-Howard isomorphism
+Curry-Howard Isomorphism
+Datalog
+* bddbddb
+** buddy, minibdd, other bdd libraries
+* John Ramsdell's datalog-in-lua
+** John Ramsdell's programmer's minesweeper
 David Cope
 * Emmy / EMI / Emily Howell
 Diomidis Spinellis
@@ -53,6 +58,7 @@ Lennart Augustsson
 * NetBSD
 * Djinn and lots of other Haskell things
 love
+Lua Missions
 Marc Stiegler
 * David's Sling
 * Earthweb
@@ -61,6 +67,13 @@ Mark S Miller
 * E language
 * Agorics
 * Caja
+Maxwell Krohn
+* tame
+* tamer
+** Eddie Kohler
+* okcupid
+** Chris Coyne
+*** Context Free Art
 Michael Feathers
 * CppUnitLite
 nesC
@@ -69,16 +82,7 @@ ncurses
 Peter Clark
 * TaleSpin
 * CN2
-Maxwell Krohn
-* tame
-* tamer
-** Eddie Kohler
-* okcupid
-** Chris Coyne
-*** Context Free Art
-Tim Budd
-* LittleSmalltalk
-* CN2
+Python Koans
 Richard Hipp
 * SQLite
 * mkheaders
@@ -86,6 +90,14 @@ Richard Hipp
 * lemon
 Robin Hanson
 * market scoring rule
+Ruby Koans
+Sequitur
+* Abbadingo
+* Gowachin
+* Omphalos
+Squeak: A language for communicating with mice
+* Luca Cardelli
+* Rob Pike
 Steve Freeman
 Steven Ganz
 * trampoline interpreter
@@ -93,6 +105,9 @@ Steven Skiena
 * Programming Challenges
 * Algorithm Design Manual
 * Calculated Bets
+Tim Budd
+* LittleSmalltalk
+* CN2
 Torben Mogensen
 * Nicolas Devillard and the fast median search
 * Basics of Compiler Design
@@ -102,17 +117,18 @@ VeryTinyProlog
 * Bill and Bev Thompson
 
 People and projects to search for on Github:
-ed
-Cardelli and Pike's Squeak: A language for communicating with mice.
-Python Koans
-Ruby Koans
-Lua Missions
-Sequitur
-Datalog (one implementation using bdds, another using lua)
-buddy, bddbddb, other bdd libraries
 minisat
+* Niklas Een
+* Niklas Sorensen
 lua
+* Roberto Ierusalimschy
+* Luiz H. de Figueiredo
+* Waldemar Celes
+* iup
+** luajit
+*** Mike Pall
 supermemo
+* Piotr Wozniak
 busybox
 quines (biquines? multiquines)
 literate programming
@@ -151,7 +167,6 @@ Fabrice Bellard
 * qemu and jslinux
 icfp
 John Ousterhout (tcl/tk)
-lua (roberto and iup and mike pall's luajit)
 bond graphs
 petri nets
 ludum dare
@@ -218,3 +233,5 @@ partial evaluation
 Project Euler
 Rosetta Code
 jsprolog
+Tim Tyler's matching pennies contest
+Frank Buss's (and Dr. Dobbs) Mars Rescue programming contest
