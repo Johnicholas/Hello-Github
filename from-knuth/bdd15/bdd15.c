@@ -2484,12 +2484,12 @@ rescan:
         switch(*c++) {
         case'\n':
             if(!infile)printf("(Type `quit' to exit the program.)\n");
-        case'#':
+        case'#': // Johnicholas says: comments start with #
             continue;
-        case'!':
+        case'!': // Johnicholas says: messages (warnings?) start with !
             printf("%s", buf+1);
             continue;
-        case'b':
+        case'b': // bubble sort to reestablish the natural variable order
 
             if(totalvars) {
                 reorder_init();
@@ -2507,7 +2507,7 @@ rescan:
         case'C':
             print_cache();
             continue;
-        case'f':
+        case'f': // parse and execute an assignment to f_k
 
             getkf;
             lhs= k;
@@ -2669,7 +2669,7 @@ assignit:
             if(o, f[lhs])deref(f[lhs]);
             o, f[lhs]= r;
             continue;
-        case'i':
+        case'i': // get ready to read a new input file
             if(infile)
                 printf("Sorry --- you can't include one file inside of another.\n");
             else {
@@ -2681,27 +2681,27 @@ assignit:
                     printf("Sorry --- I couldn't open file `%s'!\n", cc);
             }
             continue;
-        case'l':
+        case'l': // TODO(johnicholas.hines@gmail.com): What does this do?
             getk;
             leasesonlife= k;
             continue;
-        case'm':
+        case'm': // print a mathematica program for a generating function
             getkf;
             math_print(f[k]);
             fprintf(stderr, "(generating function for f%d written to %s)\n", k, buf);
             continue;
-        case'o':
+        case'o': // output a function
             getkf;
             sprintf(buf, "/tmp/f%d.zdd", k);
             freopen(buf, "w", stdout);
             print_function(f[k]);
             freopen("/dev/tty", "w", stdout);
             continue;
-        case'O':
+        case'O': // print the current variable ordering
             for(v= varhead; v<topofvars; v++)printf(" x%d", v->name);
             printf("\n");
             continue;
-        case'p':
+        case'p': // print a function or its profile
             if (*c=='p') {
                 c++;
                 getkf;
@@ -2713,25 +2713,25 @@ assignit:
                 print_function(f[k]);
             }
             continue;
-        case'P':
+        case'P': // print all
             print_base(0);
             continue;
-        case'q':
+        case'q': // exit the program
             goto alldone;
-        case'r':
+        case'r': // reset the reorder trigger
             getk;
             trigger= k/100.0;
             if(trigger*totalnodes>=memsize)toobig= memsize;
             else toobig= trigger*totalnodes;
             continue;
-        case's':
+        case's': // swap variable x_k with its predecessor
             getkv;
             v= &varhead[varmap[k]];
             reorder_init();
             if(v->up)swap(v->up, v);
             reorder_fin();
             continue;
-        case'S':
+        case'S': // sift
             if(isdigit(*c))
             {
                 getkv;
@@ -2742,18 +2742,18 @@ assignit:
             }
             else siftall();
             continue;
-        case't':
+        case't': // reset tvar
             getkv;
             tvar= &varhead[k+1];
             continue;
-        case'v':
+        case'v': // TODO(johnicholas.hines@gmail.com): What does this do?
             getk;
             verbose= k;
             continue;
-        case'V':
+        case'V': // TODO(johnicholas.hines@gmail.com): What does this do?
             verbose= -1;
             continue;
-        case'x':
+        case'x': // TODO(johnicholas.hines@gmail.com): What does this do?
             if(!totvars) {
                 getk;
                 createvars(k);
