@@ -12,8 +12,8 @@ Bjorn Freeman-Benson
 * CoolDraw
 ** HotDraw
 *** Ward Cunningham and Kent Beck
-cairo
-cmaes, the covariance matrix adaptation evolution strategy
+cairo (cairographics.org)
+cmaes, the covariance matrix adaptation evolution strategy (www.lri.fr/~hansen/cmaesintro.html)
 * Nikolaus Hansen
 Curry-Howard Isomorphism
 Datalog
@@ -32,9 +32,9 @@ Doug McIlroy
 * Engineering a sort function
 * McIlroy-Hunt diff
 * Suffix Array
-DrPetter
+DrPetter (www.drpetter.se)
 * sfxr
-* musagi
+* musagi (project_musagi.html)
 esterel / cec-0.4
 Farbrausch
 * kkrunchy
@@ -73,11 +73,11 @@ Maxwell Krohn
 ** Eddie Kohler
 * okcupid
 ** Chris Coyne
-*** Context Free Art
+*** Context Free Art (www.contextfreeart.org)
 Michael Feathers
 * CppUnitLite
 nesC
-ncurses
+ncurses (ftp://invisible-island.net/ncurses)
 * Thomas Dickey
 Peter Clark
 * TaleSpin
@@ -117,7 +117,7 @@ VeryTinyProlog
 * Bill and Bev Thompson
 
 People and projects to search for on Github:
-minisat
+minisat (minisat.se)
 * Niklas Een
 * Niklas Sorensen
 lua
@@ -134,7 +134,7 @@ quines (biquines? multiquines)
 literate programming
 batchelder's cog
 Ken Forbus
-Peter Norvig
+Peter Norvig (code.google.com/p/aima-python)
 Dave Hanson
 Todd Proebsting
 rpcgen
@@ -178,6 +178,7 @@ Kragen Sitaker
 Kevin Reid
 googlemock
 Simon Tatham
+* puzzle collection apis
 The J incunabulum
 Russ Cox
 * plan9/thread/task/coroutine libraries, go lang stuff
@@ -192,6 +193,7 @@ Soar
 * Shiwali Mohan
 * Rete/UL
 ** Doorenbos
+** Expergent (code.google.com/p/expergent)
 Andrew Appel
 * Rogomatic
 * Compiling with Continuations
@@ -216,14 +218,14 @@ Norman Ramsey
 * noweb
 Peter Schickele
 Raymond Smullyan
-Edmund Grimley-Evans
+Edmund Grimley-Evans (homepage.ntlworld.com/edmund.grimley-evans)
 * bcompiler
 * cc500
 Greaser's Autotracker-C
 Turchin supercompilation project
 * Sergei Romanenko?
 Mike Thyer's lazy specialization
-partial evaluation
+partial evaluation (www.dina.kvl.dk/~sestoft/pebook)
 * c-mix
 ** Lars Ole Anderson
 * similix
@@ -234,4 +236,14 @@ Project Euler
 Rosetta Code
 jsprolog
 Tim Tyler's matching pennies contest
-Frank Buss's (and Dr. Dobbs) Mars Rescue programming contest
+Frank Buss's (and Dr. Dobbs) Mars Rescue programming contest (frank-buss.de/marsrescue)
+automatically describing images for human consumption
+* compressing images relative to that description?
+* brute force?
+* partial evaluate a renderer, and read the output code instead of running it?
+general game playing
+* code.google.com/p/ggp-base
+* code.google.com/p/ggp-galaxy
+rl-glue
+Ken Thompson's regular expression search algorithm
+
