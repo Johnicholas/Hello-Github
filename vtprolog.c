@@ -1,3 +1,4 @@
+#include <ctype.h> // for isalpha
 #include <stdio.h> // TODO(johnicholas.hines@gmail.com): Maybe also curses?
 #include <string.h> // for strlen
 
@@ -27,16 +28,20 @@
 //
 // Edits are copyright 2011 IDEXX Laboratories
 //
-// However, the translation to C has not been tested anywhere,
+// However, the translation to C has not been tested at all,
 // and should NOT be trusted.
 //
 // Johnicholas Hines(johnicholas.hines@gmail.com)
 
 typedef int boolean;
+#define TRUE 1
+#define FALSE 0
+char* concat(const char*, const char*); // I presume this is some sort of Pascal primitive.
+
 const boolean debug= 0;
 const char back_space= 0x08; // in ascii
 const char tab= '\t';
-// const char eof_mark // TODO(johnicholas.hines@gmail.com): eof isn't a character, really, in the C/Unix world
+const char* eof_mark= "EOF"; // This was a character, but EOF isn't really an character in C/Unix.
 const char esc= 0x1B; // in ascii
 const char quote_char= '\'';
 // const char left_arrow= 75; //TODO(johnicholas.hines@gmail.com): WTF?
@@ -50,9 +55,9 @@ typedef char string80[80];
 typedef char string132[132];
 typedef char string255[255];
 
-// text_file = text ; // TODO(johnicholas.hines@gmail.com): What does this mean? is it a FILE*? or maybe an fd?
+typedef FILE* text_file;
 
-// char_set = SET Of char ; // TODO(johnicholas.hines@gmail.com): What does this mean?
+typedef char* char_set;
 
 typedef enum node_type {
   CONS_NODE,
@@ -72,10 +77,10 @@ struct node {
       node_ptr head_ptr;
     } cons_node;
     struct {
-      // no fields?
+      string80 string_data;
     } func;
     struct {
-      // no fields?
+      string80 string_data;
     } constant;
     struct {
       string80 string_data;
@@ -117,10 +122,11 @@ struct node {
 
 string132 line, saved_line;
 string80 token;
-// text_file source_file // TODO(johnicholas.hines@gmail.com): Is this a FILE*?
+text_file source_file;
 boolean error_flag, in_comment;
-// char_set delim_set, text_chars; // TODO(johnicholas.hines@gmail.com): Are these const char* as used, for example, in strtok?
-node_ptr data_base, initial_heap, free, saved_list, HeapPtr;
+char_set delim_set, text_chars;
+
+node_ptr data_base, initial_heap, vtprolog_free, saved_list, HeapPtr;
 float total_free;
 
 // The important globals are:
@@ -131,7 +137,7 @@ float total_free;
 //                the currents query attached to it.
 // initial_heap - the value of the heap pointer at the start of the program.
 //                used by the garbage collector
-// free         - the list of free nodes.
+// vtprolog_free         - the list of free nodes.
 // total_free   - total number of free blocks on the free list.
 // data_base    - a pointer to the start of the data base. It points to a
 //                node pointing to the first sentence in the data base. Nodes
@@ -146,7 +152,7 @@ float total_free;
 // ----------------------------------------------------------------------
 
 void noise()
-  // Make a noise on the terminal - used for warnings.
+// Make a noise on the terminal - used for warnings.
 {
   putchar(bell);
 }
@@ -268,1355 +274,1263 @@ counter allocation_size(counter x)
 }
 // allocation_size
 
-/*
-counter node_size()
-  // calculates the base size of a node. Add the rest of the node to this
-  // to get the actual size of a node.
+
 // TODO(johnicholas.hines@gmail.com): Remove this, it's probably completely irrelevant.
-Begin
-  node_size := 2 * sizeof(node_ptr) + sizeof(boolean) + sizeof(node_type) ;
-End ;
-(* node_size *)
-
-
-Function normalize(pt : node_ptr) : node_ptr ;
-
-(* returns a normalized pointer. Pointers are 32 bit addresses. The first
-     16 bits contain the segment number and the second 16 bits contain the
-     offset within the segment. Normalized pointers have offsets in the range
-     $0 to $F (0 .. 15)    *)
-
-Var 
-  pt_seg,pt_ofs : integer ;
-Begin
-  pt_seg := seg(pt^) + (ofs(pt^) Div 16) ;
-  pt_ofs := ofs(pt^) Mod 16 ;
-
-(* Johnicholas says: so ptr is some primitive that builds a (32-bit) pointer from a pair of (16-bit) ints?
-      *  Maybe I just need to cast the FarPointer to the appropriate type? *)
-  normalize := node_ptr(ptr(pt_seg, pt_ofs)) ;
-End ;
-(* normalize *)
-
-
-Function string_val(list : node_ptr) : string80 ;
-
-(* returns the string pointed to by list. If list points to a number
-     node, it returns a string representing that number *)
-
-Var 
-  s : string[15] ;
-Begin
-  If list = Nil
-    Then string_val := ''
-  Else If list^.tag In [constant,variable,func]
-         Then string_val := list^.string_data
-  Else string_val := '' ;
-End ;
-(* string_val *)
-
-
-Function tag_value(list : node_ptr) : node_type ;
-  (* returns the value of the tag for a node.     *)
-Begin
-  If list = Nil
-    Then tag_value := free_node
-  Else tag_value := list^.tag ;
-End ;
-(* tag_value *)
-
-
-Procedure print_list(list : node_ptr) ;
-
-(* recursively traverses the list and prints its elements. This is
-     not a pretty printer, so the lists may look a bit messy.  *)
-
-Var 
-  p : node_ptr ;
-Begin
-  If list <> Nil
-    Then
-    Case list^.tag Of 
-      constant,
-      func,
-      variable  : write(string_val(list),' ') ;
-      cons_node :
-                  Begin
-                    write('(') ;
-                    p := list ;
-                    While p <> Nil Do
-                      Begin
-                        print_list(head(p)) ;
-                        p := tail(p) ;
-                      End ;
-                    write(') ') ;
-                  End ;
-    End ;
-End ;
-(* print_list *)
-
-
-Procedure get_memory(Var p : node_ptr ; size : counter) ;
-
-(* On exit p contains a pointer to a block of allocation_size(size) bytes.
-     If possible this routine tries to get memory from the free list before
-     requesting it from the heap *)
-
-Var 
-  blks : counter ;
-  allocated : boolean ;
-
-Procedure get_from_free(Var list : node_ptr) ;
-
-(* Try and get need memory from the free list. This routine uses a
-      first-fit algorithm to get the space. It takes the first free block it
-      finds with enough storage. If the free block has more storage than was
-      requested, the block is shrunk by the requested amount.  *)
-Begin
-  If list <> Nil
-    Then
-    If list^.block_cnt >= (blks - 1)
-      Then
-      Begin
-        p := normalize(node_ptr(ptr(seg(list^), ofs(list^) +
-             (list^.block_cnt - blks + 1) * 8))) ;
-        If list^.block_cnt = blks - 1
-          Then list := list^.next_free
-        Else list^.block_cnt := list^.block_cnt - blks ;
-        allocated := true ;
-        total_free := total_free - (blks * 8.0) ;
-      End
-  Else get_from_free(list^.next_free) ;
-End ;
-(* get_from_free *)
-
-Begin
-  blks := ((size - 1) Div 8) + 1 ;
-  allocated := false ;
-  get_from_free(free) ;
-  If Not allocated
-    Then getmem(p,blks * 8) ;
-End ;
-(* get_memory *)
-
-
-Function alloc_str(typ : node_type ; s : string80) : node_ptr ;
-
-(* Allocate storage for a string and return a pointer to the new node.
-     This routine only allocates enough storage for the actual number of
-     characters in the string plus one for the length. Because of this,
-     concatenating anything to the end of a string stored in a symbol node
-     will lead to disaster. Copy the string to a new string do the
-     concatenation and then allocate a new node.  *)
-
-Var 
-  pt : node_ptr ;
-Begin
-  get_memory(pt,allocation_size(sizeof(node_type) + sizeof(boolean) +
-  length(s) + 1)) ;
-  pt^.tag := typ   ;
-  pt^.string_data := s ;
-  alloc_str := pt ;
-End ;
-(* alloc_str *)
-
-
-Function cons(new_node,list : node_ptr) : node_ptr ;
-
-(* Construct a list. This routine allocates storage for a new cons node.
-     new_node points to the new head of the list. The tail pointer of the
-     new node points to list. This routine adds the new cons node to the
-     beginning of the list and returns a pointer to it. The list described
-     in the comments at the beginning of the program could be constructed
-     as cons(alloc_str('A'),cons(alloc_str('B'),cons(alloc_str('C'),NIL))). *)
-
-Var 
-  p : node_ptr ;
-Begin
-  get_memory(p,allocation_size(node_size)) ;
-  p^.tag := cons_node ;
-  p^.head_ptr := new_node ;
-  p^.tail_ptr := list ;
-  cons := p ;
-End ;
-(* cons *)
-
-
-Function append_list(list1,list2 : node_ptr) : node_ptr ;
-
-(* Append list2 to list1. This routine returns a pointer to the
-     combined list. Appending is done by consing each item on the first
-     list to the second list. This routine is one of the major sources of
-     garbage so if garbage collection becomes a problem, you may want to
-     rewrite it. *)
-Begin
-  If list1 = Nil
-    Then append_list := list2
-  Else append_list := cons(head(list1),append_list(tail(list1),list2)) ;
-End ;
-(* append_list *)
-
-
-Function list_length(list : node_ptr) : counter ;
-  (* returns the length of a list.
-     Note - both (A B C) and ( (A B) C D) have length 3.   *)
-Begin
-  If list = Nil
-    Then list_length := 0
-  Else list_length := 1 + list_length(list^.tail_ptr) ;
-End ;
-(* list_length *)
-
-
-Procedure collect_garbage ;
-
-(* This routine is specific to Turbo Pascal Ver 3.01
-     It depends upon the fact that Turbo allocates memory in 8 byte blocks
-     on the PC. If you recompile this program on another system be very
-     careful with this routine.
-     Garbage collection proceeds in three phases:
-      unmark  - free all memory between the initial_heap^ and the current
-                top of the heap.
-      mark    - mark everything on the saved_list as being in ues.
-      release - gather all unmarked blocks and put them on the free list.
-     The collector displays a '*' on the screen to let you know it is
-      operating.  *)
-
-Function lower(p1,p2 : node_ptr) : boolean ;
-   (* returns true if p1 points to a lower memory address than p2 *)
-Begin
-  p1 := normalize(p1) ;
-  p2 := normalize(p2) ;
-  lower := (seg(p1^) < seg(p2^)) Or
-           ((seg(p1^) = seg(p2^)) And (ofs(p1^) < ofs(p2^))) ;
-End ;
-(* lower *)
-
-Procedure mark(list : node_ptr) ;
-
-(* Mark the blocks on list as being in use. Since a node may be on several
-      lists at one time, if it is already marked we don't continue processing
-      the tail of the list. *)
-Begin
-  If list <> Nil
-    Then
-    Begin
-      If Not list^.in_use
-        Then
-        Begin
-          list^.in_use := true ;
-          If list^.tag = cons_node
-            Then
-            Begin
-              mark(head(list)) ;
-              mark(tail(list)) ;
-            End ;
-        End ;
-    End ;
-End ;
-(* mark *)
-
-Procedure unmark_mem ;
-
-(* Go through memory from initial_heap^ to HeapPtr^ and mark each node
-      as not in use. The tricky part here is updating the pointer p to point
-      to the next cell. *)
-
-Var 
-  p : node_ptr ;
-  string_base,node_allocation : counter ;
-Begin
-  string_base := sizeof(node_type) + sizeof(boolean) ;
-  p := normalize(initial_heap) ;
-  node_allocation := allocation_size(node_size) ;
-
-(* Johnicholas says: HeapPtr is something from the TP runtime - is there something analogous in the fpc runtime?
- *  Are we walking over all of memory, or just some specific region? *)
-  While lower(p, HeapPtr) Do
-    Begin
-      p^.in_use := false ;
-      Case p^.tag Of 
-        cons_node : p := normalize(node_ptr(ptr(seg(p^),ofs(p^) + node_allocation))) ;
-        free_node : p := normalize(node_ptr(ptr(seg(p^),ofs(p^) + (p^.block_cnt + 1) * 8))) ;
-        func,
-        constant,
-        variable  : p := normalize(node_ptr(ptr(seg(p^),
-                         ofs(p^) +
-                         allocation_size(string_base +
-                         length(p^.string_data) + 1)))) ;
-      End ;
-    End ;
-End ;
-(* unmark_mem *)
-
-Procedure release_mem ;
-
-(* This procedure does the actual collection and compaction of nodes.
-      This is the slow phase of garbage collection because of all the pointer
-      manipulation.  *)
-
-Var 
-  heap_top : node_ptr ;
-  string_base,node_allocation,string_allocation,block_allocation : counter ;
-
-Procedure free_memory(pt : node_ptr ; size : counter) ;
-
-(* return size bytes pointed to by pt to the free list. If pt points to
-       a block next to the head of the free list combine it with the top
-       free node. total_free keeps track of the total number of free bytes. *)
-
-Var 
-  blks : counter ;
-Begin
-  blks := ((size - 1) Div 8) + 1 ;
-  pt^.tag := free_node ;
-  If normalize(node_ptr(ptr(seg(pt^),ofs(pt^) + 8 * blks))) = free
-    Then
-    Begin
-      pt^.next_free := free^.next_free ;
-      pt^.block_cnt := free^.block_cnt + blks ;
-      free := pt ;
-    End
-  Else If normalize(node_ptr(ptr(seg(free^),ofs(free^) + 8 * (free^.block_cnt + 1)))) =
-          normalize(pt)
-         Then free^.block_cnt := free^.block_cnt + blks
-  Else
-    Begin
-      pt^.next_free := free ;
-      pt^.block_cnt := blks - 1 ;
-      free := pt ;
-    End ;
-  total_free := total_free + (blks * 8.0) ;
-End ;
-(* free_memory *)
-
-Procedure do_release ;
-    (* This routine sweeps through memory and checks for nodes with
-       in_use = false. *)
-
-Var 
-  p : node_ptr ;
-Begin
-  p := normalize(initial_heap) ;
-  While lower(p,heap_top) Do
-    Case p^.tag Of 
-      cons_node :
-                  Begin
-                    If Not p^.in_use
-                      Then free_memory(p,node_size) ;
-                    p := normalize(node_ptr(ptr(seg(p^),ofs(p^) + node_allocation))) ;
-                  End ;
-      free_node :
-                  Begin
-                    block_allocation := (p^.block_cnt + 1) * 8 ;
-                    free_memory(p,block_allocation) ;
-                    p := normalize(node_ptr(ptr(seg(p^),ofs(p^) + block_allocation))) ;
-                  End ;
-      func,
-      constant,
-      variable  :
-                  Begin
-                    string_allocation := allocation_size(string_base +
-                                         length(p^.string_data) + 1) ;
-                    If Not p^.in_use
-                      Then free_memory(p,string_base + length(p^.string_data)
-                      + 1) ;
-                    p := normalize(node_ptr(ptr(seg(p^),ofs(p^) + string_allocation))) ;
-                  End ;
-    End ;
-End ;
-(* do_release *)
-
-Begin
-  free := Nil ;
-  total_free := 0.0 ;
-  heap_top := HeapPtr ;
-  string_base := sizeof(node_type) + sizeof(boolean) ;
-  node_allocation := allocation_size(node_size) ;
-  do_release ;
-End ;
-(* release_mem *)
-
-Begin
-  write('*') ;
-  unmark_mem ;
-  mark(saved_list) ;
-  release_mem ;
-  write(back_space) ;
-
-  ClrEol ;
-
-End ;
-(* collect_garbage *)
-
-
-Procedure test_memory ;
-
-(* This routine activates the garbage collector, if the the total available
-     memory (free_list + heap) is less than a specified amount. Lowering the
-     minimum causes garbage collection to be called less often, but if you
-     make it too small you may not have enough room left for recursion or any
-     temporary lists you need. Using 10000 is probably being overly
-     cautious.   *)
-Begin
-     (* Johnicholas says: is memavail something in the legacy context? yes
-      *  The fpc docs say: The MemAvail and MaxAvail functions are no longer available.
-      *  On modern operating systems, the idea of "Available Free Memory" is not valid for an application.
-      *  The reasons are:
-      *  1. One processor cycle after an application asked the OS how much memory was free, another application
-      *  may have allocated everything.
-      *  2. It is not clear what "free memory" means [...snip...]
-
-      If (memavail * 16.0) + total_free < 10000 
-      Then collect_garbage ;
-      *)
-End ;
-(* test_memory *)
-
-
-Procedure wait ;
-  (* Just like it says. It waits for the user to press a key before
-     continuing. *)
-
-Var 
-  ch : char ;
-Begin
-  writeln ;
-  writeln ;
-  write('Press any key to continue. ') ;
-  read(Input,ch) ;
-  write(return) ;
-
-  ClrEol ;
-
-End ;
-(* wait *)
-
-
-
-(* ------------------------------------------------------------------------
-        End of utility routines
-   ------------------------------------------------------------------------ *)
-
-Procedure read_kbd(Var s : string80) ;
-  (* Read a line from the keyboard *)
-Begin
-  write('-> ') ;
-  readln(s) ;
-End ;
-(* read_kbd *)
-
-
-Procedure read_from_file(Var f : text_file) ;
-
-(* Read a line from file f and store it in the global variable line.
-     It ignores blank lines and when the end of file is reached an
-     eof_mark is returned. *)
-
-Procedure read_a_line ;
-Begin
-    (*$I- *)
-  readln(f,line) ;
-    (*$I+ *)
-  If ioresult <> 0
-    Then line := eof_mark
-  Else If eof(f)
-         Then line := concat(line,eof_mark) ;
-End ;
-(* read_a_line *)
-
-Begin
-  line := '' ;
-  If is_console(f)
-    Then read_kbd(line)
-  Else read_a_line ;
-  If in_comment
-    Then
-    If pos('*)',line) > 0
-      Then
-      Begin
-        delete(line,1,pos('*)',line) + 1) ;
-        in_comment := false ;
-      End
-  Else read_from_file(f) ;
-  saved_line := line ;
-End ;
-(* read_from_file *)
-
-
-Procedure get_token(Var t_line : string132 ; Var token : string80) ;
-
-(* Extract a token from t_line. Comments are ignored. A token is
-     a string surrounded by delimiters or an end of line. Tokens may
-     contain embedded spaces if they are surrounded by quote marks *)
-
-Procedure get_word ;
-
-Var 
-  done : boolean ;
-  cn : integer ;
-  len : byte ;
-Begin
-  cn := 1 ;
-  len := length(t_line) ;
-  done := false ;
-  While Not done Do
-    If cn > len
-      Then done := true
-    Else If t_line[cn] In delim_set
-           Then done := true
-    Else cn := cn + 1 ;
-  token := copy(t_line,1,cn-1) ;
-  delete(t_line,1,cn-1) ;
-End ;
-(* get_word *)
-
-Procedure comment ;
-Begin
-  If pos('*)',t_line) > 0
-    Then
-    Begin
-      delete(t_line,1,pos('*)',t_line)+1) ;
-      get_token(line,token) ;
-    End
-  Else
-    Begin
-      t_line := '' ;
-      token := '' ;
-      in_comment := true ;
-    End ;
-End ;
-(* comment *)
-
-Procedure get_quote ;
-Begin
-  delete(t_line,1,1) ;
-  If pos(quote_char,t_line) > 0
-    Then
-    Begin
-      token := concat(quote_char,copy(t_line,1,pos(quote_char,t_line) - 1)) ;
-      delete(t_line,1,pos(quote_char,t_line)) ;
-    End
-  Else
-    Begin
-      token := t_line ;
-      t_line := '' ;
-    End ;
-End ;
-(* get_quote *)
-
-Begin
-  strip_leading_blanks(t_line) ;
-  If length(t_line) > 0
-    Then
-    Begin
-      If copy(t_line,1,2) = '(*'
-        Then comment
-      Else If (copy(t_line,1,2) = ':-') Or (copy(t_line,1,2) = '?-')
-             Then
-             Begin
-               token := copy(t_line,1,2) ;
-               delete(t_line,1,2) ;
-             End
-      Else If t_line[1] = quote_char
-             Then get_quote
-      Else If t_line[1] In delim_set
-             Then
-             Begin
-               token := t_line[1] ;
-               delete(t_line,1,1) ;
-             End
-      Else get_word ;
-    End
-  Else token := '' ;
-End ;
-(* get_token *)
-
-
-Procedure scan(Var f : text_file ; Var token : string80) ;
-
-(* Scan repeatedly calls get_token to retreive tokens. When the
-     end of a line has been reached, read_from_file is called to
-     get a new line. *)
-Begin
-  If length(line) > 0
-    Then
-    Begin
-      get_token(line,token) ;
-      If token = ''
-        Then scan(f,token) ;
-    End
-  Else
-    Begin
-      read_from_file(f) ;
-      scan(f,token) ;
-    End ;
-End ;
-(* scan *)
-
-
-Procedure compile(Var source : text_file) ;
-
-(* The recursive descent compiler. It reads tokens until the token
-     'EXIT' is found. If the token is '?-', a query is performed, a '@' token
-     is the command to read a new file and source statements are read form that
-     file, otherwise the token is assumed to be part of a sentence and the rest
-     of the sentence is parsed. *)
-
-Procedure error(error_msg : string80) ;
-
-(* Signal an error. Prints saved_line to show where the error is located.
-      saved_line contains the current line being parsed. it is required,
-      because get_token chews up line as it reads tokens. *)
-
-Procedure runout ;
-Begin
-  While (token <> '.') And (token <> eof_mark) Do
-    scan(source,token) ;
-End ;
-(* runout *)
-
-Begin
-  error_flag := true ;
-  writeln ;
-  writeln(error_msg) ;
-  writeln ;
-  writeln(saved_line) ;
-  writeln('' : length(saved_line) - length(line) - 1,'^') ; ;
-  runout ;
-  wait ;
-End ;
-(* error *)
-
-Procedure goal(Var l_ptr : node_ptr) ;
-
-(* Read a goal. The new goal is appended to l_ptr. Each goal is appended
-      to l_ptr as a list. Thus, the sentence 'likes(john,X) :- likes(X,wine) .'
-      becomes the list ( (likes john X) (likes X wine) ) *)
-
-Var 
-  goal_token : string80 ;
-
-Procedure functor(Var f_ptr : node_ptr ; func_token : string80) ;
-
-(* The current goal is a functor. This routine allocates a node
-       to store the functor and then processes the components of the
-       functor. On exit, f_ptr points to the list containing the functor
-       and its components. func_token contains the functor name. *)
-
-Var 
-  c_ptr : node_ptr ;
-
-Procedure components(Var cm_ptr : node_ptr) ;
-
-(* Process the components of the functor. The components are terms
-        seperated by commas. On exit, cm_ptr points to the list of
-        components. *)
-
-Procedure term(Var t_ptr : node_ptr) ;
-      (* Process a single term. The new term is appended to t_ptr. *)
-
-Var 
-  t_token : string80 ;
-
-Procedure quoted_str(Var q_ptr : node_ptr) ;
-       (* Process a quote *)
-Begin
-  q_ptr := append_list(q_ptr,cons(alloc_str(constant,
-           copy(token,2,length(token) - 1)),
-           Nil)) ;
-  scan(source,token) ;
-End ;
-(* quoted_str *)
-
-Procedure varbl(Var v_ptr : node_ptr) ;
-       (* The current token is a varaible, allocate a node and return
-          a pointer to it. *)
-Begin
-  v_ptr := append_list(v_ptr,cons(alloc_str(variable,token),Nil)) ;
-  scan(source,token) ;
-End ;
-(* varbl *)
-
-Procedure number(Var n_ptr : node_ptr) ;
-
-(* Numbers are treated as string constants. This isn't particularly
-          efficent, but it is easy. *)
-Begin
-  n_ptr := append_list(n_ptr,cons(alloc_str(constant,token),Nil)) ;
-  scan(source,token) ;
-End ;
-(* handle_number *)
-
-Begin
-  If token[1] In ['A' .. 'Z','_']
-    Then varbl(t_ptr)
-  Else If token[1] = quote_char
-         Then quoted_str(t_ptr)
-  Else If is_number(token)
-         Then number(t_ptr)
-  Else If token[1] In ['a' .. 'z']
-         Then
-         Begin
-           t_token := token ;
-           scan(source,token) ;
-           If token = '('
-             Then functor(t_ptr,t_token)
-           Else t_ptr := append_list(t_ptr,
-                         cons(alloc_str(constant,t_token),Nil)) ;
-         End
-  Else error('Illegal Symbol.') ;
-End ;
-(* term *)
-
-Begin
-  term(cm_ptr) ;
-  If token = ','
-    Then
-    Begin
-      scan(source,token) ;
-      components(cm_ptr) ;
-    End ;
-End ;
-(* components *)
-
-Begin
-  c_ptr := cons(alloc_str(func,func_token),Nil) ;
-  scan(source,token) ;
-  components(c_ptr) ;
-  If token = ')'
-    Then
-    Begin
-      f_ptr := append_list(f_ptr,cons(c_ptr,Nil)) ;
-      scan(source,token) ;
-    End
-  Else error('Missing '')''.') ;
-End ;
-(* functor *)
-
-Begin
-  If token[1] In ['a' .. 'z',quote_char]
-    Then
-    Begin
-      If token[1] = quote_char
-        Then
-        Begin
-          l_ptr := append_list(l_ptr,
-                   cons(cons(alloc_str(constant,
-                   copy(token,2,length(token) - 1)),Nil),Nil)) ;
-          scan(source,token) ;
-        End
-      Else
-        Begin
-          goal_token := token ;
-          scan(source,token) ;
-          If token = '('
-            Then functor(l_ptr,goal_token)
-          Else l_ptr := append_list(l_ptr,
-                        cons(cons(alloc_str(constant,goal_token),
-                        Nil),Nil)) ;
-        End
-    End
-  Else error('A goal must begin with ''a .. z'' or be a quoted string.') ;
-End ;
-(* goal *)
-
-Procedure tail_list(Var t_ptr : node_ptr) ;
-
-(* Process the tail of a rule. Since the a query is syntactically identical
-      to the tail of a rule, this routine is used to compile queries.
-      On exit, t_ptr points to the list containing the tail. *)
-Begin
-  goal(t_ptr) ;
-  If token = ','
-    Then
-    Begin
-      scan(source,token) ;
-      tail_list(t_ptr) ;
-    End ;
-End ;
-(* tail *)
-
-Procedure rule ;
-
-(* Procees a rule, actually any sentence. If no error occurs the
-      new sentence is appended to the data base. *)
-
-Var 
-  r_ptr : node_ptr ;
-
-Procedure head_list(Var h_ptr : node_ptr) ;
-Begin
-  goal(h_ptr) ;
-End ;
-(* head *)
-
-Begin
-  saved_list := cons(data_base,Nil) ;
-  test_memory ;
-  r_ptr := Nil ;
-  head_list(r_ptr) ;
-  If token = ':-'
-    Then
-    Begin
-      scan(source,token) ;
-      tail_list(r_ptr) ;
-    End ;
-  If token <> '.'
-    Then error('''.'' expected.') ;
-  If Not error_flag
-    Then data_base := append_list(data_base,cons(r_ptr,Nil)) ;
-End ;
-(* rule *)
-
-Procedure query ;
-
-(* Process a query. Compile the query, and then call solve to search the
-      data base. q_ptr points to the compiled query and solved is a boolean
-      indicating whether the query was successfully solved. *)
-
-Var 
-  q_ptr : node_ptr ;
-  solved : boolean ;
-
-Procedure solve(list,env : node_ptr ; level : counter) ;
-
-(* This is where all the hard work is done. This routine follows the
-       steps outlined in the article. list is the query to be soved, env is
-       the current environment and level is the recursion level. level can
-       only get to 32767, but you'll run out of stack space long before you
-       get that far.
-       solve saves list and env on the saved list so that they won't be
-       destroyed by garbage collection. The data base is always on the
-       saved list. At the end of solve, list and env are removed from
-       saved_list. *)
-
-Var 
-  new_env,p : node_ptr ;
-
-Function look_up(var_str : string80 ; environ : node_ptr) : node_ptr ;
-
-(* Search the environment list pointed to by environ for the variable,
-        var_str. If found return a pointer to var_str's binding, otherwise
-        return NIL *)
-
-Var 
-  found : boolean ;
-  p : node_ptr ;
-Begin
-  p := environ ;
-  found := false ;
-  While (p <> Nil) And (Not found) Do
-    Begin
-      If var_str = string_val(head(head(p)))
-        Then
-        Begin
-          found := true ;
-          look_up := tail(head(p)) ;
-        End
-      Else p := tail(p) ;
-    End ;
-  If Not found
-    Then look_up := Nil ;
-End ;
-(* look_up *)
-
-Procedure check_continue ;
-
-(* Print the bindings and see if the user is satisfied. If nothing
-        is printed from the environment, then print 'Yes' to indicate
-        that the query was successfully satisfied. *)
-
-Var 
-  printed : boolean ;
-  ch : char ;
-
-Procedure print_bindings(list : node_ptr) ;
-
-(* Print the bindings for level 0 variables only, intermediate variables
-         aren't of interest. The routine recursivley searches for the
-         end of the environments list and then prints the binding. This
-         is so that variables bound first are printed first. *)
-
-Procedure print_functor(l : node_ptr) ;
-FORWARD ;
-
-Procedure print_variable(var_str : string80) ;
-
-(* The varaible in question was bound to another varaible, so look
-          up that variable's binding and print it. If a match can't be found
-          print '_' to tell the user that the variable is anonymous. *)
-
-Var 
-  var_ptr : node_ptr ;
-Begin
-  var_ptr := look_up(var_str,env) ;
-  If var_ptr <> Nil
-    Then
-    Case tag_value(head(var_ptr)) Of 
-      constant  : write(string_val(head(var_ptr)),' ') ;
-      variable  : print_variable(string_val(head(var_ptr))) ;
-      cons_node : print_functor(head(var_ptr)) ;
-    End
-  Else write('_ ') ;
-End ;
-(* print_variable *)
-
-Procedure print_functor (* l : node_ptr *) ;
-       (* The variable was bound to a functor. Print the functor and its
-          components. *)
-
-Procedure print_components(p : node_ptr) ;
-
-(* Print the components of a functor. These may be variables or
-           other functors, so call the approriate routines to print them. *)
-Begin
-  If p <> Nil
-    Then
-    Begin
-      Case tag_value(head(p)) Of 
-        constant  : write(string_val(head(p)),' ') ;
-        variable  : print_variable(string_val(head(p))) ;
-        cons_node : print_functor(head(p)) ;
-      End ;
-      If tail(p) <> Nil
-        Then
-        Begin
-          write(',') ;
-          print_components(tail(p)) ;
-        End ;
-    End ;
-End ;
-(* print_components *)
-
-Begin
-  If l <> Nil
-    Then
-    Begin
-      write(string_val(head(l))) ;
-      If tail(l) <> Nil
-        Then
-        Begin
-          write('(') ;
-          print_components(tail(l)) ;
-          write(')') ;
-        End ;
-    End ;
-End ;
-(* print_functor *)
-
-Begin
-  If list <> Nil
-    Then
-    Begin
-      print_bindings(tail(list)) ;
-      If pos('#',string_val(head(head(list)))) = 0
-        Then
-        Begin
-          printed := true ;
-          writeln ;
-          write(string_val(head(head(list))),' = ') ;
-          Case tag_value(head(tail(head(list)))) Of 
-            constant  : write(string_val(head(tail(head(list)))),' ') ;
-            variable  : print_variable(string_val(head(tail(head(list))))) ;
-            cons_node : print_functor(head(tail(head(list)))) ;
-          End ;
-        End ;
-    End ;
-End ;
-(* print_bindings *)
-
-Begin
-  printed := false ;
-  print_bindings(env) ;
-  If Not printed
-    Then
-    Begin
-      writeln ;
-      write('Yes ') ;
-    End ;
-  Repeat
-    read(Input,ch) ;
-  Until ch In [return,';'] ;
-  solved := (ch = return) ;
-  writeln ;
-End ;
-(* check_continue *)
-
-Function copy_list(list : node_ptr ; copy_level : counter) : node_ptr ;
-     (* Copy a list and append the copy_level (recursion level) to all
-        variables. *)
-
-Var 
-  temp_list,p : node_ptr ;
-  level_str : string[6] ;
-
-Procedure list_copy(from_list : node_ptr ; Var to_list : node_ptr) ;
-Begin
-  If from_list <> Nil
-    Then
-    Case from_list^.tag Of 
-      variable : to_list := alloc_str(variable,
-                            concat(from_list^.string_data,
-                            level_str)) ;
-      func,
-      constant  : to_list := from_list ;
-      cons_node :
-                  Begin
-                    list_copy(tail(from_list),to_list) ;
-                    to_list := cons(copy_list(head(from_list),copy_level),
-                               to_list) ;
-                  End ;
-    End ;
-End ;
-(* list_copy *)
-
-Begin
-  str(copy_level,level_str) ;
-  level_str := concat('#',level_str) ;
-  temp_list := Nil ;
-  list_copy(list,temp_list) ;
-  copy_list := temp_list ;
-End ;
-(* copy_list *)
-
-Function unify(list1,list2,environ : node_ptr ; Var new_environ : node_ptr) :
-                                                                              boolean ;
-
-(* Unify two lists and return any new bindings at the front of the
-        environment list. Returns true if the lists could be unified. This
-        routine implements the unification table described in the article.
-        Unification is straight forward, but the details of matching the
-        lists get a little messy in this routine. There are better ways to
-        do all of this, we just haven't gotten around to trying them. If
-        you implement any other unification methods, we would be glad to
-        hear about it.
-        Unify checks to see if both lists are NIL, this is a successful
-        unification. If one list is NIL, unification fails. Otherwise check
-        what kind on node the head of list1 is and call the appropriate
-        routine to perform the unification. Variables are unified by
-        looking up the binding of the variable. If none is found, make
-        a binding for the variable, otherwise try to unify the binding
-        with list2. *)
-
-Var 
-  var_ptr : node_ptr ;
-
-Procedure make_binding(l1,l2 : node_ptr) ;
-
-(* Bind a variable to the environment. Anonymous variables are not bound.
-         l1 points to the variable and l2 points to its binding. *)
-Begin
-  If copy(string_val(head(l1)),1,1) <> '_'
-    Then new_environ := cons(cons(head(l1),l2),environ)
-  Else new_environ := environ ;
-  unify := true ;
-End ;
-(* make_binding *)
-
-Procedure fail ;
-      (* Unification failed. *)
-Begin
-  unify := false ;
-  new_environ := environ ;
-End ;
-(* fail *)
-
-Procedure unify_constant ;
-
-(* List1 contains a constant. Try to unify it with list2. The 4 cases
-         are:
-          list2 contains
-           constant - unify if constants match
-           variable - look up binding, if no current binding bind the
-                      constant to the variable, otherwise unify list1
-                      with the binding.
-           cons_node,
-           func     - these can't be unified with a constant. A cons_node
-                      indicates an expression. *)
-Begin
-  Case tag_value(head(list2)) Of 
-    constant  : If string_val(head(list1)) = string_val(head(list2))
-                  Then
-                  Begin
-                    unify := true ;
-                    new_environ := environ ;
-                  End
-                Else fail ;
-    variable  :
-                Begin
-                  var_ptr := look_up(string_val(head(list2)),environ) ;
-                  If var_ptr = Nil
-                    Then make_binding(list2,list1)
-                  Else unify := unify(list1,var_ptr,environ,new_environ) ;
-                End ;
-    cons_node,
-    func      : fail ;
-  End ;
-End ;
-(* unify_constant *)
-
-Procedure unify_func ;
-
-(* List1 contains a functor. Try to unify it with list2. The 4 cases
-         are:
-          list2 contains
-           constant  - can't be unified.
-           variable  - look up binding, if no current binding bind the
-                       functor to the variable, otherwise unify list1
-                       with the binding.
-           cons_node - fail
-           func      - if the functors match, then true to unify the component
-                       lists (tail of the list) term by term. *)
-
-Procedure unify_tail ;
-       (* This routine does the term by term unification of the component
-          lists *)
-
-Var 
-  p,q : node_ptr ;
-  unified : boolean ;
-Begin
-  p := tail(list1) ;
-  q := tail(list2) ;
-  unified := true ;
-  new_environ := environ ;
-  While (p <> Nil) And unified Do
-    Begin
-      unified := unified And unify(cons(head(p),Nil),cons(head(q),Nil),
-                 new_environ,new_environ) ;
-      p := tail(p) ;
-      q := tail(q) ;
-    End ;
-  If Not unified
-    Then fail ;
-End ;
-(* unify_tail *)
-
-Begin
-  Case tag_value(head(list2)) Of 
-    constant  : fail ;
-    variable  :
-                Begin
-                  var_ptr := look_up(string_val(head(list2)),environ) ;
-                  If var_ptr = Nil
-                    Then make_binding(list2,list1)
-                  Else unify := unify(list1,var_ptr,environ,new_environ) ;
-                End ;
-    func      : If string_val(head(list1)) = string_val(head(list2))
-                  Then
-                  If list_length(tail(list1)) = list_length(tail(list2))
-                    Then unify_tail
-                Else fail
-                Else fail ;
-    cons_node : fail ;
-  End ;
-End ;
-(* unify_func *)
-
-Procedure unify_expr ;
-
-(* List1 contains an expression. Try to unify it with list2. The 4 cases
-         are:
-          list2 contains
-           constant  - can't be unified.
-           variable  - look up binding, if no current binding bind the
-                       functor to the variable, otherwise unify list1
-                       with the binding.
-           cons_node - If the heads can be unified, the unify the tails.
-           func      - fail *)
-Begin
-  Case tag_value(head(list2)) Of 
-    constant  : fail ;
-    variable  :
-                Begin
-                  var_ptr := look_up(string_val(head(list2)),environ) ;
-                  If var_ptr = Nil
-                    Then make_binding(list2,list1)
-                  Else unify := unify(list1,var_ptr,environ,new_environ) ;
-                End ;
-    func      : fail ;
-    cons_node : If unify(head(list1),head(list2),environ,new_environ)
-                  Then unify := unify(tail(list1),tail(list2),new_environ,
-                                new_environ)
-                Else fail ;
-  End ;
-End ;
-(* unify_expr *)
-
-Begin
-  If (list1 = Nil) And (list2 = Nil)
-    Then
-    Begin
-      unify := true ;
-      new_environ := environ ;
-    End
-  Else If list1 = Nil
-         Then fail
-  Else If list2 = Nil
-         Then fail
-  Else
-    Case tag_value(head(list1)) Of 
-      constant  : unify_constant ;
-      variable  :
-                  Begin
-                    var_ptr := look_up(string_val(head(list1)),environ) ;
-                    If var_ptr = Nil
-                      Then make_binding(list1,list2)
-                    Else unify := unify(var_ptr,list2,environ,new_environ) ;
-                  End ;
-      func      : unify_func ;
-      cons_node : unify_expr ;
-    End ;
-End ;
-(* unify *)
-
-Begin
-  saved_list := cons(list,cons(env,saved_list)) ;
-  If list = Nil
-    Then check_continue
-  Else
-    Begin
-      p := data_base ;
-      While (p <> Nil) And (Not solved) Do
-        Begin
-          test_memory ;
-          If unify(copy_list(head(head(p)),level),head(list),env,new_env)
-            Then solve(append_list(copy_list(tail(head(p)),level),tail(list)),
-            new_env,level + 1) ;
-          p := tail(p) ;
-        End ;
-    End ;
-  saved_list := tail(tail(saved_list)) ;
-End ;
-(* solve *)
-
-Begin
-  q_ptr := Nil ;
-  tail_list(q_ptr) ;
-  If token <> '.'
-    Then error('''.'' expected.')
-  Else If Not error_flag
-         Then
-         Begin
-           solved := false ;
-           saved_list := cons(data_base,Nil) ;
-           solve(q_ptr,Nil,0) ;
-           If Not solved
-             Then writeln('No') ;
-         End ;
-End ;
-(* query *)
-
-Procedure read_new_file ;
-
-(* Read source statements from a new file. When all done, close file
-      and continue reading from the old file. Files may be nested, but you
-      will run into trouble if you nest them deaper than 15 levels. This
-      is Turbo's default for open files. *)
-
-Var 
-  new_file : text_file ;
-  old_line,old_save : string132 ;
-  f_name : string80 ;
-Begin
-  If token[1] = quote_char
-    Then delete(token,1,1) ;
-  If pos('.',token) = 0
-    Then f_name := concat(token,'.PRO')
-  Else f_name := token ;
-  If open(new_file,f_name)
-    Then
-    Begin
-      old_line := line ;
-      old_save := saved_line ;
-      line := '' ;
-      compile(new_file) ;
-      close(new_file) ;
-      line := old_line ;
-      saved_line := old_save ;
-      scan(source,token) ;
-      If token <> '.'
-        Then error('''.'' expected.') ;
-    End
-  Else error(concat('Unable to open ',f_name)) ;
-End ;
-(* read_new_file *)
-
-Procedure do_exit ;
-
-(* Exit the program. This really should be a built-in function and handled
-      in solve, but this does the trick. *)
-Begin
-  scan(source,token) ;
-  If token <> '.'
-    Then error('''.'' expected.')
-  Else halt
-End ;
-(* do_exit *)
-
-Begin
-  scan(source,token) ;
-  While token <> eof_mark Do
-    Begin
-      error_flag := false ;
-      If token = '?-'
-        Then
-        Begin
-          scan(source,token) ;
-          query ;
-        End
-      Else If token = '@'
-             Then
-             Begin
-               scan(source,token) ;
-               read_new_file ;
-             End
-      Else 
-      Begin
-        toupper(token) ;
-        If token = 'EXIT'
-        Then do_exit
-        Else rule ;
-        End ;
-      End ;
-      scan(source,token) ;
-    End ;
-End ;
-(* compile *)
-
-
-Procedure initialize ;
-
-Begin
+counter node_size()
+// calculates the base size of a node. Add the rest of the node to this
+// to get the actual size of a node.
+{
+  return 2 * sizeof(node_ptr) + sizeof(boolean) + sizeof(node_type);
+}
+// node_size
+
+
+node_ptr normalize(node_ptr pt)
+// returns a normalized pointer. Pointers are 32 bit addresses. The first
+//   16 bits contain the segment number and the second 16 bits contain the
+//   offset within the segment. Normalized pointers have offsets in the range
+//   $0 to $F (0 .. 15)
+{
+  /* TODO(johnicholas.hines@gmail.com): fix to work on modern operating systems
+  int pt_seg, pt_ofs;
+
+  pt_seg= seg(*pt) + (ofs(*pt) / 16); // SEGMENTED MEMORY MANAGEMENT
+  pt_ofs= ofs(*pt) % 16; // SEGMENTED MEMORY MANAGEMENT
+
+  return (node_ptr) ptr(ptr_seg, pt_ofs); // SEGMENTED MEMORY MANAGEMENT
+  */
+  return pt; // Just a placeholder to get this thing to compile.
+}
+// normalize
+
+
+const char* string_val(node_ptr list)
+// returns the string pointed to by list. If list points to a number
+//   node, it returns a string representing that number. 
+{
+  if (list == NULL)
+    return "";
+  else 
+    switch (list->tag) {
+    case CONSTANT: return list->u.constant.string_data; break;
+    case VARIABLE: return list->u.variable.string_data; break;
+    case FUNC: return list->u.variable.string_data; break;
+    default: return ""; break;
+    }
+}
+// string_val
+
+
+node_type tag_value(node_ptr list)
+// returns the value of the tag for a node.
+{
+  if (list == NULL)
+    return FREE_NODE;
+  else return list->tag;
+}
+// tag_value
+
+
+void print_list(node_ptr list)
+// recursively traverses the list and prints its elements. This is
+//   not a pretty printer, so the lists may look a bit messy.
+{
+  node_ptr p;
+
+  if (list != NULL)
+    {
+      switch (list->tag) {
+      case CONSTANT: // fall through
+      case FUNC: // fall through
+      case VARIABLE: printf("%s ", string_val(list)); break;
+      case CONS_NODE:
+	printf("(");
+	p= list;
+	while (p != NULL)
+	  {
+	    print_list(head(p));
+	    p= tail(p);
+	  }
+	printf(") ");
+      }
+    }
+}
+// print_list
+
+
+// TODO(johnicholas.hines@gmail.com): p should be pass-by-reference
+void get_memory(node_ptr p, counter size)
+// On exit p contains a pointer to a block of allocation_size(size) bytes.
+//   If possible this routine tries to get memory from the free list before
+//   requesting it from the heap
+{
+  counter blks;
+  boolean allocated;
+
+  // TODO(johnicholas.hines@gmail.com): list should be pass by reference
+  void get_from_free(node_ptr list)
+  // Try and get need memory from the free list. This routine uses a
+  //  first-fit algorithm to get the space. It takes the first free block it
+  //  finds with enough storage. If the free block has more storage than was
+  //  requested, the block is shrunk by the requested amount.
+  {
+    if (list != NULL)
+      {
+	if (list->u.free_node.block_cnt >= (blks - 1)) {
+	  {
+	    //p= normalize(node_ptr(ptr(seg(*list), ofs(*list) +
+	    // (list->u.free_node.block_cnt - blks + 1) * 8))); // SEGMENTED MEMORY MANAGEMENT
+	    p= normalize(list); // This is just to get it to compile, definitely buggy
+	    if (list->u.free_node.block_cnt == blks - 1)
+	      list= list->u.free_node.next_free;
+	    else list->u.free_node.block_cnt= list->u.free_node.block_cnt - blks;
+	    allocated= TRUE;
+	    total_free= total_free - (blks * 8.0);
+	  }
+	} else get_from_free(list->u.free_node.next_free);
+      }
+  }
+  // get_from_free
+  
+  blks= ((size - 1) / 8) + 1; // TODO(johnicholas.hines@gmail.com): Duplication?
+  allocated= FALSE;
+  get_from_free(vtprolog_free);
+  if (!allocated)
+    getmem(p, blks * 8);
+}
+// get_memory
+
+node_ptr alloc_str(node_type typ, string80 s)
+
+// Allocate storage for a string and return a pointer to the new node.
+//   This routine only allocates enough storage for the actual number of
+//   characters in the string plus one for the length. Because of this,
+//   concatenating anything to the end of a string stored in a symbol node
+//   will lead to disaster. Copy the string to a new string do the
+//   concatenation and then allocate a new node.
+
+{
+  node_ptr pt;
+
+  get_memory(pt, allocation_size(sizeof(node_type) + sizeof(boolean) + // TODO(johnicholas.hines@gmail.com): Duplication?
+				 length(s) + 1));
+  pt->tag= typ;
+  strncpy(pt->u.constant.string_data, s, 80); // TODO(johnicholas.hines@gmail.com): I think this requires that the string data is stored at the same spot in all the nodes that have string data
+  // TODO(johnicholas.hines@gmail.com): This 80 magic number is no good, and strncpy isn't a great way to deal with strings anyway
+  return pt;
+}
+// alloc_str
+
+
+node_ptr cons(node_ptr new_node, node_ptr list)
+
+// Construct a list. This routine allocates storage for a new cons node.
+//   new_node points to the new head of the list. The tail pointer of the
+//   new node points to list. This routine adds the new cons node to the
+//   beginning of the list and returns a pointer to it. The list described
+//   in the comments at the beginning of the program could be constructed
+//   as cons(alloc_str('A'),cons(alloc_str('B'),cons(alloc_str('C'),NIL))). *)
+
+{
+  node_ptr p;
+
+  get_memory(p, allocation_size(node_size()));
+  p->tag= CONS_NODE;
+  p->u.cons_node.head_ptr= new_node;
+  p->u.cons_node.tail_ptr= list;
+  return p;
+}
+// cons
+
+node_ptr append_list(node_ptr list1, node_ptr list2)
+// Append list2 to list1. This routine returns a pointer to the
+//   combined list. Appending is done by consing each item on the first
+//   list to the second list. This routine is one of the major sources of
+//   garbage so if garbage collection becomes a problem, you may want to
+//   rewrite it.
+{
+  if (list1 == NULL)
+    return list2;
+  else
+    return cons(head(list1), append_list(tail(list1), list2));
+}
+// append_list
+
+counter list_length(node_ptr list)
+// returns the length of a list.
+//   Note - both (A B C) and ( (A B) C D) have length 3.   *)
+{
+  if (list == NULL)
+    return 0;
+  else
+    return 1 + list_length(list->u.cons_node.tail_ptr);
+}
+// list_length
+
+
+void collect_garbage()
+// This routine is specific to Turbo Pascal Ver 3.01
+//   It depends upon the fact that Turbo allocates memory in 8 byte blocks
+//   on the PC. If you recompile this program on another system be very
+//   careful with this routine.
+//   Garbage collection proceeds in three phases:
+//    unmark  - free all memory between the initial_heap^ and the current
+//              top of the heap.
+//    mark    - mark everything on the saved_list as being in ues.
+//    release - gather all unmarked blocks and put them on the free list.
+//   The collector displays a '*' on the screen to let you know it is
+//    operating.
+{
+
+  boolean lower(node_ptr p1, node_ptr p2)
+  // returns true if p1 points to a lower memory address than p2
+  {
+    p1= normalize(p1);
+    p2= normalize(p2);
+    return (seg(*p1) < seg(*p2)) || ((seg(*p1) == seg(*p2)) && (ofs(*p1) < ofs(*p2))); // SEGMENTED MEMORY MANAGEMENT
+  }
+  // lower
+  
+  
+  void mark(node_ptr list)
+  // Mark the blocks on list as being in use. Since a node may be on several
+  //    lists at one time, if it is already marked we don't continue processing
+  //    the tail of the list.
+  {
+    if (list != NULL)
+      {
+	if (! list->in_use)
+	  {
+	    list->in_use= TRUE;
+	    if (list->tag == CONS_NODE)
+	      {
+		mark(head(list));
+		mark(tail(list));
+	      }
+	  }
+      }
+  }
+  // mark
+  
+  
+  void unmark_mem()
+  // Go through memory from initial_heap^ to HeapPtr^ and mark each node
+  //    as not in use. The tricky part here is updating the pointer p to point
+  //    to the next cell.
+  {
+    node_ptr p;
+    counter string_base, node_allocation;
+    
+    string_base= sizeof(node_type) + sizeof(boolean); // Johnicholas says: I think I've seen this somewhere - duplication?
+    p= normalize(initial_heap);
+    node_allocation= allocation_size(node_size());
+    
+    while (lower(p, HeapPtr))
+      {
+	p->in_use= FALSE;
+	switch (p->tag) {
+	case CONS_NODE: 
+	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + node_allocation))); // SEGMENTED MEMORY MANAGEMENT
+	  p= normalize(p); // Just to get this thing to compile as C.
+	  break;
+	case FREE_NODE: 
+	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + (p->u.free_node.block_cnt + 1) * 8))); // SEGMENTED MEMORY MANAGEMENT
+	  p= normalize(p); // Again, just to get this thing to compile as C.
+	  break;
+	case FUNC: // fall through
+	case CONSTANT: // fall through
+	case VARIABLE:
+	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + allocation_size(string_base + length(p->string_data) + 1)))); // SEGMENTED MEMORY MANAGEMENT
+	  p= normalize(p);
+	  break;
+	}
+      }
+  }
+  // unmark_mem
+  
+  void release_mem()
+  // This procedure does the actual collection and compaction of nodes.
+  //    This is the slow phase of garbage collection because of all the pointer
+  //    manipulation.
+  {
+    node_ptr heap_top;
+    counter string_base, node_allocation, string_allocation, block_allocation;
+    
+    void free_memory(node_ptr pt, counter size)
+    // return size bytes pointed to by pt to the free list. If pt points to
+    //     a block next to the head of the free list combine it with the top
+    //     free node. total_free keeps track of the total number of free bytes.
+    {
+      counter blks;
+      
+      blks= ((size - 1) / 8) + 1; 
+      pt->tag= FREE_NODE;
+      // if (normalize(node_ptr(ptr(seg(*pt), ofs(*pt) + 8 * blks))) == vtprolog_free) // SEGMENTED MEMORY MANAGEMENT
+      if (normalize(pt) == vtprolog_free) // just in order to get this to compile as C
+	{
+	  pt->u.free_node.next_free= vtprolog_free->u.free_node.next_free;
+	  pt->u.free_node.block_cnt= vtprolog_free->u.free_node.block_cnt + blks;
+	  vtprolog_free= pt;
+	}
+      // else if (normalize(node_ptr(ptr(seg(*vtprolog_free), ofs(*vtprolog_free) + 8 * (vtprolog_free->u.free_node.block_cnt + 1)))) == normalize(pt)) // SEGMENTED MEMORY MANAGEMENT
+      else if (normalize(vtprolog_free) == normalize(pt)) // Again, just in order to get this to compile as C
+	vtprolog_free->u.free_node.block_cnt= vtprolog_free->u.free_node.block_cnt + blks;
+      else
+	{
+	  pt->u.free_node.next_free= vtprolog_free;
+	  pt->u.free_node.block_cnt= blks - 1;
+	  vtprolog_free= pt;
+	}
+      total_free= total_free + (blks * 8.0);
+    }
+    // free_memory
+    
+    void do_release()
+    // This routine sweeps through memory and checks for nodes with in_use = false.
+    {
+      node_ptr p;
+      
+      p= normalize(initial_heap);
+      while (lower(p, heap_top)) {
+	switch (p->tag) {
+	case CONS_NODE: 
+	  if (!p->in_use) {
+	    free_memory(p, node_size());
+	  }
+	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + node_allocation))); // SEGMENTED MEMORY MANAGEMENT
+	  p= normalize(p); // just to get this thing to compile as C
+	  break;
+	case FREE_NODE:
+	  block_allocation= (p->u.free_node.block_cnt + 1) * 8;
+	  free_memory(p, block_allocation);
+	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + block_allocation))); // SEGMENTED MEMORY MANAGEMENT
+	  p= normalize(p); // again, just to get this thing to compile as C
+	  break;
+	case FUNC: // fall through
+	case CONSTANT: // fall through
+	case VARIABLE: 
+	  string_allocation= allocation_size(string_base + sizeof(p->u.constant.string_data) + 1);
+	  if (! p->in_use)
+	    free_memory(p, string_base + sizeof(p->u.constant.string_data) + 1);
+	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + string_allocation))); // SEGMENTED MEMORY MANAGEMENT
+	  p= normalize(p); // again, just to get this thing to compile as C
+	  break;
+	}
+      }
+    }
+    // do_release
+    
+    vtprolog_free= NULL;
+    total_free= 0.0;
+    heap_top= HeapPtr;
+    string_base= sizeof(node_type) + sizeof(boolean); // TODO(johnicholas.hines@gmail.com): What is this trying to do?
+    node_allocation= allocation_size(node_size());
+    do_release();
+  }
+  // release_mem
+  
+  printf("*");
+  unmark_mem();
+  mark(saved_list);
+  release_mem();
+  // printf("%c", back_space); // TODO(johnicholas.hines@gmail.com): What is the goal here?
+  
+  // ClrEol ; // TODO(johnicholas.hines@gmail.com): Maybe an ansi escape sequence would be appropriate here? or curses? or nothing?
+  
+}
+// collect_garbage
+
+void test_memory()
+// This routine activates the garbage collector, if the the total available
+//   memory (free_list + heap) is less than a specified amount. Lowering the
+//   minimum causes garbage collection to be called less often, but if you
+//   make it too small you may not have enough room left for recursion or any
+//   temporary lists you need. Using 10000 is probably being overly
+//   cautious.
+{
+  // Johnicholas says: This function is probably going to have to be completely rewritten.
+  // memavail was a function that returned the amount of available free memory
+  if ((memavail() * 16.0) + total_free < 10000) 
+    collect_garbage();
+}
+// test_memory
+
+void wait()
+// Just like it says. It waits for the user to press a key before
+//   continuing.
+{
+  char ch;
+
+  printf("\n");
+  printf("\n");
+  printf("Press any key to continue. ");
+  scanf("%c", &ch);
+  printf("\n");
+
+  // ClrEol ; // TODO(johnicholas.hines@gmail.com): Maybe an ansi escape sequence would be appropriate here? or curses? or nothing?
+}
+// wait
+
+
+// ------------------------------------------------------------------------
+//      End of utility routines
+// ------------------------------------------------------------------------
+
+
+// TODO(johnicholas.hines@gmail.com): s should be pass-by-reference
+void read_kbd(string80 s)
+// Read a line from the keyboard
+{
+  pritnf("-> ");
+  readln(s);
+}
+// read_kbd
+
+// TODO(johnicholas.hines@gmail.com): f should be pass-by-reference
+void read_from_file(text_file f)
+// Read a line from file f and store it in the global variable line.
+//   It ignores blank lines and when the end of file is reached an
+//   eof_mark is returned.
+{
+
+  // TODO(johnicholas.hines@gmail.com): Almost certainly, this, and eof_mark, will need to be completely rewritten.
+  void read_a_line()
+  {
+    // $I- // TODO(johnicholas.hines@gmail.com): What does this mean?
+    // readln(f, line);
+    // $I+ // TODO(johnicholas.hines@gmail.com): What does this mean?
+    // if (ioresult != 0)
+    //   line= eof_mark;
+    // else if eof(f);
+    // line= concat(line, eof_mark);
+  }
+  // read_a_line
+  
+  line[0]= '\0';
+  if (is_console(f))
+    read_kbd(line);
+  else read_a_line();
+  if (in_comment) {
+    if (pos("*)", line) > 0) // TODO(johnicholas.hines@gmail.com): if there is a end-of-comment sequence on this line?
+      {
+	delete(line, 1, pos("*)", line) + 1);
+	in_comment= FALSE;
+      }
+  }
+  else read_from_file(f);
+  strncpy(saved_line, line, sizeof(saved_line));
+}
+// read_from_file
+
+// TODO(johnicholas.hines@gmail.com): both t_line and token should be passed by reference.
+void get_token(string132 t_line, string80 token)
+// Extract a token from t_line. Comments are ignored. A token is
+//   a string surrounded by delimiters or an end of line. Tokens may
+//   contain embedded spaces if they are surrounded by quote marks *)
+{
+
+  void get_word() {
+    boolean done;
+    int cn;
+    int len;
+    
+    cn= 1;
+    len= strlen(t_line);
+    done= FALSE;
+    while (!done) {
+      if (cn > len)
+	done= TRUE;
+      else if (in(t_line[cn], delim_set))
+	done= TRUE;
+      else cn= cn + 1;
+    }
+    token= copy(t_line, 1, cn-1);
+    delete(t_line, 1, cn-1);
+  }
+  // get_word
+  
+  void comment()
+  {
+    if (pos("*)", t_line) > 0) // Johnicholas says: does this mean "if there is an end-comment sequence on this line?"
+      {
+	delete(t_line, 1, pos("*)", t_line) + 1);
+	get_token(line, token);
+      }
+    else
+      {
+	t_line= "";
+	token= "";
+	in_comment= TRUE;
+      }
+  }
+  // comment
+  
+  void get_quote()
+  {
+    delete(t_line, 1, 1);
+    if (pos(quote_char, t_line) > 0) // Johnicholas says: does this mean "if there is a quote character on the line?"
+      {
+	token= concat(quote_char, copy(t_line, 1, pos(quote_char, t_line) - 1));
+	delete(t_line, 1, pos(quote_char, t_line));
+      }
+    else
+      {
+	token= t_line;
+	t_line= "";
+      }
+  }
+  // get_quote
+  
+  strip_leading_blanks(t_line);
+  if (strlen(t_line) > 0)
+    {
+      if (strcmp(copy(t_line, 1, 2), "(*") == 0)  // TODO(johnicholas.hines@gmail.com): What is copy? Should I be using it?
+	comment();
+      else if (strcmp(copy(t_line, 1, 2), ":-") == 0 || strcmp(copy(t_line, 1, 2), "?-") == 0)
+	{
+	  token= copy(t_line, 1, 2);
+	  delete(t_line, 1, 2);
+	}
+      else if (t_line[0] == quote_char)
+	get_quote();
+      else if (in(t_line[0], delim_set))
+	{
+	  token= t_line[0];
+	  delete(t_line, 1, 1);
+	}
+      else get_word();
+    }
+  else token= "";
+}
+// get_token
+
+// TODO(johnicholas.hines@gmail.com): both f and token should be passed by reference
+void scan(text_file f, string80 token)
+// Scan repeatedly calls get_token to retreive tokens. When the
+//   end of a line has been reached, read_from_file is called to
+//   get a new line.
+{
+  if (strlen(line) > 0)
+    {
+      get_token(line, token);
+      if (strcmp(token, "") == 0)
+	scan(f, token);
+    }
+  else
+    {
+      read_from_file(f);
+      scan(f, token);
+    }
+}
+// scan
+
+// TODO(johnicholas.hines@gmail.com): source should be passed by reference
+void compile(text_file source)
+// The recursive descent compiler. It reads tokens until the token
+//   'EXIT' is found. If the token is '?-', a query is performed, a '@' token
+//   is the command to read a new file and source statements are read form that
+//   file, otherwise the token is assumed to be part of a sentence and the rest
+//   of the sentence is parsed.
+{
+  void error(string80 error_msg)
+  // Signal an error. Prints saved_line to show where the error is located.
+  //    saved_line contains the current line being parsed. it is required,
+  //    because get_token chews up line as it reads tokens.
+  {
+    void runout()
+    {
+      while (strcmp(token, ".") != 0 && strcmp(token, eof_mark) != 0) 
+	scan(source, token);
+    }
+    // runout
+    
+    error_flag= TRUE;
+    printf("\n");
+    printf("%s", error_msg);
+    printf("\n");
+    printf("%s\n", saved_line);
+    // writeln('' : length(saved_line) - length(line) - 1,'^') ; ; // TODO(johnicholas.hines@gmail.com): What was this doing?
+    runout();
+    wait();
+  }
+  // error
+
+  // TODO(johnicholas.hines@gmail.com): l_ptr ought to be passed by reference
+  void goal(node_ptr l_ptr)
+  // Read a goal. The new goal is appended to l_ptr. Each goal is appended
+  //    to l_ptr as a list. Thus, the sentence 'likes(john,X) :- likes(X,wine) .'
+  //    becomes the list ( (likes john X) (likes X wine) ) *)
+  {
+    string80 goal_token;
+    
+    // TODO(johnicholas.hines@gmail.com): f_ptr ought to be passed by reference
+    void functor(node_ptr f_ptr, string80 func_token)
+    // The current goal is a functor. This routine allocates a node
+    //   to store the functor and then processes the components of the
+    //   functor. On exit, f_ptr points to the list containing the functor
+    //   and its components. func_token contains the functor name. *)
+    {
+      node_ptr c_ptr;
+      
+      // TODO(johnicholas.hines@gmail.com): cm_ptr ought to be passed by reference
+      void components(node_ptr cm_ptr)
+      // Process the components of the functor. The components are terms
+      //      seperated by commas. On exit, cm_ptr points to the list of
+      //      components.
+      {
+	
+	// TODO(johnicholas.hines@gmail.com): t_ptr ought to be passed by reference
+	void term(node_ptr t_ptr)
+	// Process a single term. The new term is appended to t_ptr.
+	{
+	  string80 t_token;
+	  
+	  // TODO(johnicholas.hines@gmail.com): q_ptr ought to be passed by reference
+	  void quoted_str(node_ptr q_ptr)
+	  // Process a quote
+	  {
+	    q_ptr= append_list(q_ptr, cons(alloc_str(CONSTANT,
+						     copy(token, 2, length(token) - 1)),
+					   NULL));
+	    scan(source, token);
+	  }
+	  // quoted_str
+	  
+	  void varbl(node_ptr v_ptr)
+	  // The current token is a varaible, allocate a node and return
+	  //        a pointer to it.
+	  {
+	    v_ptr= append_list(v_ptr, cons(alloc_str(VARIABLE, token), NULL));
+	    scan(source, token);
+	  }
+	  // varbl
+	  
+	  // TODO(johnicholas.hines@gmail.com): n_ptr ought to be passed by reference
+	  void number(node_ptr n_ptr)
+	  // Numbers are treated as string constants. This isn't particularly
+	  //        efficent, but it is easy.
+	  {
+	    n_ptr= append_list(n_ptr, cons(alloc_str(CONSTANT, token), NULL));
+	    scan(source, token);
+	  }
+	  // handle_number
+	  
+	  if (isupper(token[0]) || token[0] == '_')
+	    varbl(t_ptr);
+	  else if (token[0] == quote_char)
+	    quoted_str(t_ptr);
+	  else if (is_number(token))
+	    number(t_ptr);
+	  else if (isalpha(token[0]))
+	    {
+	      strncpy(t_token, token, sizeof(t_token));
+	      scan(source, token);
+	      if (strcmp(token, "(") == 0)
+		functor(t_ptr, t_token);
+	      else 
+		t_ptr= append_list(t_ptr,
+				   cons(alloc_str(CONSTANT, t_token), NULL));
+	    }
+	  else error("Illegal Symbol.");
+	}
+	// term
+	
+	term(cm_ptr);
+	if (strcmp(token, ",") == 0)
+	  {
+	    scan(source, token);
+	    components(cm_ptr);
+	  }
+      }
+      // components
+      
+      c_ptr= cons(alloc_str(FUNC, func_token), NULL);
+      scan(source, token);
+      components(c_ptr);
+      if (strcmp(token, ")") == 0)
+	{
+	  f_ptr= append_list(f_ptr, cons(c_ptr, NULL));
+	  scan(source, token);
+	}
+      else error("Missing ')'.");
+    }
+    // functor
+    
+    if (in(token[0], "[a-z]'")) // TODO(johnicholas.hines@gmail.com): Was token[1] In ['a' .. 'z',quote_char]
+      {
+	if (token[0] == quote_char)
+	  {
+	    l_ptr= append_list(l_ptr,
+			       cons(cons(alloc_str(CONSTANT,
+						   copy(token, 2, length(token) - 1)), NULL), NULL));
+	    scan(source, token);
+	  }
+	else
+	  {
+	    strncpy(goal_token, token, sizeof(goal_token));
+	    scan(source, token);
+	    if (strcmp(token, "(") == 0) {
+	      functor(l_ptr, goal_token);
+	    } else 
+	      l_ptr= append_list(l_ptr,
+				 cons(cons(alloc_str(CONSTANT, goal_token),
+					   NULL), NULL));
+	  }
+      }
+    else error("A goal must begin with 'a .. z' or be a quoted string.");
+  }
+  // goal
+  
+  // TODO(johnicholas.hines@gmail.com): t_ptr should be passed by reference
+  void tail_list(node_ptr t_ptr)
+  // Process the tail of a rule. Since the a query is syntactically identical
+  //    to the tail of a rule, this routine is used to compile queries.
+  //    On exit, t_ptr points to the list containing the tail.
+  {
+    goal(t_ptr);
+    if (strcmp(token, ",") == 0)
+      {
+	scan(source, token);
+	tail_list(t_ptr);
+      }
+  }
+  // tail
+  
+  void rule()
+  // Procees a rule, actually any sentence. If no error occurs the
+  //    new sentence is appended to the data base.
+  {
+    node_ptr r_ptr;
+    
+    // TODO(johnicholas.hines@gmail.com): h_ptr should be passed by reference
+    void head_list(node_ptr h_ptr)
+    {
+      goal(h_ptr);
+    }
+    // head
+    
+    saved_list= cons(data_base, NULL);
+    test_memory();
+    r_ptr= NULL;
+    head_list(r_ptr);
+    if (strcmp(token, ":-") == 0)
+      {
+	scan(source, token);
+	tail_list(r_ptr);
+      }
+    if (strcmp(token, ".") != 0)
+      error("'.' expected.");
+    if (!error_flag)
+      data_base= append_list(data_base, cons(r_ptr, NULL));
+  }
+  // rule
+  
+  void query()
+  // Process a query. Compile the query, and then call solve to search the
+  //    data base. q_ptr points to the compiled query and solved is a boolean
+  //    indicating whether the query was successfully solved.
+  {
+    node_ptr q_ptr;
+    boolean solved;
+    
+    void solve(node_ptr list, node_ptr env, counter level)
+    //   This is where all the hard work is done. This routine follows the
+    //     steps outlined in the article. list is the query to be soved, env is
+    //     the current environment and level is the recursion level. level can
+    //     only get to 32767, but you'll run out of stack space long before you
+    //     get that far.
+    //     solve saves list and env on the saved list so that they won't be
+    //     destroyed by garbage collection. The data base is always on the
+    //     saved list. At the end of solve, list and env are removed from
+    //     saved_list.
+    {
+      node_ptr new_env;
+      node_ptr p;
+      
+      node_ptr look_up(string80 var_str, node_ptr environ)
+      // Search the environment list pointed to by environ for the variable,
+      //      var_str. If found return a pointer to var_str's binding, otherwise
+      //      return NIL
+      {
+	boolean found;
+	node_ptr p;
+	
+	p= environ;
+	found= FALSE;
+	while (p != NULL && ! found)
+	  {
+	    if (strcmp(var_str, string_val(head(head(p)))) == 0) {
+	      {
+		found= TRUE;
+		return tail(head(p));
+	      }
+	    } else p= tail(p);
+	  }
+	if (!found)
+	  return NULL;
+      }
+      // look_up
+      
+      void check_continue()
+      // Print the bindings and see if the user is satisfied. If nothing
+      //      is printed from the environment, then print 'Yes' to indicate
+      //      that the query was successfully satisfied. *)
+      {
+	boolean printed;
+	char ch;
+	
+	void print_bindings(node_ptr list)
+	// Print the bindings for level 0 variables only, intermediate variables
+	//     aren't of interest. The routine recursivley searches for the
+	//     end of the environments list and then prints the binding. This
+	//     is so that variables bound first are printed first. *)
+	{
+	  // forward declaration
+	  // void print_functor(node_ptr l);
+	  
+	  void print_variable(string80 var_str)
+	  // The varaible in question was bound to another varaible, so look
+	  //        up that variable's binding and print it. If a match can't be found
+	  //        print '_' to tell the user that the variable is anonymous.
+	  {
+	    node_ptr var_ptr;
+	    
+	    var_ptr= look_up(var_str, env);
+	    if (var_ptr != NULL)
+	      {
+		switch (tag_value(head(var_ptr))) {
+		case CONSTANT: printf("%s ", string_val(head(var_ptr))); break;
+		case VARIABLE: print_variable(string_val(head(var_ptr))); break;
+		case CONS_NODE: print_functor(head(var_ptr)); break;
+		}
+	      }
+	    else printf("_ ");
+	  }
+	  // print_variable
+	  
+	  void print_functor(node_ptr l)
+	  // The variable was bound to a functor. Print the functor and its
+	  // components.
+	  {
+	    
+	    void print_components(node_ptr p)
+	    // Print the components of a functor. These may be variables or
+	    // other functors, so call the approriate routines to print them.
+	    {
+	      if (p != NULL)
+		{
+		  switch (tag_value(head(p))) {
+		  case CONSTANT: printf("%s ", string_val(head(p))); break;
+		  case VARIABLE: print_variable(string_val(head(p))); break;
+		  case CONS_NODE: print_functor(head(p)); break;
+		  }
+		  if (tail(p) != NULL) 
+		    {
+		      printf(",");
+		      print_components(tail(p));
+		    }
+		}
+	    }
+	    // print_components
+	    
+	    if (l != NULL)
+	      {
+		printf("%s", string_val(head(l)));
+		if (tail(l) != NULL) {
+		  {
+		    printf("(");
+		    print_components(tail(l));
+		    printf(")");
+		  }
+		}
+	      }
+	  }
+	  // print_functor
+	  
+	  if (list != NULL)
+	    {
+	      print_bindings(tail(list));
+	      if (pos('#', string_val(head(head(list)))) == 0)
+		{
+		  printed= TRUE;
+		  printf("\n");
+		  printf("%s = ", string_val(head(head(list))));
+		  switch (tag_value(head(tail(head(list))))) {
+		  case CONSTANT: printf("%s ", string_val(head(tail(head(list))))); break;
+		  case VARIABLE: print_variable(string_val(head(tail(head(list))))); break;
+		  case CONS_NODE: print_functor(head(tail(head(list)))); break;
+		  }
+		}
+	    }
+	}
+	// print_bindings
+	
+	printed= FALSE;
+	print_bindings(env);
+	if (!printed)
+	  {
+	    printf("\n");
+	    printf("Yes ");
+	  }
+	do {
+	  read(stdin, ch);
+	} while (!in(ch, "\n;")); // TODO(johnicholas.hines@gmail.com): Write a new function, 'in'? or is there a C version?
+	solved= (ch == '\n');
+	printf("\n");
+      }
+      // check_continue
+      
+      node_ptr copy_list(node_ptr list, counter copy_level)
+      // Copy a list and append the copy_level (recursion level) to all
+      // variables.
+      {
+	node_ptr temp_list, p;
+	const char level_str[6];
+	
+	// TODO(johnicholas.hines@gmail.com): to_list should be passed by reference, I think
+	void list_copy(node_ptr from_list, node_ptr to_list)
+	{
+	  if (from_list != NULL) 
+	    {
+	      switch (from_list->tag) {
+	      case VARIABLE:
+		to_list= alloc_str(VARIABLE, concat(from_list->u.constant.string_data, level_str));
+		break;
+	      case FUNC: // fall through
+	      case CONSTANT:
+		to_list= from_list;
+		break;
+	      case CONS_NODE:
+		list_copy(tail(from_list), to_list);
+		to_list= cons(copy_list(head(from_list), copy_level), to_list);
+		break;
+	      }
+	    }
+	}
+	// list_copy
+	
+	str(copy_level, level_str);
+	strncpy(level_str, concat("#", level_str), sizeof(level_str));
+	temp_list= NULL;
+	list_copy(list, temp_list);
+	return temp_list;
+      }
+      // copy_list
+      
+      // TODO(johnicholas.hines@gmail.com): new_environ should be passed by reference, I think.
+      boolean unify(node_ptr list1, node_ptr list2, node_ptr environ, node_ptr new_environ)
+      // Unify two lists and return any new bindings at the front of the
+      //      environment list. Returns true if the lists could be unified. This
+      //      routine implements the unification table described in the article.
+      //      Unification is straight forward, but the details of matching the
+      //      lists get a little messy in this routine. There are better ways to
+      //      do all of this, we just haven't gotten around to trying them. If
+      //      you implement any other unification methods, we would be glad to
+      //      hear about it.
+      //      Unify checks to see if both lists are NIL, this is a successful
+      //      unification. If one list is NIL, unification fails. Otherwise check
+      //      what kind on node the head of list1 is and call the appropriate
+      //      routine to perform the unification. Variables are unified by
+      //      looking up the binding of the variable. If none is found, make
+      //      a binding for the variable, otherwise try to unify the binding
+      //      with list2.
+      {
+	node_ptr var_ptr;
+	boolean unify_return_value;
+	
+	void make_binding(node_ptr l1, node_ptr l2)
+	// Bind a variable to the environment. Anonymous variables are not bound.
+	//       l1 points to the variable and l2 points to its binding.
+	{
+	  if (strcmp(copy(string_val(head(l1)), 1, 1), "_") != 0) {
+	    new_environ= cons(cons(head(l1), l2), environ);
+	  } else
+	    new_environ= environ;
+	  return TRUE;
+	}
+	// make_binding
+	
+	void fail()
+	// Unification failed.
+	{
+	  unify_return_value= FALSE;
+	  new_environ= environ;
+	}
+	// fail
+	
+	void unify_constant()
+	// List1 contains a constant. Try to unify it with list2. The 4 cases
+	//       are:
+	//        list2 contains
+	//         constant - unify if constants match
+	//         variable - look up binding, if no current binding bind the
+	//                    constant to the variable, otherwise unify list1
+	//                    with the binding.
+	//         cons_node,
+	//         func     - these can't be unified with a constant. A cons_node
+	//                    indicates an expression.
+	{
+	  switch (tag_value(head(list2))) {
+	  case CONSTANT:
+	    if (strcmp(string_val(head(list1)), string_val(head(list2))) == 0) {
+	      unify_return_value= TRUE;
+	      new_environ= environ;
+	    } else fail();
+	    break;
+	  case VARIABLE:
+	    var_ptr= look_up(string_val(head(list2)), environ);
+	    if (var_ptr == NULL) {
+	      make_binding(list2, list1);
+	    } else {
+	      unify_return_value= unify(list1, var_ptr, environ, new_environ);
+	    }
+	    break;
+	  case CONS_NODE: // fall through
+	  case FUNC: fail(); break;
+	  }
+	}
+	// unify_constant
+	
+	void unify_func()
+	// List1 contains a functor. Try to unify it with list2. The 4 cases
+	//       are:
+	//        list2 contains
+	//         constant  - can't be unified.
+	//         variable  - look up binding, if no current binding bind the
+	//                     functor to the variable, otherwise unify list1
+	//                     with the binding.
+	//         cons_node - fail
+	//         func      - if the functors match, then true to unify the component
+	//                     lists (tail of the list) term by term.
+	{
+	  
+	  void unify_tail()
+	  // This routine does the term by term unification of the component
+	  //   lists
+	  {
+	    node_ptr p;
+	    node_ptr q;
+	    boolean unified;
+	    
+	    p= tail(list1);
+	    q= tail(list2);
+	    unified= TRUE;
+	    new_environ= environ;
+	    while (p != NULL && unified)
+	      {
+		unified= unified && unify(cons(head(p), NULL), cons(head(q), NULL), new_environ, new_environ);
+		p= tail(p);
+		q= tail(q);
+	      }
+	    if (!unified)
+	      fail();
+	  }
+	  // unify_tail
+	  
+	  switch (tag_value(head(list2))) {
+	  case CONSTANT: fail(); break;
+	  case VARIABLE: 
+	    var_ptr= look_up(string_val(head(list2)), environ);
+	    if (var_ptr == NULL) {
+	      make_binding(list2, list1);
+	    } else
+	      return unify(list1, var_ptr, environ, new_environ);
+	    break;
+	  case FUNC:
+	    if (strcmp(string_val(head(list1)), string_val(head(list2))) == 0) {
+	      if (list_length(tail(list1)) == list_length(tail(list2))) {
+		unify_tail();
+	      } else fail();
+	    } else fail();
+	    break;
+	  case CONS_NODE: fail(); break;
+	  }
+	}
+	// unify_func
+	
+	void unify_expr()
+	// List1 contains an expression. Try to unify it with list2. The 4 cases
+	//       are:
+	//        list2 contains
+	//         constant  - can't be unified.
+	//         variable  - look up binding, if no current binding bind the
+	//                     functor to the variable, otherwise unify list1
+	//                     with the binding.
+	//         cons_node - If the heads can be unified, the unify the tails.
+	//         func      - fail
+	{
+	  switch (tag_value(head(list2))) {
+	  case CONSTANT: fail(); break;
+	  case VARIABLE: 
+	    var_ptr= look_up(string_val(head(list2)), environ);
+	    if (var_ptr == NULL) {
+	      make_binding(list2, list1);
+	    } else
+	      return unify(list1, var_ptr, environ, new_environ);
+	    break;
+	  case FUNC: fail(); break;
+	  case CONS_NODE: 
+	    if (unify(head(list1), head(list2), environ, new_environ)) {
+	      return unify(tail(list1), tail(list2), new_environ, new_environ);
+	    } else fail();
+	    break;
+	  }
+	}
+	// unify_expr
+	
+	if (list1 == NULL && list2 == NULL) {
+	  unify_return_value= TRUE;
+	  new_environ= environ;
+	} else if (list1 == NULL) {
+	  fail();
+	} else if (list2 == NULL) {
+	  fail();
+	} else {
+	  switch (tag_value(head(list1))) {
+	  case CONSTANT: unify_constant(); break;
+	  case VARIABLE:
+	    var_ptr= look_up(string_val(head(list1)), environ);
+	    if (var_ptr == NULL) {
+	      make_binding(list1, list2);
+	    } else
+	      return unify(var_ptr, list2, environ, new_environ);
+	    break;
+	  case FUNC: unify_func(); break;
+	  case CONS_NODE: unify_expr(); break;
+	  }
+	}
+	return unify_return_value;
+      }
+      // unify
+      
+      saved_list= cons(list, cons(env, saved_list));
+      if (list == NULL) {
+	check_continue();
+      } else {
+	p= data_base;
+	while (p != NULL && !solved) {
+	  test_memory();
+	  if (unify(copy_list(head(head(p)), level), head(list), env, new_env)) {
+	    solve(append_list(copy_list(tail(head(p)), level), tail(list)), new_env, level + 1);
+	    p= tail(p);
+	  }
+	}
+	saved_list= tail(tail(saved_list));
+      }
+    }
+    // solve
+    
+    q_ptr= NULL;
+    tail_list(q_ptr);
+    if (strcmp(token, ".") != 0) {
+      error("'.' expected.");
+    } else if (!error_flag) {
+      solved= FALSE;
+      saved_list= cons(data_base, NULL);
+      solve(q_ptr, NULL, 0);
+      if (!solved) {
+	printf("No\n");
+      }
+    }
+  }
+  // query
+  
+  void read_new_file()
+  // Read source statements from a new file. When all done, close file
+  //    and continue reading from the old file. Files may be nested, but you
+  //    will run into trouble if you nest them deaper than 15 levels. This
+  //    is Turbo's default for open files. 
+  {
+    text_file new_file;
+    string132 old_line, old_save;
+    string80 f_name;
+    
+    if (token[0] == quote_char) {
+      delete(token, 1, 1); // Does this mean "delete one character from the front of token"?
+    }
+    if (pos('.', token) == 0) { // Does this mean "if there are no occurrences of period character within token"?
+      strncpy(f_name, concat(token, ".pl"), sizeof(f_name)); // was .PRO, but I think .pl is more common for prolog source
+    } else {
+      strncpy(f_name, token, sizeof(f_name));
+    }
+    if (vtprolog_open(new_file, f_name)) {
+      strncpy(old_line, line, sizeof(old_line));
+      strncpy(old_save, saved_line, sizeof(old_save));
+      line[0]= '\0';
+      compile(new_file);
+      close(new_file);
+      strncpy(line, old_line, sizeof(line));
+      strncpy(saved_line, old_save, sizeof(saved_line));
+      scan(source, token);
+      if (strcmp(token, ".") != 0) {
+	error("'.' expected.");
+      }
+    } else {
+      error(concat("Unable to open ", f_name));
+    }
+  }
+  // read_new_file
+    
+  void do_exit() 
+  // Exit the program. This really should be a built-in function and handled
+  //   in solve, but this does the trick.
+  {
+    scan(source,token);
+    if (strcmp(token, ".") != 0) {
+      error("'.' expected.");
+    } else {
+      halt();
+    }
+  }
+  // do_exit
+  
+  scan(source, token);
+  while (token != eof_mark) {
+    error_flag= FALSE;
+    if (strcmp(token, "?-") == 0) {
+      scan(source, token);
+      query();
+    } else if (strcmp(token, "@") == 0) {
+      scan(source, token);
+      read_new_file();
+    } else {
+      toupper(token);
+      if (strcmp(token, "EXIT") == 0) {
+	do_exit(); 
+      } else {
+	rule();
+      }
+    }
+    scan(source,token);
+  }
+}
+// compile
+
 void initialize() 
-  // Write a heading line and initialize the global variables
+// Write a heading line and initialize the global variables
 {
   // clrscr();
   printf("\n");
   printf("Very Tiny Prolog - Version 1.0     [c] 1986 MicroExpert Systems\n");
   printf("\n");
-  in_comment= false;
-
+  in_comment= FALSE;
+  
   // delim_set := [' ',')','(',',','[',']',eof_mark,tab,quote_char,':',
   // '@','.','?'] ;
   // text_chars := [' ' .. '~'] ;
-
-  line= "";
+  
+  line[0]= '\0';
   data_base= NULL;
-  free= NULL;
+  vtprolog_free= NULL;
   saved_list= NULL;
   total_free= 0.0;
-  initial_heap= HeapPtr; // TODO(johnicholas.hines@gmail.com): hrr?
+  initial_heap= HeapPtr;
 }
 // initialize
 
-
-*/
-
 int main() {
-  // initialize(); // TODO(johnicholas.hines@gmail.com): implement this
-  // compile(stdin); // TODO(johnicholas.hines@gmail.com): implement this
+  initialize();
+  compile(stdin);
   return 0;
 }
 
