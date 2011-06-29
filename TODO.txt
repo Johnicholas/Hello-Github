@@ -194,6 +194,9 @@ Soar
 * Rete/UL
 ** Doorenbos
 ** Expergent (code.google.com/p/expergent)
+** pychinko
+** cwm
+** cwmclone
 Andrew Appel
 * Rogomatic
 * Compiling with Continuations
