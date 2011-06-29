@@ -256,4 +256,5 @@ cellular automata
 * ferociously partially-evaluating a rule and a pattern, to the point where a register machine implemented in wireworld becomes something like C code manipulating registers
 automatic differentiation
 the mysteryfcm treasure trove:chris.mysteryfcm.co.uk/?f=
+Phong Vo's cdt library (www.research.att.com/software_tools)
 
