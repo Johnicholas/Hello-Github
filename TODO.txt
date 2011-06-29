@@ -6,8 +6,21 @@ Benjamin Pierce
 * Pict
 * Unison and lens combinators
 * TAPL
-cairo
-Curry-Howard isomorphism
+Bjorn Freeman-Benson
+* DeltaBlue
+** Cassowary
+* CoolDraw
+** HotDraw
+*** Ward Cunningham and Kent Beck
+cairo (cairographics.org)
+cmaes, the covariance matrix adaptation evolution strategy (www.lri.fr/~hansen/cmaesintro.html)
+* Nikolaus Hansen
+Curry-Howard Isomorphism
+Datalog
+* bddbddb
+** buddy, minibdd, other bdd libraries
+* John Ramsdell's datalog-in-lua
+** John Ramsdell's programmer's minesweeper
 David Cope
 * Emmy / EMI / Emily Howell
 Diomidis Spinellis
@@ -19,9 +32,9 @@ Doug McIlroy
 * Engineering a sort function
 * McIlroy-Hunt diff
 * Suffix Array
-DrPetter
+DrPetter (www.drpetter.se)
 * sfxr
-* musagi
+* musagi (project_musagi.html)
 esterel / cec-0.4
 Farbrausch
 * kkrunchy
@@ -36,12 +49,16 @@ John Tromp
 * ioccc maze
 * ioccc tetris
 * the lazy-k language
+Ken Kahn
+* Prolog-in-maclisp
+* ToonTalk
 Lennart Augustsson
 * LPC
 * IOCCC
 * NetBSD
 * Djinn and lots of other Haskell things
 love
+Lua Missions
 Marc Stiegler
 * David's Sling
 * Earthweb
@@ -50,16 +67,22 @@ Mark S Miller
 * E language
 * Agorics
 * Caja
+Maxwell Krohn
+* tame
+* tamer
+** Eddie Kohler
+* okcupid
+** Chris Coyne
+*** Context Free Art (www.contextfreeart.org)
 Michael Feathers
 * CppUnitLite
 nesC
-ncurses
+ncurses (ftp://invisible-island.net/ncurses)
 * Thomas Dickey
 Peter Clark
 * TaleSpin
-Tim Budd
-* LittleSmalltalk
 * CN2
+Python Koans
 Richard Hipp
 * SQLite
 * mkheaders
@@ -67,6 +90,14 @@ Richard Hipp
 * lemon
 Robin Hanson
 * market scoring rule
+Ruby Koans
+Sequitur
+* Abbadingo
+* Gowachin
+* Omphalos
+Squeak: A language for communicating with mice
+* Luca Cardelli
+* Rob Pike
 Steve Freeman
 Steven Ganz
 * trampoline interpreter
@@ -74,39 +105,36 @@ Steven Skiena
 * Programming Challenges
 * Algorithm Design Manual
 * Calculated Bets
+Tim Budd
+* LittleSmalltalk
+* CN2
 Torben Mogensen
 * Nicolas Devillard and the fast median search
 * Basics of Compiler Design
 Van Noord
 * FSATools (http://www.let.rug.nl/~vannoord/Fsa/)
+VeryTinyProlog
+* Bill and Bev Thompson
 
 People and projects to search for on Github:
-tame/tamer and those okcupid guys
-the CMAes optimization evolutionary strategy
-VeryTinyProlog
-Ken Kahn
-* Prolog-in-maclisp
-* ToonTalk
-HotDraw / CoolDraw
-ed
-Cardelli and Pike's Squeak: A language for communicating with mice.
-DeltaBlue
-Cassowary
-Python Koans
-Ruby Koans
-Lua Missions
-Sequitur
-Datalog (one implementation using bdds, another using lua)
-buddy, bddbddb, other bdd libraries
-minisat
+minisat (minisat.se)
+* Niklas Een
+* Niklas Sorensen
 lua
+* Roberto Ierusalimschy
+* Luiz H. de Figueiredo
+* Waldemar Celes
+* iup
+** luajit
+*** Mike Pall
 supermemo
+* Piotr Wozniak
 busybox
 quines (biquines? multiquines)
 literate programming
 batchelder's cog
 Ken Forbus
-Peter Norvig
+Peter Norvig (code.google.com/p/aima-python)
 Dave Hanson
 Todd Proebsting
 rpcgen
@@ -139,7 +167,6 @@ Fabrice Bellard
 * qemu and jslinux
 icfp
 John Ousterhout (tcl/tk)
-lua (roberto and iup and mike pall's luajit)
 bond graphs
 petri nets
 ludum dare
@@ -151,6 +178,7 @@ Kragen Sitaker
 Kevin Reid
 googlemock
 Simon Tatham
+* puzzle collection apis
 The J incunabulum
 Russ Cox
 * plan9/thread/task/coroutine libraries, go lang stuff
@@ -160,6 +188,12 @@ Soar
 * Bob Mariner
 * Joseph Wu
 * Miller Tinkerhess
+* Nate Derbinsky
+* Randy Jones
+* Shiwali Mohan
+* Rete/UL
+** Doorenbos
+** Expergent (code.google.com/p/expergent)
 Andrew Appel
 * Rogomatic
 * Compiling with Continuations
@@ -184,14 +218,14 @@ Norman Ramsey
 * noweb
 Peter Schickele
 Raymond Smullyan
-Edmund Grimley-Evans
+Edmund Grimley-Evans (homepage.ntlworld.com/edmund.grimley-evans)
 * bcompiler
 * cc500
 Greaser's Autotracker-C
 Turchin supercompilation project
 * Sergei Romanenko?
 Mike Thyer's lazy specialization
-partial evaluation
+partial evaluation (www.dina.kvl.dk/~sestoft/pebook)
 * c-mix
 ** Lars Ole Anderson
 * similix
@@ -200,3 +234,16 @@ partial evaluation
 ** Armin Rigo? cfbolz? tav? 
 Project Euler
 Rosetta Code
+jsprolog
+Tim Tyler's matching pennies contest
+Frank Buss's (and Dr. Dobbs) Mars Rescue programming contest (frank-buss.de/marsrescue)
+automatically describing images for human consumption
+* compressing images relative to that description?
+* brute force?
+* partial evaluate a renderer, and read the output code instead of running it?
+general game playing
+* code.google.com/p/ggp-base
+* code.google.com/p/ggp-galaxy
+rl-glue
+Ken Thompson's regular expression search algorithm
+

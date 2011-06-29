@@ -1,0 +1,98 @@
+                      VT-PROLOG - Very Tiny Prolog
+
+
+VT-PROLOG  is a simple prolog interpreter provided with full source  code 
+to encourage experimentation with PROLOG.
+
+Startup
+1. Boot the system.
+2. Insert the disk containing VTPROLOG.COM in Drive A:
+3. If the DOS prompt is not A>, type A: and press the ENTER key to switch 
+   to drive A:.
+4. Type VTPROLOG and press RETURN. VTPROLOGshould respond withits heading 
+   and a '-> ' prompt.
+
+Loading a data base
+1. You may enter rules and queries directlty from the keyboard. The        
+   syntax of both queries and rules is described below. Be sure to 
+   terminate all queries, rules and commands with a period.
+2. Data bases may be stored as ASCII text files. To read a text file type 
+   the command:
+         @ filename .
+   where filename is a legitimate DOS filename, the default extension is 
+   'PRO'. If the filename contains a ':', '.' or a '\' then it must be 
+   enclosed in single quotes. For example, the following are legitmate 
+   file commands:
+         @ wine .
+         @ 'b:wine.pro' .
+         @ 'c:\prolog\test\wine' .
+3. VTPROLOG will read and compile the text file. Any queries included in 
+   the file will be executed just as if they had been typed from the 
+   keyboard.
+4. Data base files may contain commands to read to other data base files.
+
+Terminating VTPROLOG
+1. To exit VTPROLOG, type :
+          exit .
+   at the '-> ' prompt. Don't forget the period.
+
+VTPROLOG Grammar
+   The following BNF describes the syntax of VTPROLOG rules and queries:
+
+     sentence ::- rule | query | command
+     rule ::- head '.' | head ':-' tail '.'
+     query ::- '?-' tail '.'
+     command ::- '@' file_name '.'
+     head ::- goal
+     tail ::- goal | goal ',' tail
+     goal ::- constant | variable | structure
+     constant ::- {quoted string} | {token beginning with 'a' .. 'z'}
+     variable ::- {identifier beginning with 'A' .. 'Z' or '_' }
+     structure ::- functor '(' component_list ')'
+     functor ::- {token beginning with 'a' .. 'z'}
+     component_list ::- goal | goal ',' components_list
+     file_name ::- {legitimate DOS file name, must be surrounded with
+                    single quotes if it contains a '.',':' or '\'}
+
+   Examples of legitimate data base statements are:
+
+       likes(john,X) :- likes(X,wine) , female(X) .
+       likes(joan,wine) .
+       likes(alice,candy) .
+       male(john) .
+       female(alice) .
+       female(joan) .
+
+   An example of a legitimate query for this data base would be:
+
+       ?- likes(john,Who) .
+
+   VTPROLOG should respond:
+      
+       Who = joan
+
+   At this point you may type ';' to continue to search for other 
+   solutions to the query, or press the 'Enter' key to terminate the 
+   query. If VTPROLOG cannot find a solution to a query it responds 'No'
+   to indicate that no solution exits to the query at this point.
+
+   Constant,  variable  or  functor names may be up to 80  characters  in 
+   length.   Constants  beginning  with  capital  letters  or  containing 
+   imbedded blanks, commas, paraenthesis or periods must be surrounded by 
+   single quote marks.
+
+   From time to time you may see a '*' displayed on the screen as a query 
+   is being evaluated. This means that garbage collection is in progress. 
+   The '*' will be erased when collection is completed.
+
+   Good  luck  with VTPROLOG.  We would be very interested in hearing  of 
+   your experiments,  enhancements or even (gasp) bugs that you may find. 
+   Please write to us with your comments or questions.
+
+          Bill and Bev Thompson
+          C/O AI Expert Magazine
+          650 5th St.
+          Suite 311
+          San Francisco, CA 94107
+
+
