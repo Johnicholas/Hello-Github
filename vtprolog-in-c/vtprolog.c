@@ -1528,9 +1528,10 @@ void initialize()
 }
 // initialize
 
+#ifndef BUILD_AS_LIBRARY
 int main() {
   initialize();
   compile(stdin);
   return 0;
 }
-
+#endif // BUILD_AS_LIBRARY
