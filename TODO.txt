@@ -237,7 +237,7 @@ partial evaluation (www.dina.kvl.dk/~sestoft/pebook)
 ** Armin Rigo? cfbolz? tav? 
 Project Euler
 Rosetta Code
-jsprolog
+jsprolog at ioctl.org
 Tim Tyler's matching pennies contest
 Frank Buss's (and Dr. Dobbs) Mars Rescue programming contest (frank-buss.de/marsrescue)
 automatically describing images for human consumption
@@ -250,4 +250,8 @@ general game playing
 rl-glue
 Ken Thompson's regular expression search algorithm
 ROSE / librose, a source-to-source transformation project/tool/library
-
+cellular automata
+* searching for useful components, gliders and reactions and wires and gates.
+* abstract circuits / machines that can be ported from one rule to another easily
+* ferociously partially-evaluating a rule and a pattern, to the point where a register machine implemented in wireworld becomes something like C code manipulating registers
+automatic differentiation
