@@ -236,16 +236,6 @@ node_ptr tail(node_ptr list)
 }
 // tail
 
-counter allocation_size(counter x)
-  // Turbo 3.0 allocates memory in 8 byte blocks, this routine calculates the
-  // actual number of bytes returned for a request of x bytes.
-  // TODO(johnicholas.hines@gmail.com): this is probably completely irrelevant
-{
-  return (((x - 1) / 8) + 1) * 8;
-}
-// allocation_size
-
-
 // TODO(johnicholas.hines@gmail.com): Remove this, it's probably completely irrelevant.
 counter node_size()
 // calculates the base size of a node. Add the rest of the node to this
@@ -331,7 +321,7 @@ void print_list(node_ptr list)
 
 // TODO(johnicholas.hines@gmail.com): p should be pass-by-reference
 void get_memory(node_ptr p, counter size)
-// On exit p contains a pointer to a block of allocation_size(size) bytes.
+// On exit p contains a pointer to a block of size bytes.
 //   If possible this routine tries to get memory from the free list before
 //   requesting it from the heap
 {
@@ -383,8 +373,7 @@ node_ptr alloc_str(node_type typ, string80 s)
 {
   node_ptr pt;
 
-  get_memory(pt, allocation_size(sizeof(node_type) + sizeof(boolean) + // TODO(johnicholas.hines@gmail.com): Duplication?
-				 sizeof(s) + 1));
+  get_memory(pt, sizeof(node_type) + sizeof(boolean) + sizeof(s) + 1); // TODO(johnicholas.hines@gmail.com): duplicate?
   pt->tag= typ;
   strncpy(pt->u.constant.string_data, s, 80); // TODO(johnicholas.hines@gmail.com): I think this requires that the string data is stored at the same spot in all the nodes that have string data
   // TODO(johnicholas.hines@gmail.com): This 80 magic number is no good, and strncpy isn't a great way to deal with strings anyway
@@ -405,7 +394,7 @@ node_ptr cons(node_ptr new_node, node_ptr list)
 {
   node_ptr p;
 
-  get_memory(p, allocation_size(node_size()));
+  get_memory(p, node_size());
   p->tag= CONS_NODE;
   p->u.cons_node.head_ptr= new_node;
   p->u.cons_node.tail_ptr= list;
@@ -494,7 +483,7 @@ void collect_garbage()
     
     string_base= sizeof(node_type) + sizeof(boolean); // Johnicholas says: I think I've seen this somewhere - duplication?
     p= normalize(initial_heap);
-    node_allocation= allocation_size(node_size());
+    node_allocation= node_size();
     
     while (lower(p, HeapPtr))
       {
@@ -511,7 +500,7 @@ void collect_garbage()
 	case FUNC: // fall through
 	case CONSTANT: // fall through
 	case VARIABLE:
-	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + allocation_size(string_base + length(p->string_data) + 1)))); // SEGMENTED MEMORY MANAGEMENT
+	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + string_base + length(p->string_data) + 1))); // SEGMENTED MEMORY MANAGEMENT
 	  p= normalize(p);
 	  break;
 	}
@@ -580,7 +569,7 @@ void collect_garbage()
 	case FUNC: // fall through
 	case CONSTANT: // fall through
 	case VARIABLE: 
-	  string_allocation= allocation_size(string_base + sizeof(p->u.constant.string_data) + 1);
+	  string_allocation= string_base + sizeof(p->u.constant.string_data) + 1;
 	  if (! p->in_use)
 	    free_memory(p, string_base + sizeof(p->u.constant.string_data) + 1);
 	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + string_allocation))); // SEGMENTED MEMORY MANAGEMENT
@@ -595,7 +584,7 @@ void collect_garbage()
     total_free= 0.0;
     heap_top= HeapPtr;
     string_base= sizeof(node_type) + sizeof(boolean); // TODO(johnicholas.hines@gmail.com): What is this trying to do?
-    node_allocation= allocation_size(node_size());
+    node_allocation= node_size();
     do_release();
   }
   // release_mem
