@@ -186,16 +186,14 @@ void strip_leading_blanks(char** s)
 }
 // strip_leading_blanks
 
-void vtprolog_toupper(string80 s)
+void vtprolog_toupper(char* s)
 // converts s to upper case
 {
   int i;
-  if (strlen(s) > 0) 
-    {
-      for (i= 0; i < strlen(s); ++i) {
-	s[i]= toupper(s[i]);
-      }
-    }
+
+  for (i= 0; s[i] != 0; ++i) {
+    s[i]= toupper(s[i]);
+  }
 }
 // vtprolog_toupper
 

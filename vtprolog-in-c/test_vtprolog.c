@@ -94,6 +94,14 @@ void test_strip_none() {
   free(to_strip);
 }
 
+void test_uppercase_hello() {
+  char* to_uppercase= malloc(80);
+  strcpy(to_uppercase, "Hello World");
+  vtprolog_toupper(to_uppercase);
+  assert(strcmp(to_uppercase, "HELLO WORLD") == 0);
+  free(to_uppercase);
+}
+
 int main() {
   test_vtprolog_open();
   test_stdin_is_a_console();
@@ -101,6 +109,7 @@ int main() {
   test_strip_one_blank();
   test_strip_several_spaces_and_tabs();
   test_strip_none();
+  test_uppercase_hello();
   printf("Hello world!\n");
   return 0;
 }
