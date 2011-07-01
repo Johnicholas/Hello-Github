@@ -1,5 +1,6 @@
+#include <assert.h>
 #include <ctype.h> // for isalpha
-#include <stdio.h> // TODO(johnicholas.hines@gmail.com): Maybe also curses?
+#include <stdio.h>
 #include <string.h> // for strlen
 #include <unistd.h> // for isatty
 
@@ -44,10 +45,6 @@ const char tab= '\t';
 const char* eof_mark= "EOF"; // This was a character, but EOF isn't really an character in C/Unix.
 const char esc= 0x1B; // in ascii
 const char quote_char= '\'';
-// const char left_arrow= 75; //TODO(johnicholas.hines@gmail.com): WTF?
-//const char end_key= 79; // TODO(johnicholas.hines@gmail.com): WTF?
-//const char del_line= ^X; // TODO(johnicholas.hines@gmail.com): I don't know what they mean by this
-//const char return= ^M;  // TODO(johnicholas.hines@gmail.com): I don't know what they mean by this
 const char bell= '\b';
 
 typedef int counter;
@@ -151,21 +148,16 @@ float total_free;
 //      Utility Routines
 // ----------------------------------------------------------------------
 
-void noise()
-// Make a noise on the terminal - used for warnings.
-{
-  putchar(bell);
-}
-// noise
-
-int vtprolog_open(text_file f, string80 f_name)
+int vtprolog_open(text_file* f, const char* f_name)
 // open a file - returns true if the file exists and was opened properly
-//   f      - file pointer
+//   f      - a text_file, passed by reference
 //   f_name - external name of the file
 {
-  // assign(f,f_name) ; // TODO(johnicholas.hines@gmail.com): This should become something using posix's, but what mode? reading? writing? open(f, f_name, "r")
-  // reset(f) ;
-  return 1; // ioresult == 0 // TODO(johnicholas.hines@gmail.com): What is ioresult?
+  int retval;
+
+  assert(f);
+  *f= fopen(f_name, "r");
+  return (*f != NULL);
 }
 // vtprolog_open
 
@@ -621,8 +613,8 @@ void collect_garbage()
   release_mem();
   // printf("%c", back_space); // TODO(johnicholas.hines@gmail.com): What is the goal here?
   
-  // ClrEol ; // TODO(johnicholas.hines@gmail.com): Maybe an ansi escape sequence would be appropriate here? or curses? or nothing?
-  
+  // ClrEol ; // TODO(johnicholas.hines@gmail.com): Maybe an ansi escape sequence would be appropriate here?
+
 }
 // collect_garbage
 

@@ -1,4 +1,6 @@
+#include <assert.h>
 #include <stdio.h>
+#include "vtprolog.h"
 
 void strip_trailing_blanks(char* s) {
   // TODO(johnicholas.hines@gmail.com): Stop calling this function.
@@ -44,7 +46,32 @@ char* concat(char* first, char* second) {
   // TODO(johnicholas.hines@gmail.com): Stop calling this function.
 }
 
+void test_vtprolog_open() {
+  // happy path
+  system("touch dummy.txt"); // TODO(johnicholas.hines@gmail.com): Some tmpfile thing?
+  FILE* to_open= NULL;
+  assert(vtprolog_open(&to_open, "dummy.txt"));
+  assert(to_open != NULL);
+  system("rm -f dummy.txt");
+}
+
+// TODO(johnicholas.hines@gmail.com): This isn't true in general, but it's true for my purposes right now.
+void test_stdin_is_a_console() {
+  assert(is_console(stdin));
+}
+
+void test_dummy_file_is_not_a_console() {
+  system("touch dummy.txt");
+  FILE* dummy_file= fopen("dummy.txt", "r");
+  assert(!is_console(dummy_file));
+  fclose(dummy_file);
+  system("rm -f dummy.txt");
+}  
+
 int main() {
+  test_vtprolog_open();
+  test_stdin_is_a_console();
+  test_dummy_file_is_not_a_console();
   printf("Hello world!\n");
   return 0;
 }
