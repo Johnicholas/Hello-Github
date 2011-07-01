@@ -249,4 +249,5 @@ general game playing
 * code.google.com/p/ggp-galaxy
 rl-glue
 Ken Thompson's regular expression search algorithm
+ROSE / librose, a source-to-source transformation project/tool/library
 
