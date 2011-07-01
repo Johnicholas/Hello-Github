@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h> // for malloc, free
+#include <string.h> // for strcpy
 #include "vtprolog.h"
 
 void strip_trailing_blanks(char* s) {
@@ -68,10 +70,37 @@ void test_dummy_file_is_not_a_console() {
   system("rm -f dummy.txt");
 }  
 
+void test_strip_one_blank() {
+  char* to_strip= malloc(80);
+  strcpy(to_strip, " x");
+  strip_leading_blanks(&to_strip);
+  assert(strcmp(to_strip, "x") == 0);
+  free(to_strip);
+}
+
+void test_strip_several_spaces_and_tabs() {
+  char* to_strip= malloc(80);
+  strcpy(to_strip, " \t whatever");
+  strip_leading_blanks(&to_strip);
+  assert(strcmp(to_strip, "whatever") == 0);
+  free(to_strip);
+}
+
+void test_strip_none() {
+  char* to_strip= malloc(80);
+  strcpy(to_strip, "hello world \t ");
+  strip_leading_blanks(&to_strip);
+  assert(strcmp(to_strip, "hello world \t ") == 0);
+  free(to_strip);
+}
+
 int main() {
   test_vtprolog_open();
   test_stdin_is_a_console();
   test_dummy_file_is_not_a_console();
+  test_strip_one_blank();
+  test_strip_several_spaces_and_tabs();
+  test_strip_none();
   printf("Hello world!\n");
   return 0;
 }

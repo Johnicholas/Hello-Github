@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h> // for isalpha
 #include <stdio.h>
+#include <stdlib.h> // for malloc, free
 #include <string.h> // for strlen
 #include <unistd.h> // for isatty
 
@@ -162,27 +163,28 @@ int vtprolog_open(text_file* f, const char* f_name)
 // vtprolog_open
 
 
-// Johnicholas says: I think this is trying to do something like posix's isatty
 boolean is_console(text_file f)
 // return true if f is open on the system console
 {
   return isatty(fileno(f));
 }
 
-void strip_leading_blanks(string80 s)
+// Assumes the input is a null-terminated string, allocated with malloc, passed by reference.
+// Returns (by modifying the input) a string that differs only by any initial spaces or tabs stripped off.
+void strip_leading_blanks(char** s)
 {
-  if (strlen(s) > 0)
-    {
-      if (s[0] == ' ' || s[0] == tab)
-	{
-	  // TODO(johnicholas.hines@gmail.com): Recursion? Quadratic time complexity? Isn't there a better way?
-	  // delete(s,1,1) ;
-	  // strip_leading_blanks(s) ;
-	}
-    }
+  int i;
+  char* temp;
+
+  i= 0;
+  while ((*s)[i] == ' ' || (*s)[i] == tab) {
+    i++;
+  }
+  temp= strdup((*s)+i); 
+  free(*s);
+  *s= temp;
 }
 // strip_leading_blanks
-
 
 void vtprolog_toupper(string80 s)
 // converts s to upper case
@@ -204,7 +206,7 @@ boolean is_number(string80 s)
   float num;
   int code;
   strip_trailing_blanks(s);
-  strip_leading_blanks(s);
+  strip_leading_blanks(&s);
   if (strcmp(s, "") != 0) {
     val(s, num, code);
   } else {
@@ -704,7 +706,7 @@ void read_from_file(text_file f)
 void get_token(string132 t_line, string80 token)
 // Extract a token from t_line. Comments are ignored. A token is
 //   a string surrounded by delimiters or an end of line. Tokens may
-//   contain embedded spaces if they are surrounded by quote marks *)
+//   contain embedded spaces if they are surrounded by quote marks
 {
 
   void get_word() {
@@ -759,7 +761,7 @@ void get_token(string132 t_line, string80 token)
   }
   // get_quote
   
-  strip_leading_blanks(t_line);
+  strip_leading_blanks(&t_line);
   if (strlen(t_line) > 0)
     {
       if (strcmp(copy(t_line, 1, 2), "(*") == 0)  // TODO(johnicholas.hines@gmail.com): What is copy? Should I be using it?
