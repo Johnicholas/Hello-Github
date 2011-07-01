@@ -235,25 +235,6 @@ node_ptr tail(node_ptr list)
 }
 // tail
 
-node_ptr normalize(node_ptr pt)
-// returns a normalized pointer. Pointers are 32 bit addresses. The first
-//   16 bits contain the segment number and the second 16 bits contain the
-//   offset within the segment. Normalized pointers have offsets in the range
-//   $0 to $F (0 .. 15)
-{
-  /* TODO(johnicholas.hines@gmail.com): fix to work on modern operating systems
-  int pt_seg, pt_ofs;
-
-  pt_seg= seg(*pt) + (ofs(*pt) / 16); // SEGMENTED MEMORY MANAGEMENT
-  pt_ofs= ofs(*pt) % 16; // SEGMENTED MEMORY MANAGEMENT
-
-  return (node_ptr) ptr(ptr_seg, pt_ofs); // SEGMENTED MEMORY MANAGEMENT
-  */
-  return pt; // Just a placeholder to get this thing to compile.
-}
-// normalize
-
-
 const char* string_val(node_ptr list)
 // returns the string pointed to by list. If list points to a number
 //   node, it returns a string representing that number. 
@@ -309,10 +290,10 @@ void print_list(node_ptr list)
 
 
 // TODO(johnicholas.hines@gmail.com): p should be pass-by-reference
-void get_memory(node_ptr p, counter size)
+void get_memory(node_ptr* p, counter size)
 // On exit p contains a pointer to a block of size bytes.
 //   If possible this routine tries to get memory from the free list before
-//   requesting it from the heap
+//   requesting it from the heap.
 {
   counter blks;
   boolean allocated;
@@ -324,21 +305,16 @@ void get_memory(node_ptr p, counter size)
   //  finds with enough storage. If the free block has more storage than was
   //  requested, the block is shrunk by the requested amount.
   {
-    if (list != NULL)
-      {
-	if (list->u.free_node.block_cnt >= (blks - 1)) {
-	  {
-	    //p= normalize(node_ptr(ptr(seg(*list), ofs(*list) +
-	    // (list->u.free_node.block_cnt - blks + 1) * 8))); // SEGMENTED MEMORY MANAGEMENT
-	    p= normalize(list); // This is just to get it to compile, definitely buggy
-	    if (list->u.free_node.block_cnt == blks - 1)
-	      list= list->u.free_node.next_free;
-	    else list->u.free_node.block_cnt= list->u.free_node.block_cnt - blks;
-	    allocated= TRUE;
-	    total_free= total_free - (blks * 8.0);
-	  }
-	} else get_from_free(list->u.free_node.next_free);
-      }
+    if (list != NULL) {
+      if (list->u.free_node.block_cnt >= (blks - 1)) {
+	*p= list;
+	if (list->u.free_node.block_cnt == blks - 1)
+	  list= list->u.free_node.next_free;
+	else list->u.free_node.block_cnt= list->u.free_node.block_cnt - blks;
+	allocated= TRUE;
+	total_free= total_free - (blks * 8.0);
+      } else get_from_free(list->u.free_node.next_free);
+    }
   }
   // get_from_free
   
@@ -434,9 +410,7 @@ void collect_garbage()
   boolean lower(node_ptr p1, node_ptr p2)
   // returns true if p1 points to a lower memory address than p2
   {
-    p1= normalize(p1);
-    p2= normalize(p2);
-    return (seg(*p1) < seg(*p2)) || ((seg(*p1) == seg(*p2)) && (ofs(*p1) < ofs(*p2))); // SEGMENTED MEMORY MANAGEMENT
+    return p1 < p2;
   }
   // lower
   
@@ -446,22 +420,20 @@ void collect_garbage()
   //    lists at one time, if it is already marked we don't continue processing
   //    the tail of the list.
   {
-    if (list != NULL)
-      {
-	if (! list->in_use)
-	  {
-	    list->in_use= TRUE;
-	    if (list->tag == CONS_NODE)
-	      {
-		mark(head(list));
-		mark(tail(list));
-	      }
-	  }
+    if (list != NULL) {
+      if (! list->in_use) {
+	list->in_use= TRUE;
+	if (list->tag == CONS_NODE) {
+	  mark(head(list));
+	  mark(tail(list));
+	}
       }
+    }
   }
   // mark
   
   
+  // TODO(johnicholas.hines@gmail.com): This function is acting as if different kinds of nodes take different amounts of memory, which is not true in the current C implementation.
   void unmark_mem()
   // Go through memory from initial_heap^ to HeapPtr^ and mark each node
   //    as not in use. The tricky part here is updating the pointer p to point
@@ -471,29 +443,25 @@ void collect_garbage()
     counter string_base, node_allocation;
     
     string_base= sizeof(node_type) + sizeof(boolean); // Johnicholas says: I think I've seen this somewhere - duplication?
-    p= normalize(initial_heap);
+    p= initial_heap;
     node_allocation= sizeof(struct node);
     
-    while (lower(p, HeapPtr))
-      {
-	p->in_use= FALSE;
-	switch (p->tag) {
-	case CONS_NODE: 
-	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + node_allocation))); // SEGMENTED MEMORY MANAGEMENT
-	  p= normalize(p); // Just to get this thing to compile as C.
-	  break;
-	case FREE_NODE: 
-	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + (p->u.free_node.block_cnt + 1) * 8))); // SEGMENTED MEMORY MANAGEMENT
-	  p= normalize(p); // Again, just to get this thing to compile as C.
-	  break;
-	case FUNC: // fall through
-	case CONSTANT: // fall through
-	case VARIABLE:
-	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + string_base + length(p->string_data) + 1))); // SEGMENTED MEMORY MANAGEMENT
-	  p= normalize(p);
-	  break;
-	}
+    while (lower(p, HeapPtr)) {
+      p->in_use= FALSE;
+      switch (p->tag) {
+      case CONS_NODE: 
+	p= p + node_allocation;
+	break;
+      case FREE_NODE: 
+	p= p + (p->u.free_node.block_cnt + 1) * 8;
+	break;
+      case FUNC: // fall through
+      case CONSTANT: // fall through
+      case VARIABLE:
+	p= p + string_base + sizeof(p->u.constant.string_data) + 1;
+	break;
       }
+    }
   }
   // unmark_mem
   
@@ -514,46 +482,42 @@ void collect_garbage()
       
       blks= ((size - 1) / 8) + 1; 
       pt->tag= FREE_NODE;
-      // if (normalize(node_ptr(ptr(seg(*pt), ofs(*pt) + 8 * blks))) == vtprolog_free) // SEGMENTED MEMORY MANAGEMENT
-      if (normalize(pt) == vtprolog_free) // just in order to get this to compile as C
-	{
-	  pt->u.free_node.next_free= vtprolog_free->u.free_node.next_free;
-	  pt->u.free_node.block_cnt= vtprolog_free->u.free_node.block_cnt + blks;
-	  vtprolog_free= pt;
-	}
-      // else if (normalize(node_ptr(ptr(seg(*vtprolog_free), ofs(*vtprolog_free) + 8 * (vtprolog_free->u.free_node.block_cnt + 1)))) == normalize(pt)) // SEGMENTED MEMORY MANAGEMENT
-      else if (normalize(vtprolog_free) == normalize(pt)) // Again, just in order to get this to compile as C
+      if (pt + 8 * blks == vtprolog_free) {
+	pt->u.free_node.next_free= vtprolog_free->u.free_node.next_free;
+	pt->u.free_node.block_cnt= vtprolog_free->u.free_node.block_cnt + blks;
+	vtprolog_free= pt;
+      }
+      else if (vtprolog_free + 8 * (vtprolog_free->u.free_node.block_cnt + 1) == pt)
 	vtprolog_free->u.free_node.block_cnt= vtprolog_free->u.free_node.block_cnt + blks;
-      else
-	{
-	  pt->u.free_node.next_free= vtprolog_free;
-	  pt->u.free_node.block_cnt= blks - 1;
-	  vtprolog_free= pt;
-	}
+      else {
+	pt->u.free_node.next_free= vtprolog_free;
+	pt->u.free_node.block_cnt= blks - 1;
+	vtprolog_free= pt;
+      }
       total_free= total_free + (blks * 8.0);
     }
     // free_memory
     
+    // TODO(johnicholas.hines@gmail.com): Again, this is sweeping through memory, assuming these nodes have variable sizes,
+    // which they don't in the C version at the moment; there's duplication too.
     void do_release()
     // This routine sweeps through memory and checks for nodes with in_use = false.
     {
       node_ptr p;
       
-      p= normalize(initial_heap);
+      p= initial_heap;
       while (lower(p, heap_top)) {
 	switch (p->tag) {
 	case CONS_NODE: 
 	  if (!p->in_use) {
 	    free_memory(p, sizeof(struct node));
 	  }
-	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + node_allocation))); // SEGMENTED MEMORY MANAGEMENT
-	  p= normalize(p); // just to get this thing to compile as C
+	  p= p + node_allocation;
 	  break;
 	case FREE_NODE:
 	  block_allocation= (p->u.free_node.block_cnt + 1) * 8;
 	  free_memory(p, block_allocation);
-	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + block_allocation))); // SEGMENTED MEMORY MANAGEMENT
-	  p= normalize(p); // again, just to get this thing to compile as C
+	  p= p + block_allocation;
 	  break;
 	case FUNC: // fall through
 	case CONSTANT: // fall through
@@ -561,8 +525,7 @@ void collect_garbage()
 	  string_allocation= string_base + sizeof(p->u.constant.string_data) + 1;
 	  if (! p->in_use)
 	    free_memory(p, string_base + sizeof(p->u.constant.string_data) + 1);
-	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + string_allocation))); // SEGMENTED MEMORY MANAGEMENT
-	  p= normalize(p); // again, just to get this thing to compile as C
+	  p= p + string_allocation;
 	  break;
 	}
       }
