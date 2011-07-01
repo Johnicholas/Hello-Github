@@ -1,6 +1,7 @@
 #include <ctype.h> // for isalpha
 #include <stdio.h> // TODO(johnicholas.hines@gmail.com): Maybe also curses?
 #include <string.h> // for strlen
+#include <unistd.h> // for isatty
 
 // Copyright 1986 - MicroExpert Systems
 // Box 430 R.D. 2
@@ -36,7 +37,6 @@
 typedef int boolean;
 #define TRUE 1
 #define FALSE 0
-char* concat(const char*, const char*); // I presume this is some sort of Pascal primitive.
 
 const boolean debug= 0;
 const char back_space= 0x08; // in ascii
@@ -158,38 +158,24 @@ void noise()
 }
 // noise
 
-//int vtprolog_open(text_file f, string80 f_name)
-//// open a file - returns true if the file exists and was opened properly
-////   f      - file pointer
-////   f_name - external name of the file
-//{
-//  // assign(f,f_name) ; // TODO(johnicholas.hines@gmail.com): This should become something using posix's, but what mode? reading? writing? open(f, f_name, "r")
-//  // reset(f) ;
-//   return // ioresult == 0 // TODO(johnicholas.hines@gmail.com): What is ioresult?
-//}
-//// vtprolog_open
+int vtprolog_open(text_file f, string80 f_name)
+// open a file - returns true if the file exists and was opened properly
+//   f      - file pointer
+//   f_name - external name of the file
+{
+  // assign(f,f_name) ; // TODO(johnicholas.hines@gmail.com): This should become something using posix's, but what mode? reading? writing? open(f, f_name, "r")
+  // reset(f) ;
+  return 1; // ioresult == 0 // TODO(johnicholas.hines@gmail.com): What is ioresult?
+}
+// vtprolog_open
 
 
 // Johnicholas says: I think this is trying to do something like posix's isatty
-//Function is_console(Var f : text_file) : boolean ;
+boolean is_console(text_file f)
 // return true if f is open on the system console
-//   for details of fibs and fib_ptrs see the Turbo Pascal ver 3.0 reference
-//   manual chapter 20. This should work under CP/M-86 or 80, but we haven't
-//   tried it. *)
-//
-//Type 
-//  fib = ARRAY [0 .. 75] Of byte ;
-//
-//Var 
-//  fib_ptr : ^fib ;
-//  dev_type : byte ;
-//Begin
-//  fib_ptr := addr(f) ;
-//  dev_type := fib_ptr^[2] And $07 ;
-//  is_console := (dev_type = 1) Or (dev_type = 2) ;
-//End ;
-//(* is_console *)
-
+{
+  return isatty(fileno(f));
+}
 
 void strip_leading_blanks(string80 s)
 {
@@ -413,7 +399,7 @@ node_ptr alloc_str(node_type typ, string80 s)
   node_ptr pt;
 
   get_memory(pt, allocation_size(sizeof(node_type) + sizeof(boolean) + // TODO(johnicholas.hines@gmail.com): Duplication?
-				 length(s) + 1));
+				 sizeof(s) + 1));
   pt->tag= typ;
   strncpy(pt->u.constant.string_data, s, 80); // TODO(johnicholas.hines@gmail.com): I think this requires that the string data is stored at the same spot in all the nodes that have string data
   // TODO(johnicholas.hines@gmail.com): This 80 magic number is no good, and strncpy isn't a great way to deal with strings anyway
@@ -681,8 +667,8 @@ void wait()
 void read_kbd(string80 s)
 // Read a line from the keyboard
 {
-  pritnf("-> ");
-  readln(s);
+  printf("-> ");
+  getline(NULL, 0, stdin); // TODO(johnicholas.hines@gmail.com): The line should go into s, not the bit bucket.
 }
 // read_kbd
 
@@ -824,6 +810,107 @@ void scan(text_file f, string80 token)
 }
 // scan
 
+node_ptr look_up(string80 var_str, node_ptr environ)
+// Search the environment list pointed to by environ for the variable,
+//      var_str. If found return a pointer to var_str's binding, otherwise
+//      return NIL
+{
+  boolean found;
+  node_ptr p;
+  
+  p= environ;
+  found= FALSE;
+  while (p != NULL && ! found)
+    {
+      if (strcmp(var_str, string_val(head(head(p)))) == 0) {
+	{
+	  found= TRUE;
+	  return tail(head(p));
+	}
+      } else p= tail(p);
+    }
+  if (!found) // TODO(johnicholas.hines@gmail.com): Is this necessary?
+    return NULL; 
+}
+// look_up
+
+void print_components(node_ptr p, node_ptr env)
+// Print the components of a functor. These may be variables or
+// other functors, so call the approriate routines to print them.
+{
+  if (p != NULL)
+    {
+      switch (tag_value(head(p))) {
+      case CONSTANT: printf("%s ", string_val(head(p))); break;
+      case VARIABLE: print_variable(string_val(head(p)), env); break;
+      case CONS_NODE: print_functor(head(p), env); break;
+      }
+      if (tail(p) != NULL) 
+	{
+	  printf(",");
+	  print_components(tail(p), env);
+	}
+    }
+}
+// print_components
+	    
+void print_functor(node_ptr l, node_ptr env)
+// The variable was bound to a functor. Print the functor and its
+// components.
+{	    
+  if (l != NULL) {
+    printf("%s", string_val(head(l)));
+    if (tail(l) != NULL) {
+      printf("(");
+      print_components(tail(l), env);
+      printf(")");
+    }
+  }
+}
+// print_functor
+	  
+void print_variable(string80 var_str, node_ptr env)
+// The varaible in question was bound to another varaible, so look
+//        up that variable's binding and print it. If a match can't be found
+//        print '_' to tell the user that the variable is anonymous.
+{
+  node_ptr var_ptr;
+	    
+  var_ptr= look_up(var_str, env);
+  if (var_ptr != NULL) {
+    switch (tag_value(head(var_ptr))) {
+    case CONSTANT: printf("%s ", string_val(head(var_ptr))); break;
+    case VARIABLE: print_variable(string_val(head(var_ptr)), env); break;
+    case CONS_NODE: print_functor(head(var_ptr), env); break;
+    }
+  }
+  else printf("_ ");
+}
+// print_variable
+	  
+// TODO(johnicholas.hines@gmail.com): printed should be passed by reference.
+void print_bindings(node_ptr list, node_ptr env, boolean printed)
+// Print the bindings for level 0 variables only, intermediate variables
+//     aren't of interest. The routine recursivley searches for the
+//     end of the environments list and then prints the binding. This
+//     is so that variables bound first are printed first. *)
+{	  
+  if (list != NULL) {
+    print_bindings(tail(list), env, printed);
+    if (pos('#', string_val(head(head(list)))) == 0) {
+      printed= TRUE;
+      printf("\n");
+      printf("%s = ", string_val(head(head(list))));
+      switch (tag_value(head(tail(head(list))))) {
+      case CONSTANT: printf("%s ", string_val(head(tail(head(list))))); break;
+      case VARIABLE: print_variable(string_val(head(tail(head(list)))), env); break;
+      case CONS_NODE: print_functor(head(tail(head(list))), env); break;
+      }
+    }
+  }
+}
+// print_bindings
+	
 // TODO(johnicholas.hines@gmail.com): source should be passed by reference
 void compile(text_file source)
 // The recursive descent compiler. It reads tokens until the token
@@ -890,7 +977,7 @@ void compile(text_file source)
 	  // Process a quote
 	  {
 	    q_ptr= append_list(q_ptr, cons(alloc_str(CONSTANT,
-						     copy(token, 2, length(token) - 1)),
+						     copy(token, 2, sizeof(token) - 1)),
 					   NULL));
 	    scan(source, token);
 	  }
@@ -962,7 +1049,7 @@ void compile(text_file source)
 	  {
 	    l_ptr= append_list(l_ptr,
 			       cons(cons(alloc_str(CONSTANT,
-						   copy(token, 2, length(token) - 1)), NULL), NULL));
+						   copy(token, 2, sizeof(token) - 1)), NULL), NULL));
 	    scan(source, token);
 	  }
 	else
@@ -1047,30 +1134,6 @@ void compile(text_file source)
       node_ptr new_env;
       node_ptr p;
       
-      node_ptr look_up(string80 var_str, node_ptr environ)
-      // Search the environment list pointed to by environ for the variable,
-      //      var_str. If found return a pointer to var_str's binding, otherwise
-      //      return NIL
-      {
-	boolean found;
-	node_ptr p;
-	
-	p= environ;
-	found= FALSE;
-	while (p != NULL && ! found)
-	  {
-	    if (strcmp(var_str, string_val(head(head(p)))) == 0) {
-	      {
-		found= TRUE;
-		return tail(head(p));
-	      }
-	    } else p= tail(p);
-	  }
-	if (!found)
-	  return NULL;
-      }
-      // look_up
-      
       void check_continue()
       // Print the bindings and see if the user is satisfied. If nothing
       //      is printed from the environment, then print 'Yes' to indicate
@@ -1079,101 +1142,14 @@ void compile(text_file source)
 	boolean printed;
 	char ch;
 	
-	void print_bindings(node_ptr list)
-	// Print the bindings for level 0 variables only, intermediate variables
-	//     aren't of interest. The routine recursivley searches for the
-	//     end of the environments list and then prints the binding. This
-	//     is so that variables bound first are printed first. *)
-	{
-	  // forward declaration
-	  // void print_functor(node_ptr l);
-	  
-	  void print_variable(string80 var_str)
-	  // The varaible in question was bound to another varaible, so look
-	  //        up that variable's binding and print it. If a match can't be found
-	  //        print '_' to tell the user that the variable is anonymous.
-	  {
-	    node_ptr var_ptr;
-	    
-	    var_ptr= look_up(var_str, env);
-	    if (var_ptr != NULL)
-	      {
-		switch (tag_value(head(var_ptr))) {
-		case CONSTANT: printf("%s ", string_val(head(var_ptr))); break;
-		case VARIABLE: print_variable(string_val(head(var_ptr))); break;
-		case CONS_NODE: print_functor(head(var_ptr)); break;
-		}
-	      }
-	    else printf("_ ");
-	  }
-	  // print_variable
-	  
-	  void print_functor(node_ptr l)
-	  // The variable was bound to a functor. Print the functor and its
-	  // components.
-	  {
-	    
-	    void print_components(node_ptr p)
-	    // Print the components of a functor. These may be variables or
-	    // other functors, so call the approriate routines to print them.
-	    {
-	      if (p != NULL)
-		{
-		  switch (tag_value(head(p))) {
-		  case CONSTANT: printf("%s ", string_val(head(p))); break;
-		  case VARIABLE: print_variable(string_val(head(p))); break;
-		  case CONS_NODE: print_functor(head(p)); break;
-		  }
-		  if (tail(p) != NULL) 
-		    {
-		      printf(",");
-		      print_components(tail(p));
-		    }
-		}
-	    }
-	    // print_components
-	    
-	    if (l != NULL)
-	      {
-		printf("%s", string_val(head(l)));
-		if (tail(l) != NULL) {
-		  {
-		    printf("(");
-		    print_components(tail(l));
-		    printf(")");
-		  }
-		}
-	      }
-	  }
-	  // print_functor
-	  
-	  if (list != NULL)
-	    {
-	      print_bindings(tail(list));
-	      if (pos('#', string_val(head(head(list)))) == 0)
-		{
-		  printed= TRUE;
-		  printf("\n");
-		  printf("%s = ", string_val(head(head(list))));
-		  switch (tag_value(head(tail(head(list))))) {
-		  case CONSTANT: printf("%s ", string_val(head(tail(head(list))))); break;
-		  case VARIABLE: print_variable(string_val(head(tail(head(list))))); break;
-		  case CONS_NODE: print_functor(head(tail(head(list)))); break;
-		  }
-		}
-	    }
-	}
-	// print_bindings
-	
 	printed= FALSE;
-	print_bindings(env);
-	if (!printed)
-	  {
-	    printf("\n");
-	    printf("Yes ");
-	  }
+	print_bindings(env, env, printed);
+	if (!printed) {
+	  printf("\n");
+	  printf("Yes ");
+	}
 	do {
-	  read(stdin, ch);
+	  ch= getchar(); // TODO(johnicholas.hines@gmail.com): getchar actually returns an int, and it might be EOF, which is not a char.
 	} while (!in(ch, "\n;")); // TODO(johnicholas.hines@gmail.com): Write a new function, 'in'? or is there a C version?
 	solved= (ch == '\n');
 	printf("\n");
@@ -1187,7 +1163,7 @@ void compile(text_file source)
 	node_ptr temp_list, p;
 	const char level_str[6];
 	
-	// TODO(johnicholas.hines@gmail.com): to_list should be passed by reference, I think
+	// TODO(johnicholas.hines@gmail.com): to_list should be passed by reference
 	void list_copy(node_ptr from_list, node_ptr to_list)
 	{
 	  if (from_list != NULL) 
@@ -1209,7 +1185,7 @@ void compile(text_file source)
 	}
 	// list_copy
 	
-	str(copy_level, level_str);
+	// str(copy_level, level_str); // TODO(johnicholas.hines@gmail.com): What did this mean?
 	strncpy(level_str, concat("#", level_str), sizeof(level_str));
 	temp_list= NULL;
 	list_copy(list, temp_list);
@@ -1479,7 +1455,7 @@ void compile(text_file source)
     if (strcmp(token, ".") != 0) {
       error("'.' expected.");
     } else {
-      halt();
+      exit(0);
     }
   }
   // do_exit
