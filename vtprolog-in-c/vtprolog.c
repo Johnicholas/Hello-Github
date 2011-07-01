@@ -245,12 +245,11 @@ const char* string_val(node_ptr list)
     switch (list->tag) {
     case CONSTANT: return list->u.constant.string_data; break;
     case VARIABLE: return list->u.variable.string_data; break;
-    case FUNC: return list->u.variable.string_data; break;
+    case FUNC: return list->u.func.string_data; break;
     default: return ""; break;
     }
 }
 // string_val
-
 
 node_type tag_value(node_ptr list)
 // returns the value of the tag for a node.
@@ -261,35 +260,32 @@ node_type tag_value(node_ptr list)
 }
 // tag_value
 
-
 void print_list(node_ptr list)
 // recursively traverses the list and prints its elements. This is
 //   not a pretty printer, so the lists may look a bit messy.
 {
   node_ptr p;
 
-  if (list != NULL)
-    {
-      switch (list->tag) {
-      case CONSTANT: // fall through
-      case FUNC: // fall through
-      case VARIABLE: printf("%s ", string_val(list)); break;
-      case CONS_NODE:
-	printf("(");
-	p= list;
-	while (p != NULL)
-	  {
-	    print_list(head(p));
-	    p= tail(p);
-	  }
-	printf(") ");
+  if (list != NULL) {
+    switch (list->tag) {
+    case CONSTANT: // fall through
+    case FUNC: // fall through
+    case VARIABLE: printf("%s ", string_val(list)); break;
+    case CONS_NODE:
+      printf("(");
+      p= list;
+      while (p != NULL) {
+	print_list(head(p));
+	p= tail(p);
       }
+      printf(") ");
+      break;
     }
+  }
 }
 // print_list
 
 
-// TODO(johnicholas.hines@gmail.com): p should be pass-by-reference
 void get_memory(node_ptr* p, counter size)
 // On exit p contains a pointer to a block of size bytes.
 //   If possible this routine tries to get memory from the free list before
