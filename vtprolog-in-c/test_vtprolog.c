@@ -102,6 +102,14 @@ void test_uppercase_hello() {
   free(to_uppercase);
 }
 
+void test_one_point_oh_is_a_number() {
+  assert(is_number("1.0"));
+}
+
+void test_hello_is_not_a_number() {
+  assert(!is_number("hello"));
+}
+
 int main() {
   test_vtprolog_open();
   test_stdin_is_a_console();
@@ -110,6 +118,8 @@ int main() {
   test_strip_several_spaces_and_tabs();
   test_strip_none();
   test_uppercase_hello();
+  test_one_point_oh_is_a_number();
+  test_hello_is_not_a_number();
   printf("Hello world!\n");
   return 0;
 }

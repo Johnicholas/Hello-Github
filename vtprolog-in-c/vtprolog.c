@@ -197,20 +197,13 @@ void vtprolog_toupper(char* s)
 }
 // vtprolog_toupper
 
-boolean is_number(string80 s)
+boolean is_number(char* s)
   // checks to see if s contains a legitimate numerical string.
-  // It ignores leading and trailing blanks
+  // It ignores leading blanks. 
 {
   float num;
-  int code;
-  strip_trailing_blanks(s);
-  strip_leading_blanks(&s);
-  if (strcmp(s, "") != 0) {
-    val(s, num, code);
-  } else {
-    code= -1;
-  }
-  return code == 0;
+
+  return sscanf(s, " %f", &num) == 1;
 }
 // is_number
 
@@ -704,7 +697,7 @@ void read_from_file(text_file f)
 void get_token(string132 t_line, string80 token)
 // Extract a token from t_line. Comments are ignored. A token is
 //   a string surrounded by delimiters or an end of line. Tokens may
-//   contain embedded spaces if they are surrounded by quote marks
+//   contain embedded spaces if they are surrounded by quote marks.
 {
 
   void get_word() {
