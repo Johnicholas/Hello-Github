@@ -32,7 +32,8 @@
 //
 // Johnicholas Hines(johnicholas.hines@gmail.com)
 
-const int debug= 0;
+typedef int boolean;
+const boolean debug= 0;
 const char back_space= 0x08; // in ascii
 const char tab= '\t';
 // const char eof_mark // TODO(johnicholas.hines@gmail.com): eof isn't a character, really, in the C/Unix world
@@ -63,8 +64,8 @@ typedef enum node_type {
 
 typedef struct node* node_ptr;
 struct node {
-  int in_use;
-  node_type kind;
+  boolean in_use;
+  node_type tag;
   union {
     struct {
       node_ptr tail_ptr;
@@ -117,7 +118,7 @@ struct node {
 string132 line, saved_line;
 string80 token;
 // text_file source_file // TODO(johnicholas.hines@gmail.com): Is this a FILE*?
-int error_flag, in_comment;
+boolean error_flag, in_comment;
 // char_set delim_set, text_chars; // TODO(johnicholas.hines@gmail.com): Are these const char* as used, for example, in strtok?
 node_ptr data_base, initial_heap, free, saved_list, HeapPtr;
 float total_free;
@@ -212,7 +213,7 @@ void vtprolog_toupper(string80 s)
 }
 // vtprolog_toupper
 
-int is_number(string80 s)
+boolean is_number(string80 s)
   // checks to see if s contains a legitimate numerical string.
   // It ignores leading and trailing blanks
 {
@@ -229,50 +230,49 @@ int is_number(string80 s)
 }
 // is_number
 
+node_ptr head(node_ptr list)
+  // returns a pointer to the first item in the list
+  // if the list is empty, returns NULL.
+{
+  if (list == NULL) {
+    return NULL;
+  } else {
+    return list->u.cons_node.head_ptr;
+  }
+}
+// head
 
-Function head(list : node_ptr) : node_ptr ;
-  (* returns a pointer to the first item in the list.
-     If the list is empty, it returns NIL.  *)
-Begin
-  If list = Nil
-    Then head := Nil
-  Else head := list^.head_ptr ;
-End ;
-(* head *)
+node_ptr tail(node_ptr list)
+  // returns a pointer to a list starting at the second item in the list.
+  // Note - tail( (a b c) ) points to the list (b c), but
+  //        tail( ((a b) c d) ) points to the list (c d) .
+{
+  if (list == NULL) {
+    return NULL;
+  } else {
+    switch (list->tag) {
+    case CONS_NODE: return list->u.cons_node.tail_ptr;
+    case FREE_NODE: return list->u.free_node.next_free;
+    default: return NULL;
+    }
+  }
+}
+// tail
 
+counter allocation_size(counter x)
+  // Turbo 3.0 allocates memory in 8 byte blocks, this routine calculates the
+  // actual number of bytes returned for a request of x bytes.
+  // TODO(johnicholas.hines@gmail.com): this is probably completely irrelevant
+{
+  return (((x - 1) / 8) + 1) * 8;
+}
+// allocation_size
 
-Function tail(list : node_ptr) : node_ptr ;
-
-(* returns a pointer to a list starting at the second item in the list.
-     Note - tail( (a b c) ) points to the list (b c), but
-            tail( ((a b) c d) ) points to the list (c d) .  *)
-Begin
-  If list = Nil
-    Then tail := Nil
-  Else
-    Case list^.tag Of 
-      cons_node : tail := list^.tail_ptr ;
-      free_node : tail := list^.next_free ;
-      Else        tail := Nil ;
-    End ;
-End ;
-(* tail *)
-
-
-Function allocation_size(x : counter) : counter ;
-
-(* Turbo 3.0 allocates memory in 8 byte blocks, this routine calculates the
-     actual number of bytes returned for a request of x bytes.  *)
-Begin
-  allocation_size := (((x - 1) Div 8) + 1) * 8 ;
-End ;
-(* allocation_size *)
-
-
-Function node_size : counter ;
-
-(* calculates the base size of a node. Add the rest of the node to this
-     to get the actual size of a node *)
+/*
+counter node_size()
+  // calculates the base size of a node. Add the rest of the node to this
+  // to get the actual size of a node.
+// TODO(johnicholas.hines@gmail.com): Remove this, it's probably completely irrelevant.
 Begin
   node_size := 2 * sizeof(node_ptr) + sizeof(boolean) + sizeof(node_type) ;
 End ;
