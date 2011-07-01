@@ -162,7 +162,6 @@ int vtprolog_open(text_file* f, const char* f_name)
 }
 // vtprolog_open
 
-
 boolean is_console(text_file f)
 // return true if f is open on the system console
 {
@@ -235,16 +234,6 @@ node_ptr tail(node_ptr list)
   }
 }
 // tail
-
-// TODO(johnicholas.hines@gmail.com): Remove this, it's probably completely irrelevant.
-counter node_size()
-// calculates the base size of a node. Add the rest of the node to this
-// to get the actual size of a node.
-{
-  return 2 * sizeof(node_ptr) + sizeof(boolean) + sizeof(node_type);
-}
-// node_size
-
 
 node_ptr normalize(node_ptr pt)
 // returns a normalized pointer. Pointers are 32 bit addresses. The first
@@ -394,7 +383,7 @@ node_ptr cons(node_ptr new_node, node_ptr list)
 {
   node_ptr p;
 
-  get_memory(p, node_size());
+  get_memory(p, sizeof(struct node));
   p->tag= CONS_NODE;
   p->u.cons_node.head_ptr= new_node;
   p->u.cons_node.tail_ptr= list;
@@ -483,7 +472,7 @@ void collect_garbage()
     
     string_base= sizeof(node_type) + sizeof(boolean); // Johnicholas says: I think I've seen this somewhere - duplication?
     p= normalize(initial_heap);
-    node_allocation= node_size();
+    node_allocation= sizeof(struct node);
     
     while (lower(p, HeapPtr))
       {
@@ -555,7 +544,7 @@ void collect_garbage()
 	switch (p->tag) {
 	case CONS_NODE: 
 	  if (!p->in_use) {
-	    free_memory(p, node_size());
+	    free_memory(p, sizeof(struct node));
 	  }
 	  // p= normalize(node_ptr(ptr(seg(*p), ofs(*p) + node_allocation))); // SEGMENTED MEMORY MANAGEMENT
 	  p= normalize(p); // just to get this thing to compile as C
@@ -584,7 +573,7 @@ void collect_garbage()
     total_free= 0.0;
     heap_top= HeapPtr;
     string_base= sizeof(node_type) + sizeof(boolean); // TODO(johnicholas.hines@gmail.com): What is this trying to do?
-    node_allocation= node_size();
+    node_allocation= sizeof(struct node);
     do_release();
   }
   // release_mem
