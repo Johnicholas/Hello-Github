@@ -1,4 +1,4 @@
-/*
+1;2790;0c/*
 // Copyright 1986 - MicroExpert Systems
 // Box 430 R.D. 2
 // Nassau, NY 12123
@@ -888,7 +888,6 @@ void do_exit(text_file source)
 //   in solve, but this does the trick.
 */
 {
-  scan(source, token);
   if (strcmp(token, ".") != 0) {
     error("'.' expected.", source);
   } else {
@@ -1449,24 +1448,20 @@ void compile(text_file source)
 //   of the sentence is parsed.
 */
 {
-  scan(source, token);
-  while (token != eof_mark) {
+  for (scan(source, token); token != eof_mark; scan(source, token)) {
     error_flag= FALSE;
     if (strcmp(token, "?-") == 0) {
-      scan(source, token);
+      scan(source, token); /* read past the match */
       query();
     } else if (strcmp(token, "@") == 0) {
-      scan(source, token);
+      scan(source, token);  /* read past the match */
       read_new_file();
+    } else if (strcmp(token, "EXIT") == 0 || strcmp(token, "exit") == 0) {
+      scan(source, token);  /* read past the match */
+      do_exit(source); 
     } else {
-      vtprolog_toupper(token);
-      if (strcmp(token, "EXIT") == 0) {
-	do_exit(source); 
-      } else {
-	rule(source);
-      }
+      rule(source);
     }
-    scan(source, token);
   }
 }
 /* compile */
