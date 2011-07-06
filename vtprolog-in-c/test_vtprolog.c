@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h> // for malloc, free
 #include <string.h> // for strcpy
-#include "vtprolog.h"
 
 void strip_trailing_blanks(char* s) {
   // TODO(johnicholas.hines@gmail.com): Stop calling this function.
