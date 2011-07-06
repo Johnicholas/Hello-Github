@@ -619,11 +619,10 @@ void read_from_file(text_file f)
     read_kbd(line);
   else read_a_line();
   if (in_comment) {
-    if (pos("*)", line) > 0) // TODO(johnicholas.hines@gmail.com): if there is a end-of-comment sequence on this line?
-      {
-	delete(line, 1, pos("*)", line) + 1);
-	in_comment= FALSE;
-      }
+    if (strstr(line, "*)") != NULL) {
+      delete(line, 1, pos("*)", line) + 1);
+      in_comment= FALSE;
+    }
   }
   else read_from_file(f);
   strncpy(saved_line, line, sizeof(saved_line));
@@ -659,56 +658,45 @@ void get_token(string132 t_line, string80 token)
   
   void comment()
   {
-    if (pos("*)", t_line) > 0) // Johnicholas says: does this mean "if there is an end-comment sequence on this line?"
-      {
-	delete(t_line, 1, pos("*)", t_line) + 1);
-	get_token(line, token);
-      }
-    else
-      {
-	t_line= "";
-	token= "";
-	in_comment= TRUE;
-      }
+    if (strstr(t_line, "*)") != NULL) {
+      delete(t_line, 1, pos("*)", t_line) + 1);
+      get_token(line, token);
+    } else {
+      t_line= "";
+      token= "";
+      in_comment= TRUE;
+    }
   }
   // comment
   
   void get_quote()
   {
     delete(t_line, 1, 1);
-    if (pos(quote_char, t_line) > 0) // Johnicholas says: does this mean "if there is a quote character on the line?"
-      {
-	token= concat(quote_char, copy(t_line, 1, pos(quote_char, t_line) - 1));
-	delete(t_line, 1, pos(quote_char, t_line));
-      }
-    else
-      {
-	token= t_line;
-	t_line= "";
-      }
+    if (strchr(t_line, quote_char) == NULL) {
+      token= concat(quote_char, copy(t_line, 1, pos(quote_char, t_line) - 1));
+      delete(t_line, 1, pos(quote_char, t_line));
+    } else {
+      token= t_line;
+      t_line= "";
+    }
   }
   // get_quote
   
   strip_leading_blanks(&t_line);
-  if (strlen(t_line) > 0)
-    {
-      if (strcmp(copy(t_line, 1, 2), "(*") == 0)  // TODO(johnicholas.hines@gmail.com): What is copy? Should I be using it?
-	comment();
-      else if (strcmp(copy(t_line, 1, 2), ":-") == 0 || strcmp(copy(t_line, 1, 2), "?-") == 0)
-	{
-	  token= copy(t_line, 1, 2);
-	  delete(t_line, 1, 2);
-	}
-      else if (t_line[0] == quote_char)
-	get_quote();
-      else if (in(t_line[0], delim_set))
-	{
-	  token= t_line[0];
-	  delete(t_line, 1, 1);
-	}
-      else get_word();
-    }
-  else token= "";
+  if (strlen(t_line) > 0) {
+    if (strcmp(copy(t_line, 1, 2), "(*") == 0)  // TODO(johnicholas.hines@gmail.com): What is copy? Should I be using it?
+      comment();
+    else if (strcmp(copy(t_line, 1, 2), ":-") == 0 ||
+	     strcmp(copy(t_line, 1, 2), "?-") == 0) {
+      token= copy(t_line, 1, 2);
+      delete(t_line, 1, 2);
+    } else if (t_line[0] == quote_char)
+      get_quote();
+    else if (in(t_line[0], delim_set)) {
+      token= t_line[0];
+      delete(t_line, 1, 1);
+    } else get_word();
+  } else token= "";
 }
 // get_token
 
@@ -718,17 +706,14 @@ void scan(text_file f, string80 token)
 //   end of a line has been reached, read_from_file is called to
 //   get a new line.
 {
-  if (strlen(line) > 0)
-    {
-      get_token(line, token);
-      if (strcmp(token, "") == 0)
-	scan(f, token);
-    }
-  else
-    {
-      read_from_file(f);
+  if (strlen(line) > 0) {
+    get_token(line, token);
+    if (strcmp(token, "") == 0)
       scan(f, token);
-    }
+  } else {
+    read_from_file(f);
+    scan(f, token);
+  }
 }
 // scan
 
@@ -760,19 +745,17 @@ void print_components(node_ptr p, node_ptr env)
 // Print the components of a functor. These may be variables or
 // other functors, so call the approriate routines to print them.
 {
-  if (p != NULL)
-    {
-      switch (tag_value(head(p))) {
-      case CONSTANT: printf("%s ", string_val(head(p))); break;
-      case VARIABLE: print_variable(string_val(head(p)), env); break;
-      case CONS_NODE: print_functor(head(p), env); break;
-      }
-      if (tail(p) != NULL) 
-	{
-	  printf(",");
-	  print_components(tail(p), env);
-	}
+  if (p != NULL) {
+    switch (tag_value(head(p))) {
+    case CONSTANT: printf("%s ", string_val(head(p))); break;
+    case VARIABLE: print_variable(string_val(head(p)), env); break;
+    case CONS_NODE: print_functor(head(p), env); break;
     }
+    if (tail(p) != NULL) {
+      printf(",");
+      print_components(tail(p), env);
+    }
+  }
 }
 // print_components
 	    
@@ -997,11 +980,10 @@ void compile(text_file source)
   //    On exit, t_ptr points to the list containing the tail.
   {
     goal(t_ptr);
-    if (strcmp(token, ",") == 0)
-      {
-	scan(source, token);
-	tail_list(t_ptr);
-      }
+    if (strcmp(token, ",") == 0) {
+      scan(source, token);
+      tail_list(t_ptr);
+    }
   }
   // tail
   
@@ -1346,8 +1328,8 @@ void compile(text_file source)
     if (token[0] == quote_char) {
       delete(token, 1, 1); // Does this mean "delete one character from the front of token"?
     }
-    if (pos('.', token) == 0) { // Does this mean "if there are no occurrences of period character within token"?
-      strncpy(f_name, concat(token, ".pl"), sizeof(f_name)); // was .PRO, but I think .pl is more common for prolog source
+    if (strchr(token, '.') == NULL) {
+      snprintf(f_name, sizeof(f_name), "%s.pro", token);
     } else {
       strncpy(f_name, token, sizeof(f_name));
     }
@@ -1373,7 +1355,7 @@ void compile(text_file source)
   // Exit the program. This really should be a built-in function and handled
   //   in solve, but this does the trick.
   {
-    scan(source,token);
+    scan(source, token);
     if (strcmp(token, ".") != 0) {
       error("'.' expected.");
     } else {
@@ -1392,14 +1374,14 @@ void compile(text_file source)
       scan(source, token);
       read_new_file();
     } else {
-      toupper(token);
+      vtprolog_toupper(token);
       if (strcmp(token, "EXIT") == 0) {
 	do_exit(); 
       } else {
 	rule();
       }
     }
-    scan(source,token);
+    scan(source, token);
   }
 }
 // compile
