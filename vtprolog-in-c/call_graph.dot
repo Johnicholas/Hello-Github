@@ -1,0 +1,28 @@
+digraph {
+	main -> initialize;
+	main -> compile;
+	compile -> scan;
+	compile -> query;
+	compile -> read_new_file;
+	compile -> vtprolog_toupper;
+	compile -> do_exit;
+	compile -> rule;
+	scan -> get_token;
+	scan -> scan;
+	scan -> read_from_file;
+	get_token -> strip_leading_blanks;
+	get_token -> comment;
+	get_token -> get_quote;
+	comment -> get_token;
+	do_exit -> scan;
+	do_exit -> error;
+	read_new_file -> compile;
+	read_new_file -> scan;
+	read_new_file -> error;
+
+
+	read_from_file -> is_console;
+	read_from_file -> read_kbd;
+	read_from_file -> read_a_line;
+
+}
