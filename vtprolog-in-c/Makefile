@@ -1,4 +1,7 @@
 
+scanner.c: scanner.re
+	re2c -i scanner.re >scanner.c
+
 test: test_vtprolog
 	./test_vtprolog
 
