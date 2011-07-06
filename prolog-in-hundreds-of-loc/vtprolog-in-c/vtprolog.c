@@ -164,25 +164,6 @@ float total_free;
 // ----------------------------------------------------------------------
 */
 
-/*
-// Assumes the input is a null-terminated string, allocated with malloc, passed by reference.
-// Returns (by modifying the input) a string that differs only by any initial spaces or tabs stripped off.
-*/
-void strip_leading_blanks(char** s)
-{
-  int i;
-  char* temp;
- 
-  i= 0;
-  while ((*s)[i] == ' ' || (*s)[i] == tab) {
-    i++;
-  }
-  temp= strdup((*s)+i); 
-  free(*s);
-  *s= temp;
-}
-/* strip_leading_blanks */
-
 void vtprolog_toupper(char* s)
 /* converts s to upper case */
 {
@@ -713,7 +694,15 @@ void get_token(string132 t_line)
 //   contain embedded spaces if they are surrounded by quote marks.
 */
 {
-  strip_leading_blanks(&t_line);
+  {
+    int i;
+    char* temp;
+ 
+    for (i= 0; t_line[i] == ' ' || t_line[i] == tab; ++i); /* note empty loop body */
+    temp= strdup(t_line + i);
+    free(t_line);
+    t_line= temp;
+  }
   if (strlen(t_line) > 0) {
     if (strncmp(t_line, "(*", 2) == 0) {
       comment(t_line);
