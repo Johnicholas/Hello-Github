@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h> // for exit
 #include <string.h>
+#include "new_vtprolog_parser.h"
 
 /*!max:re2c */
 #define BSIZE 128
@@ -71,10 +72,12 @@ int scan(FILE* fp)
 {
     int res= 0;
     Scanner s;
+    void* parser;
 
     assert(fp);
     s.fp= fp;
     fill(&s, 0);
+    parser= ParseAlloc( malloc );
     while (1)
     {
         s.tok= s.cur;
@@ -83,25 +86,34 @@ int scan(FILE* fp)
           re2c:indent:top    = 2;
           re2c:yyfill:enable = 0;
 
-          whitespace = [ \t]+ ;
+          whitespace = [ \t\n]+ ;
+	  
           lowerid = [a-z][a-zA-Z0-9_]* ;
           upperid = [A-Z_][a-zA-Z0-9_]* ;
 
           whitespace	{ continue; }
           '(' '*'	{ goto comment; }
 
-          '.'	{ printf("period\n"); continue; }
-          ':-'	{ printf("implies\n"); continue; }
-          '?-'	{ printf("begin_query\n"); continue; }
-          '@'	{ printf("at\n"); continue; }
-          ','	{ printf("comma\n"); continue; }
-          'exit'	{ printf("exit\n"); continue; }
-          lowerid	{ printf("constant(%.*s)\n", s.cur - s.tok, s.tok); continue; }
-          upperid	{ printf("variable(%.*s)\n", s.cur - s.tok, s.tok); continue; }
-          '('			     { printf("open paren\n"); continue; }
-          ')'			     { printf("close paren\n"); continue; }
+          '.'	{ Parse(parser, PERIOD, NULL); continue; }
+          ':-'	{ Parse(parser, IMPLIED_BY, NULL); continue; }
+          '?-'	{ Parse(parser, BEGIN_QUERY, NULL); continue; }
+          '@'	{ Parse(parser, INCLUDE, NULL); continue; }
+          ','	{ Parse(parser, COMMA, NULL); continue; }
+          'exit'	{ Parse(parser, EXIT, NULL); continue; }
+          lowerid	{ 
+	  		// printf("constant(%.*s)\n", s.cur - s.tok, s.tok); 
+	  		Parse(parser, LOWER_ID, NULL);
+			continue;
+			}
+          upperid	{
+	  		// printf("variable(%.*s)\n", s.cur - s.tok, s.tok);
+			Parse(parser, UPPER_ID, NULL);
+			continue;
+			}
+          '('	{ Parse(parser, OPEN_PAREN, NULL); continue; }
+          ')'	{ Parse(parser, CLOSE_PAREN, NULL); continue; }
 
-          .				     { assert(0); exit(1); }
+      	  . { break; }
         */
 comment:
         s.tok= s.cur;
@@ -110,6 +122,8 @@ comment:
           [^] { goto comment; }
         */
     }
+    Parse(parser, 0, NULL);
+    ParseFree(parser, free);
 
     return res;
 }

@@ -174,7 +174,7 @@ void strip_leading_blanks(char** s)
 {
   int i;
   char* temp;
-
+ 
   i= 0;
   while ((*s)[i] == ' ' || (*s)[i] == tab) {
     i++;
@@ -1196,12 +1196,11 @@ void compile(text_file source)
 	    q= tail(list2);
 	    unified= TRUE;
 	    new_environ= environ;
-	    while (p != NULL && unified)
-	      {
-		unified= unified && unify(cons(head(p), NULL), cons(head(q), NULL), new_environ, new_environ);
-		p= tail(p);
-		q= tail(q);
-	      }
+	    while (p != NULL && unified) {
+	      unified= unified && unify(cons(head(p), NULL), cons(head(q), NULL), new_environ, new_environ);
+	      p= tail(p);
+	      q= tail(q);
+	    }
 	    if (!unified)
 	      fail();
 	  }
