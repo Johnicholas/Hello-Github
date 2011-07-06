@@ -170,11 +170,7 @@ node_ptr head(node_ptr list)
 // if the list is empty, returns NULL.
 */
 {
-  if (list == NULL) {
-    return NULL;
-  } else {
-    return list->u.cons_node.head_ptr;
-  }
+  return list ? list->u.cons_node.head_ptr : NULL;
 }
 /* head */
 
@@ -185,14 +181,11 @@ node_ptr tail(node_ptr list)
 //        tail( ((a b) c d) ) points to the list (c d) .
 */
 {
-  if (list == NULL) {
-    return NULL;
-  } else {
-    switch (list->tag) {
-    case CONS_NODE: return list->u.cons_node.tail_ptr;
-    case FREE_NODE: return list->u.free_node.next_free;
-    default: return NULL;
-    }
+  if (list == NULL) return NULL;
+  switch (list->tag) {
+  case CONS_NODE: return list->u.cons_node.tail_ptr;
+  case FREE_NODE: return list->u.free_node.next_free;
+  default: return NULL;
   }
 }
 /* tail */
@@ -203,24 +196,20 @@ char* string_val(node_ptr list)
 //   node, it returns a string representing that number.
 */
 {
-  if (list == NULL)
-    return "";
-  else 
-    switch (list->tag) {
-    case CONSTANT: return list->u.constant.string_data; break;
-    case VARIABLE: return list->u.variable.string_data; break;
-    case FUNC: return list->u.func.string_data; break;
-    default: return ""; break;
-    }
+  if (list == NULL) return "";
+  switch (list->tag) {
+  case CONSTANT: return list->u.constant.string_data; break;
+  case VARIABLE: return list->u.variable.string_data; break;
+  case FUNC: return list->u.func.string_data; break;
+  default: return ""; break;
+  }
 }
 /* string_val */
 
 node_type tag_value(node_ptr list)
 /* returns the value of the tag for a node. */
 {
-  if (list == NULL)
-    return FREE_NODE;
-  else return list->tag;
+  return list ? list->tag : FREE_NODE;
 }
 /* tag_value */
 
@@ -232,22 +221,17 @@ void print_list(node_ptr list)
 {
   node_ptr p;
 
-  if (list != NULL) {
-    switch (list->tag) {
-    case CONSTANT: /* fall through */
-    case FUNC: /* fall through */
-    case VARIABLE: printf("%s ", string_val(list)); break;
-    case CONS_NODE:
-      printf("(");
-      p= list;
-      while (p != NULL) {
-	print_list(head(p));
-	p= tail(p);
-      }
-      printf(") ");
-      break;
-    case FREE_NODE: assert(0); break;
-    }
+  if (list == NULL) return;
+  switch (list->tag) {
+  case CONSTANT: /* fall through */
+  case FUNC: /* fall through */
+  case VARIABLE: printf("%s ", string_val(list)); break;
+  case CONS_NODE:
+    printf("(");
+    for (p= list; p; p= tail(p)) print_list(head(p));
+    printf(") ");
+    break;
+  case FREE_NODE: assert(0); break;
   }
 }
 /* print_list */
@@ -262,16 +246,16 @@ void get_from_free(node_ptr list, counter blks, boolean allocated, node_ptr* p)
 //  requested, the block is shrunk by the requested amount.
 */
 {
-  if (list != NULL) {
-    if (list->u.free_node.block_cnt >= (blks - 1)) {
-      *p= list;
-      if (list->u.free_node.block_cnt == blks - 1)
-	list= list->u.free_node.next_free;
-      else list->u.free_node.block_cnt= list->u.free_node.block_cnt - blks;
-      allocated= TRUE;
-      total_free= total_free - (blks * 8.0);
-    } else get_from_free(list->u.free_node.next_free, blks, allocated, p);
-  }
+  if (list == NULL) return;
+
+  if (list->u.free_node.block_cnt >= (blks - 1)) {
+    *p= list;
+    if (list->u.free_node.block_cnt == blks - 1)
+      list= list->u.free_node.next_free;
+    else list->u.free_node.block_cnt= list->u.free_node.block_cnt - blks;
+    allocated= TRUE;
+    total_free= total_free - (blks * 8.0);
+  } else get_from_free(list->u.free_node.next_free, blks, allocated, p);
 }
 /* get_from_free */
   
@@ -289,7 +273,7 @@ void get_memory(node_ptr* p, counter size)
   allocated= FALSE;
   get_from_free(vtprolog_free, blks, allocated, p);
   if (!allocated)
-    p= malloc(blks * 8);
+    *p= malloc(blks * 8);
 }
 /* get_memory */
 
@@ -343,10 +327,7 @@ node_ptr append_list(node_ptr list1, node_ptr list2)
 //   rewrite it.
 */
 {
-  if (list1 == NULL)
-    return list2;
-  else
-    return cons(head(list1), append_list(tail(list1), list2));
+  return list1 ? cons(head(list1), append_list(tail(list1), list2)) : list2;
 }
 /* append_list */
 
@@ -356,20 +337,10 @@ counter list_length(node_ptr list)
 //   Note - both (A B C) and ( (A B) C D) have length 3.
 */
 {
-  if (list == NULL)
-    return 0;
-  else
-    return 1 + list_length(list->u.cons_node.tail_ptr);
+  return list ? 1 + list_length(list->u.cons_node.tail_ptr) : 0;
 }
 /* list_length */
 
-boolean lower(node_ptr p1, node_ptr p2)
-/* returns true if p1 points to a lower memory address than p2 */
-{
-  return p1 < p2;
-}
-/* lower */
-  
 void mark(node_ptr list)
 /*
 // Mark the blocks on list as being in use. Since a node may be on several
@@ -401,10 +372,10 @@ void unmark_mem()
   counter string_base, node_allocation;
     
   string_base= sizeof(node_type) + sizeof(boolean); /* Johnicholas says: I think I've seen this somewhere - duplication? */
-  p= initial_heap;
   node_allocation= sizeof(struct node);
+  p= initial_heap;
     
-  while (lower(p, HeapPtr)) {
+  while (p < HeapPtr) {
     p->in_use= FALSE;
     switch (p->tag) {
     case CONS_NODE: 
@@ -458,7 +429,7 @@ void do_release(node_ptr heap_top)
   counter string_allocation, block_allocation;
       
   p= initial_heap;
-  while (lower(p, heap_top)) {
+  while (p < heap_top) {
     switch (p->tag) {
     case CONS_NODE: 
       if (!p->in_use) {
@@ -519,7 +490,7 @@ void collect_garbage()
   unmark_mem();
   mark(saved_list);
   release_mem();
-  /* printf("%c", back_space); // TODO(johnicholas.hines@gmail.com): What is the goal here? */
+  /* printf("%c", back_space); Maybe an ansi escape sequence would be appropriate here? */
   
   /* ClrEol ; // TODO(johnicholas.hines@gmail.com): Maybe an ansi escape sequence would be appropriate here? */
 
@@ -609,8 +580,7 @@ void read_from_file(text_file f)
       memmove(line, strstr("*)", line) + sizeof("*)"), line + sizeof(line) - strstr("*)", line)); /* Was: delete(line, 1, pos("*)", line) + 1); The intent here was to chop line to be shorter */
       in_comment= FALSE;
     }
-  }
-  else read_from_file(f);
+  } else read_from_file(f);
   strncpy(saved_line, line, sizeof(saved_line));
 }
 /* read_from_file */
@@ -628,8 +598,7 @@ void get_word(string132 t_line) {
   len= strlen(t_line);
   /* TODO(johnicholas.hines@gmail.com): This is a bit crazy; replace with
   // strtok or getdelim if we can't just put in a new lexer. */
-  for (cn= 0; cn < len && strchr(delim_set, t_line[cn]) == NULL; ++cn)
-    ; /* deliberately empty loop body */
+  for (cn= 0; cn < len && strchr(delim_set, t_line[cn]) == NULL; ++cn); /* deliberately empty loop body */
   strncpy(token, t_line, cn);
   memmove(t_line, t_line + cn, sizeof(t_line) - cn); /* Was: delete(t_line, 1, cn-1);  The intent here was to chop t_line to be shorter */
 }
@@ -727,43 +696,38 @@ node_ptr look_up(string80 var_str, node_ptr environ)
 //      return NIL
 */
 {
-  boolean found;
   node_ptr p;
   
-  p= environ;
-  found= FALSE;
-  while (p != NULL && ! found) {
-    if (strcmp(var_str, string_val(head(head(p)))) == 0) {
-      found= TRUE;
+  for (p= environ; p; p= tail(p)) {
+    if (strcmp(var_str, string_val(head(head(p)))) == 0)
       return tail(head(p));
-    } else p= tail(p);
   }
-  return found ? p : NULL;
+  return NULL;
 }
 /* look_up */
 
 /* forward declarations */
 void print_variable(char* to_print, node_ptr env);
 void print_functor(node_ptr to_print, node_ptr env);
-
 void print_components(node_ptr p, node_ptr env)
+
 /*
 // Print the components of a functor. These may be variables or
 // other functors, so call the approriate routines to print them.
 */
 {
-  if (p != NULL) {
-    switch (tag_value(head(p))) {
-    case CONSTANT: printf("%s ", string_val(head(p))); break;
-    case VARIABLE: print_variable(string_val(head(p)), env); break;
-    case CONS_NODE: print_functor(head(p), env); break;
-    case FUNC: /* fall through */
-    case FREE_NODE: assert(0); break;
-    }
-    if (tail(p) != NULL) {
-      printf(",");
-      print_components(tail(p), env);
-    }
+  if (p == NULL) return;
+
+  switch (tag_value(head(p))) {
+  case CONSTANT: printf("%s ", string_val(head(p))); break;
+  case VARIABLE: print_variable(string_val(head(p)), env); break;
+  case CONS_NODE: print_functor(head(p), env); break;
+  case FUNC: /* fall through */
+  case FREE_NODE: assert(0); break;
+  }
+  if (tail(p) != NULL) {
+    printf(",");
+    print_components(tail(p), env);
   }
 }
 /* print_components */
@@ -771,13 +735,13 @@ void print_components(node_ptr p, node_ptr env)
 void print_functor(node_ptr l, node_ptr env)
 /* The variable was bound to a functor. Print the functor and its components. */
 {
-  if (l != NULL) {
-    printf("%s", string_val(head(l)));
-    if (tail(l) != NULL) {
-      printf("(");
-      print_components(tail(l), env);
-      printf(")");
-    }
+  if (l == NULL) return;
+
+  printf("%s", string_val(head(l)));
+  if (tail(l) != NULL) {
+    printf("(");
+    print_components(tail(l), env);
+    printf(")");
   }
 }
 /* print_functor */
@@ -792,16 +756,14 @@ void print_variable(char* var_str, node_ptr env)
   node_ptr var_ptr;
 	    
   var_ptr= look_up(var_str, env);
-  if (var_ptr != NULL) {
-    switch (tag_value(head(var_ptr))) {
-    case CONSTANT: printf("%s ", string_val(head(var_ptr))); break;
-    case VARIABLE: print_variable(string_val(head(var_ptr)), env); break;
-    case CONS_NODE: print_functor(head(var_ptr), env); break;
-    case FUNC: /* fall through */
-    case FREE_NODE: assert(0); break;
-    }
-  } else {
-    printf("_ ");
+  if (var_ptr == NULL) printf("_ ");
+
+  switch (tag_value(head(var_ptr))) {
+  case CONSTANT: printf("%s ", string_val(head(var_ptr))); break;
+  case VARIABLE: print_variable(string_val(head(var_ptr)), env); break;
+  case CONS_NODE: print_functor(head(var_ptr), env); break;
+  case FUNC: /* fall through */
+  case FREE_NODE: assert(0); break;
   }
 }
 /* print_variable */
@@ -815,25 +777,24 @@ void print_bindings(node_ptr list, node_ptr env, boolean printed)
 //     is so that variables bound first are printed first.
 */
 {	  
-  if (list != NULL) {
-    print_bindings(tail(list), env, printed);
-    if (strchr(string_val(head(head(list))), '#') == NULL) {
-      printed= TRUE;
-      printf("\n");
-      printf("%s = ", string_val(head(head(list))));
-      switch (tag_value(head(tail(head(list))))) {
-      case CONSTANT: printf("%s ", string_val(head(tail(head(list))))); break;
-      case VARIABLE: print_variable(string_val(head(tail(head(list)))), env); break;
-      case CONS_NODE: print_functor(head(tail(head(list))), env); break;
-      case FUNC: /* fall through */
-      case FREE_NODE: assert(0); break;
-      }
+  if (list == NULL) return;
+
+  print_bindings(tail(list), env, printed);
+  if (strchr(string_val(head(head(list))), '#') == NULL) {
+    printed= TRUE;
+    printf("\n");
+    printf("%s = ", string_val(head(head(list))));
+    switch (tag_value(head(tail(head(list))))) {
+    case CONSTANT: printf("%s ", string_val(head(tail(head(list))))); break;
+    case VARIABLE: print_variable(string_val(head(tail(head(list)))), env); break;
+    case CONS_NODE: print_functor(head(tail(head(list))), env); break;
+    case FUNC: /* fall through */
+    case FREE_NODE: assert(0); break;
     }
   }
 }
 /* print_bindings */
-	
-/* TODO(johnicholas.hines@gmail.com): maybe source should be passed by ref? */
+
 void runout(text_file source)
 {
   while (strcmp(token, ".") != 0 && strcmp(token, eof_mark) != 0) 
@@ -908,8 +869,13 @@ void varbl(node_ptr v_ptr, text_file source)
 /* forward declaration */
 void functor(node_ptr t_ptr, string80 t_token, text_file source);
 
+/* TODO: t_ptr should be passed by reference. */
 void term(node_ptr t_ptr, text_file source)
-/* Process a single term. The new term is appended to t_ptr. */
+/* Process a single term. The new term is appended to t_ptr.
+//
+// Here, the CFG production we are modeling is:
+// term ::= VARBL | ' quoted_str | ID ( functor | ID .
+*/
 {
   string80 t_token;
   
@@ -932,12 +898,14 @@ void term(node_ptr t_ptr, text_file source)
 }
 /* term */
 
-/* TODO(johnicholas.hines@gmail.com): cm_ptr should be passed by ref */
-void components(node_ptr cm_ptr, text_file source)
+void components(node_ptr* cm_ptr, text_file source)
 /*
 // Process the components of the functor. The components are terms
 //      seperated by commas. On exit, cm_ptr points to the list of
 //      components.
+//
+// Here, the CFG component we are modeling is:
+// components ::= term | term , components .
 */
 {
   term(cm_ptr, source);
@@ -948,13 +916,15 @@ void components(node_ptr cm_ptr, text_file source)
 }
 /* components */
 
-/* TODO(johnicholas.hines@gmail.com): f_ptr ought to be passed by reference */
-void functor(node_ptr f_ptr, string80 func_token, text_file source)
+void functor(node_ptr* f_ptr, string80 func_token, text_file source)
 /*
 // The current goal is a functor. This routine allocates a node
 //   to store the functor and then processes the components of the
 //   functor. On exit, f_ptr points to the list containing the functor
 //   and its components. func_token contains the functor name.
+//
+// Here, the CFG production that we are modeling is:
+// functor ::= components ) .
 */
 {
   node_ptr c_ptr;
@@ -970,43 +940,47 @@ void functor(node_ptr f_ptr, string80 func_token, text_file source)
 /* functor */
 
 /* TODO(johnicholas.hines@gmail.com): l_ptr ought to be passed by reference */
-void goal(node_ptr l_ptr, text_file source)
+void goal(node_ptr* l_ptr, text_file source)
 /*
 // Read a goal. The new goal is appended to l_ptr. Each goal is appended
 //    to l_ptr as a list. Thus, the sentence 'likes(john,X) :- likes(X,wine) .'
 //    becomes the list ( (likes john X) (likes X wine) )
+//
+// goal ::= quoted_str | ID ( functor | ID .
 */
 {
   string80 goal_token;
   
-  if (islower(token[0]) || token[0] == quote_char) {
-    if (token[0] == quote_char) {
-      l_ptr= append_list(l_ptr,
-			 cons(cons(alloc_str(CONSTANT,
-					     strndup(token+1, sizeof(token) - 2)), NULL), NULL));
-      scan(source, token);
-    } else {
-      strncpy(goal_token, token, sizeof(goal_token));
-      scan(source, token);
-      if (strcmp(token, "(") == 0) {
-	functor(l_ptr, goal_token, source);
-      } else 
-	l_ptr= append_list(l_ptr,
-			   cons(cons(alloc_str(CONSTANT, goal_token),
-				     NULL), NULL));
-    }
-  } else {
+  if (!islower(token[0]) && token[0] != quote_char) {
     error("A goal must begin with 'a .. z' or be a quoted string.", source);
+    return;
+  }
+  if (token[0] == quote_char) {
+    *l_ptr= append_list(l_ptr,
+			cons(cons(alloc_str(CONSTANT,
+					    strndup(token+1, sizeof(token) - 2)), NULL), NULL));
+    scan(source, token);
+  } else {
+    strncpy(goal_token, token, sizeof(goal_token));
+    scan(source, token);
+    if (strcmp(token, "(") == 0) {
+      functor(l_ptr, goal_token, source);
+    } else 
+      *l_ptr= append_list(l_ptr,
+			  cons(cons(alloc_str(CONSTANT, goal_token),
+				    NULL), NULL));
   }
 }
 /* goal */
   
 /* TODO(johnicholas.hines@gmail.com): t_ptr should be passed by reference */
-void tail_list(node_ptr t_ptr, text_file source)
+void tail_list(node_ptr* t_ptr, text_file source)
 /*
 // Process the tail of a rule. Since the a query is syntactically identical
 //    to the tail of a rule, this routine is used to compile queries.
 //    On exit, t_ptr points to the list containing the tail.
+//
+// tail_list ::= goal | goal , tail_list .
 */
 {
   goal(t_ptr, source);
@@ -1021,6 +995,8 @@ void rule(text_file source)
 /*
 // Procees a rule, actually any sentence. If no error occurs the
 //    new sentence is appended to the data base.
+//
+// rule ::= head_list | head_list :- tail_list . 
 */
 {
   node_ptr r_ptr;
@@ -1033,10 +1009,8 @@ void rule(text_file source)
     scan(source, token);
     tail_list(r_ptr, source);
   }
-  if (strcmp(token, ".") != 0)
-    error("'.' expected.", source);
-  if (!error_flag)
-    data_base= append_list(data_base, cons(r_ptr, NULL));
+  if (strcmp(token, ".") != 0) error("'.' expected.", source);
+  if (!error_flag) data_base= append_list(data_base, cons(r_ptr, NULL));
 }
 /* rule */
 
@@ -1071,19 +1045,19 @@ node_ptr copy_list(node_ptr to_copy, counter copy_level);
 /* TODO(johnicholas.hines@gmail.com): to_list should be passed by reference */
 void list_copy(node_ptr from_list, node_ptr to_list, char* level_str, counter copy_level)
 {
-  if (from_list != NULL) {
-    switch (from_list->tag) {
-    case VARIABLE:
-      to_list= alloc_str(VARIABLE, strcat(from_list->u.constant.string_data, level_str));
-      break;
-    case FUNC: /* fall through */
-    case CONSTANT: to_list= from_list; break;
-    case CONS_NODE:
-      list_copy(tail(from_list), to_list, level_str, copy_level);
-      to_list= cons(copy_list(head(from_list), copy_level), to_list);
-      break;
-    case FREE_NODE: assert(0); break;
-    }
+  if (from_list == NULL) return;
+
+  switch (from_list->tag) {
+  case VARIABLE:
+    to_list= alloc_str(VARIABLE, strcat(from_list->u.constant.string_data, level_str));
+    break;
+  case FUNC: /* fall through */
+  case CONSTANT: to_list= from_list; break;
+  case CONS_NODE:
+    list_copy(tail(from_list), to_list, level_str, copy_level);
+    to_list= cons(copy_list(head(from_list), copy_level), to_list);
+    break;
+  case FREE_NODE: assert(0); break;
   }
 }
 /* list_copy */
@@ -1107,19 +1081,15 @@ void make_binding(node_ptr l1, node_ptr l2, node_ptr* new_environ)
 //       l1 points to the variable and l2 points to its binding.
 */
 {
-  if (string_val(head(l1))[0] != '_') {
-    *new_environ= cons(cons(head(l1), l2), environ);
-  } else {
-    *new_environ= environ;
-  }
+  *new_environ= (string_val(head(l1))[0] == '_') ? environ : cons(cons(head(l1), l2), environ ;
 }
 /* make_binding */
 
 void fail(boolean* unify_return_value, node_ptr* new_environ, node_ptr environ)
 /* Unification failed. */
 {
-  unify_return_value= FALSE;
-  new_environ= environ;
+  *unify_return_value= FALSE;
+  *new_environ= environ;
 }
 /* fail */
 	
@@ -1149,7 +1119,7 @@ void unify_constant()
     if (var_ptr == NULL) {
       make_binding(list2, list1, &environ);
     } else {
-      unify_return_value= unify(list1, var_ptr, environ, new_environ);
+      *unify_return_value= unify(list1, var_ptr, environ, new_environ);
     }
     break;
   case CONS_NODE: /* fall through */
@@ -1321,17 +1291,16 @@ void solve(node_ptr list, node_ptr env, counter level, boolean* solved)
   saved_list= cons(list, cons(env, saved_list));
   if (list == NULL) {
     check_continue(env, solved);
-  } else {
-    p= data_base;
-    while (p != NULL && !solved) {
-      test_memory();
-      if (unify(copy_list(head(head(p)), level), head(list), env, new_env)) {
-	solve(append_list(copy_list(tail(head(p)), level), tail(list)), new_env, level + 1, solved);
-	p= tail(p);
-      }
-    }
-    saved_list= tail(tail(saved_list));
+    return;
   }
+  for (p= data_base; p != NULL && !solved; ) {
+    test_memory();
+    if (unify(copy_list(head(head(p)), level), head(list), env, new_env)) {
+      solve(append_list(copy_list(tail(head(p)), level), tail(list)), new_env, level + 1, solved);
+      p= tail(p);
+    }
+  }
+  saved_list= tail(tail(saved_list));
 }
 /* solve */
     
