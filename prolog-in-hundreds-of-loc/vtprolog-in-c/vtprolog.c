@@ -917,7 +917,7 @@ void term(node_ptr t_ptr, text_file source)
     varbl(t_ptr, source);
   } else if (token[0] == quote_char) {
     quoted_str(t_ptr, source);
-  } else if (isalpha(token[0])) {
+  } else if (isalnum(token[0])) {
     strncpy(t_token, token, sizeof(t_token));
     scan(source, token);
     if (strcmp(token, "(") == 0) {
