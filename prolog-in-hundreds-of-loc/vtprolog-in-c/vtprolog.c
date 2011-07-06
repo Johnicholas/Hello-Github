@@ -600,7 +600,7 @@ void get_word(string132 t_line) {
   // strtok or getdelim if we can't just put in a new lexer. */
   for (cn= 0; cn < len && strchr(delim_set, t_line[cn]) == NULL; ++cn); /* deliberately empty loop body */
   strncpy(token, t_line, cn);
-  memmove(t_line, t_line + cn, sizeof(t_line) - cn); /* Was: delete(t_line, 1, cn-1);  The intent here was to chop t_line to be shorter */
+  memmove(t_line, t_line + cn, sizeof(t_line) - cn); /* chop t_line to be shorter */
 }
 /* get_word */
 
