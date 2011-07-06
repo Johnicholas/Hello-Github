@@ -164,19 +164,6 @@ float total_free;
 // ----------------------------------------------------------------------
 */
 
-int vtprolog_open(text_file* f, const char* f_name)
-/*
-// open a file - returns true if the file exists and was opened properly
-//   f      - a text_file, passed by reference
-//   f_name - external name of the file
-*/
-{
-  assert(f);
-  *f= fopen(f_name, "r");
-  return (*f != NULL);
-}
-/* vtprolog_open */
-
 boolean is_console(text_file f)
 /* return true if f is open on the system console */
 {
@@ -1451,7 +1438,7 @@ void read_new_file(text_file source)
   } else {
     strncpy(f_name, token, sizeof(f_name));
   }
-  if (vtprolog_open(&new_file, f_name)) {
+  if (new_file= fopen(f_name, "r"))
     strncpy(old_line, line, sizeof(old_line));
     strncpy(old_save, saved_line, sizeof(old_save));
     line[0]= '\0';
