@@ -164,12 +164,6 @@ float total_free;
 // ----------------------------------------------------------------------
 */
 
-boolean is_console(text_file f)
-/* return true if f is open on the system console */
-{
-  return isatty(fileno(f));
-}
-
 /*
 // Assumes the input is a null-terminated string, allocated with malloc, passed by reference.
 // Returns (by modifying the input) a string that differs only by any initial spaces or tabs stripped off.
@@ -649,7 +643,7 @@ void read_from_file(text_file f)
 */
 {
   line[0]= '\0';
-  if (is_console(f))
+  if (isatty(fileno(f)))
     read_kbd(line);
   else read_a_line();
   if (in_comment) {
