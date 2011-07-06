@@ -1,4 +1,4 @@
-1;2790;0c/*
+/*
 // Copyright 1986 - MicroExpert Systems
 // Box 430 R.D. 2
 // Nassau, NY 12123
@@ -163,29 +163,6 @@ float total_free;
 //      Utility Routines
 // ----------------------------------------------------------------------
 */
-
-void vtprolog_toupper(char* s)
-/* converts s to upper case */
-{
-  int i;
-
-  for (i= 0; s[i] != 0; ++i) {
-    s[i]= toupper(s[i]);
-  }
-}
-/* vtprolog_toupper */
-
-boolean is_number(char* s)
-/*
-// checks to see if s contains a legitimate numerical string.
-// It ignores leading blanks.
-*/
-{
-  float num;
-
-  return sscanf(s, " %f", &num) == 1;
-}
-/* is_number */
 
 node_ptr head(node_ptr list)
 /*
@@ -928,18 +905,6 @@ void varbl(node_ptr v_ptr, text_file source)
 }
 /* varbl */
 
-/* TODO(johnicholas.hines@gmail.com): n_ptr ought to be passed by reference */
-void number(node_ptr n_ptr, text_file source)
-/*
-// Numbers are treated as string constants. This isn't particularly
-//        efficent, but it is easy.
-*/
-{
-  n_ptr= append_list(n_ptr, cons(alloc_str(CONSTANT, token), NULL));
-  scan(source, token);
-}
-/* handle_number */
-
 /* forward declaration */
 void functor(node_ptr t_ptr, string80 t_token, text_file source);
 
@@ -952,8 +917,6 @@ void term(node_ptr t_ptr, text_file source)
     varbl(t_ptr, source);
   } else if (token[0] == quote_char) {
     quoted_str(t_ptr, source);
-  } else if (is_number(token)) {
-    number(t_ptr, source);
   } else if (isalpha(token[0])) {
     strncpy(t_token, token, sizeof(t_token));
     scan(source, token);
