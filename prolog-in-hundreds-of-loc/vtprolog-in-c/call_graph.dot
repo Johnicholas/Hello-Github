@@ -54,6 +54,7 @@ digraph
 	//   there are three possibilities - a quoted string, a functor, or a constant.
 	// functor a nonterminal in the grammar, part of goal.
 	//   functor assumes the "foo(" has been parsed, and concentrates on the arguments and the end paren
+	//   functor allocates a "c_ptr" on the stack, and passes it into components by reference
 	// components is a nonterminal in the grammar, part of functor.
 	//   components parses a sequence of terms, separated by commas
 	// term is a nonterminal in the grammar, part of components
@@ -69,20 +70,20 @@ digraph
 	//   at the end of rule parsing, it appends to the database global
 	// head_list is part of the recursive descent compiler, and just delegates to goal
 	// query
-	// solve
 	// look_up is straightforwardly walking a variable through a substitution list
 	// check_continue is part of the REPL - checking whether the user wants another solutioon
 	// print_bindings is printing answers
 	// print_functor, print_variable, print_components are all part of print_bindings
 	// copy_list copies a list  ***and appends the copy level to all variables***
 	// list_copy is copy_list's helper
-	// unify 
 	// make_binding is a standard environment manipulation, I think
-	// fail communicates back to unify using lexical variables, which will be by-reference variables allocated on the stack
+	// unify makes (primarily) its own return value and new_environ lexically available
+	// fail communicates back to unify using lexical variables
 	// unify_constant  unify_func, unify_tail, unify_expr are all part of the double-dispatch architecture of unify
 	// solve makes sure that things won't be garbage collected,
  	//   then walks through the database, trying to find a rule that will unify
 	//   if solve finds a rule that matches, it appends the tail of the rule and recurses
+	//   solve creates new_env on the stack, and passes it by reference into unify, which makes it available lexically
 	// query is part of the recursive descent parser
 	//   after it parses (using tail_list) it calls solve
 	// read_new_file copies globals into locals, delegates (recurses) to compile),

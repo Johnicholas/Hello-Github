@@ -4,6 +4,9 @@
 int cons(int x, int y) { // a fake implementation of cons, for now
     return x + y;
 }
+int append(int x, int y) { // a fake implementation of append, for now
+    return x + y;
+}
 }
 
 %parse_accept {
@@ -18,26 +21,20 @@ fprintf(stderr, "error: parser stack overflow\n");
 
 start ::= document .
 document ::= .
-document ::= document line .
+document ::= line document  .
 line ::= sentence PERIOD . 
-sentence ::= rule .
-sentence ::= query .
-sentence ::= command .
-rule ::= head . // add a null tail and assert the fact into the global database
-rule ::= head IMPLIED_BY tail . // assert the rule into the global database
-query ::= BEGIN_QUERY tail . // solve the query
-command ::= INCLUDE file_name . // tell the lexer to push the new file onto the stack of streams
-command ::= EXIT . // halt, or possibly tell the lexer to halt
+sentence ::= BEGIN_QUERY tail . // tell the machine to solve the query
+sentence ::= INCLUDE file_name . // tell the machine to push the new file onto the stack of streams
+sentence ::= EXIT . // tell the machine to halt
+sentence ::= rule . // tell the machine to assert the rule into the global database
+rule ::= goal . // add a null tail and build a rule abstract syntax tree node
+rule ::= goal IMPLIED_BY tail . // build a rule abstract syntax tree node
+tail ::= goal . // build a singleton list-of-goals abstract syntax tree
+tail(A) ::= tail(B) COMMA goal(C) . { A= append(B, C); }
+goal ::= LOWER_ID . // build a constant abstract syntax tree
+goal ::= UPPER_ID .  // build a variable abstract syntax tree
+goal ::= LOWER_ID OPEN_PAREN component_list CLOSE_PAREN . // build a functor astract syntax tree
+component_list ::= goal . 
+component_list(A) ::= component_list(B) COMMA goal(C). { A= append(B, C); }
 file_name ::= LOWER_ID . 
 file_name ::= UPPER_ID . 
-head ::= goal . 
-tail ::= goal . 
-tail(A) ::= goal(B) COMMA tail(C) . { A= cons(B, C); } // TODO: right recursion. Bad!
-goal ::= constant . 
-goal ::= variable . 
-goal ::= structure . 
-constant ::= LOWER_ID . 
-variable ::= UPPER_ID . 
-structure ::= LOWER_ID OPEN_PAREN component_list CLOSE_PAREN . 
-component_list ::= goal . 
-component_list(A) ::= goal(B) COMMA component_list(C) . { A= cons(B, C); } // TODO: right recursion. Bad!
