@@ -1,128 +1,94 @@
 digraph
 {
-    subgraph cluster_freelist_management {
-        get_memory;
-        free_memory;
-    }
-    subgraph cluster_basic_list_operations {
-        head;
-        tail;
-        cons;
-    }
-    subgraph cluster_garbage_collection {
-        test_memory;
-        collect_garbage;
-        unmark_mem;
-        mark;
-        release_mem;
-        do_release;
-    }
+	line;
+	saved_line;
+	token;
+	source_file;
+	error_flag;
+	in_comment;
+	data_base;
+	free;
+	saved_list;
 
-    subgraph cluster_recursive_descent {
-        query;
-        tail_list;
-        quoted_str;
-        rule;
-    }
+	// noise is not used
 
-    main -> initialize;
-    main -> compile;
-    compile -> scan;
-    compile -> query;
-    compile -> read_new_file;
-    compile -> vtprolog_toupper;
-    compile -> do_exit;
-    compile -> rule;
-    scan -> get_token;
-    scan -> scan;
-    scan -> read_from_file;
-    get_token -> strip_leading_blanks;
-    get_token -> comment -> get_token;
-    get_token -> get_quote;
-    get_token -> get_word;
-    read_from_file -> is_console;
-    read_from_file -> read_kbd;
-    read_from_file -> read_a_line;
-
-    do_exit -> scan;
-    do_exit -> error;
-    error -> runout;
-    error -> wait;
-    read_new_file -> compile;
-    read_new_file -> scan;
-    read_new_file -> error;
-
-    solve -> cons;
-    solve -> head;
-    solve -> tail;
-    solve -> check_continue;
-    solve -> test_memory;
-    solve -> unify;
-    solve -> copy_list;
-    solve -> append_list;
-    solve -> solve;
-    unify -> unify_constant;
-    unify -> look_up;
-    unify -> string_val;
-    unify -> head;
-    unify -> make_binding;
-    unify -> unify_func;
-    unify -> unify_expr;
-    unify_expr -> tag_value;
-    unify_expr -> fail;
-    unify_expr -> look_up;
-    unify_expr -> string_val;
-    unify_expr -> head;
-    unify_expr -> make_binding;
-    unify_expr -> unify;
-    unify_expr -> tail;
-    unify_func -> tag_value;
-    unify_func -> head;
-    unify_func -> fail;
-    unify_func -> look_up;
-    unify_func -> make_binding;
-    unify_func -> unify;
-    unify_func -> string_val;
-    unify_func -> tail;
-    unify_func -> list_length;
-    unify_func -> unify_tail;
-    unify_tail -> tail;
-    unify_tail -> unify;
-    unify_tail -> cons;
-    unify_tail -> head;
-    unify_constant -> tag_value;
-    unify_constant -> head;
-    unify_constant -> string_val;
-    unify_constant -> look_up;
-    unify_constant -> make_binding;
-    unify_constant -> unify;
-    unify_constant -> fail;
-    make_binding -> string_val;
-    make_binding -> head;
-    make_binding -> cons;
-
-
-    alloc_str -> get_memory;
-    get_memory -> get_from_free;
-    cons -> get_memory;
-    test_memory -> collect_garbage;
-    collect_garbage -> unmark_mem;
-    collect_garbage -> mark;
-    collect_garbage -> release_mem;
-    mark -> mark;
-    mark -> head;
-    mark -> tail;
-    release_mem -> do_release;
-    do_release -> free_memory;
-
-    query -> tail_list;
-    query -> error;
-    query -> cons;
-    query -> solve;
-    quoted_str -> alloc_str;
-    rule;
-    tail_list -> goal;
-    tail_list -> scan;
-    tail_list -> tail_list;
-
+	// open should be inlined
+	// is_console should be inlined
+	// strip_leading_blanks should be slain
+	// strip_trailing_blanks should be slain
+	// toupper isn't worth it; just make EXIT and exit work, don't worry about ExIt
+	// is_number should be removed
+	// head is from the lisp runtime
+	// tail is from the lisp runtime
+	// allocation_size is irrelevant
+	// node_size is irrelevant
+	// normalize is irrelevant
+	// string_val is an accessor for node
+	// tag_value is an accessor for node
+	// print_list is unused, just for debugging
+	// get_memory is part of the freelist management
+	// get_from_free is get_memory's helper
+	// alloc_str is part node constructor, and part memory management
+	// cons is from the lisp runtime.
+	// append_list is straight out of lisp.
+	// list_length is straight out of lisp.
+	// collect_garbage is nearly irrelevant.
+	// lower is irrelevant
+	// mark, unmark, release_mem are nearly irrelevant.
+	// free_memory is part of the freelist management
+	// do_release is nearly irrelevant
+	// test_memory is nearly irrelevant
+	// wait is support for the interactive repl
+	// read_kbd is irrelevant - we can share code interactive / noninteractive reading
+	// read_from_file handles comments, and manages line and saved_line
+	// read_a_line handles the eof_mark
+	// get_token isn't doing anything terribly tricky, just part of the lexer
+	// get_word is part of get_token
+	// comment is part of get_token (but wasn't that handled already by read_from_file?)
+	// get_quote is part of get_token (do we really have to support quoted strings?)
+	// scan is the outer interface to the lexer,
+	// compile
+	// error uses saved_line and line to point a caret to where the error occurred
+	// runout could be inlined, it's not doing anything tricky.
+	// goal is a nonterminal in the grammar
+	//   there are three possibilities - a quoted string, a functor, or a constant.
+	// functor a nonterminal in the grammar, part of goal.
+	//   functor assumes the "foo(" has been parsed, and concentrates on the arguments and the end paren
+	// components is a nonterminal in the grammar, part of functor.
+	//   components parses a sequence of terms, separated by commas
+	// term is a nonterminal in the grammar, part of components
+	//   term inspects the first characater and delegates to some smaller things (varbl, quoted_str, number)
+	//   or tosses it back up to scan and functor
+	// quoted_str is a nonterminal in the grammar, part of term
+	// varbl is a nonterminal in the grammar, part of term (Don't tolerate abbreviations or misspellings!)
+	// number should be removed - they're effectively just constants
+	// tail_list is part of the recursive descent compiler.
+	//   captures a nonempty sequence of goals separated by commas.
+	// rule is part of the recursive descent compiler.
+	//   rule parses facts and rules (that is, whether or not they have tails).
+	//   at the end of rule parsing, it appends to the database global
+	// head_list is part of the recursive descent compiler, and just delegates to goal
+	// query
+	// solve
+	// look_up is straightforwardly walking a variable through a substitution list
+	// check_continue is part of the REPL - checking whether the user wants another solutioon
+	// print_bindings is printing answers
+	// print_functor, print_variable, print_components are all part of print_bindings
+	// copy_list copies a list  ***and appends the copy level to all variables***
+	// list_copy is copy_list's helper
+	// unify 
+	// make_binding is a standard environment manipulation, I think
+	// fail communicates back to unify using lexical variables, which will be by-reference variables allocated on the stack
+	// unify_constant  unify_func, unify_tail, unify_expr are all part of the double-dispatch architecture of unify
+	// solve makes sure that things won't be garbage collected,
+ 	//   then walks through the database, trying to find a rule that will unify
+	//   if solve finds a rule that matches, it appends the tail of the rule and recurses
+	// query is part of the recursive descent parser
+	//   after it parses (using tail_list) it calls solve
+	// read_new_file copies globals into locals, delegates (recurses) to compile),
+	//   then puts the globals back
+	// do_exit handles the EXIT command
+	// compile uses the first token to decide what action to do - a query, include, exit, or rule.
+	// initialize sets up globals
+	// main calls initialize and then compile, starting compile on stdin
 }
