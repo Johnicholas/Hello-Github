@@ -47,8 +47,8 @@ int fill(Scanner* s, int len)
         int cnt= s->tok - s->buffer;
         if (cnt > 0)
         {
-            // TODO(johnicholas.hines@gmail.com): This copying backward seems crazy.
-            memcpy(s->buffer, s->tok, s->lim - s->tok);
+            // TODO(johnicholas.hines@gmail.com): This looks unnecessarily slow.
+            memmove(s->buffer, s->tok, s->lim - s->tok);
             s->tok -= cnt;
             s->cur -= cnt;
             s->lim -= cnt;

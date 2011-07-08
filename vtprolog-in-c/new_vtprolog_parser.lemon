@@ -1,6 +1,9 @@
 %include {
 #include <stdio.h>
-#include <stdlib.h> // for memset
+
+int cons(int x, int y) { // a fake implementation of cons, for now
+    return x + y;
+}
 }
 
 %parse_accept {
@@ -11,28 +14,30 @@ printf("parsing complete\n");
 fprintf(stderr, "error: parser stack overflow\n");
 }
 
+%token_type int
+
 start ::= document .
-document ::= . { printf("parsing empty document\n"); }
+document ::= .
 document ::= document line .
-line ::= sentence PERIOD . { printf("parsing line\n"); }
-sentence ::= rule . { printf("parsing sentence->rule\n"); }
-sentence ::= query . { printf("parsing sentence->query\n"); }
-sentence ::= command . { printf("parsing sentence->command\n"); }
-rule ::= head . { printf("parsing rule->head\n"); }
-rule ::= head IMPLIED_BY tail . { printf("parsing implied-by\n"); }
-query ::= BEGIN_QUERY tail . { printf("parsing begin_query\n"); }
-command ::= INCLUDE file_name . { printf("parsing include\n"); }
-command ::= EXIT . { printf("parsing exit\n"); }
-file_name ::= LOWER_ID . { printf("parsing lowercase filename\n"); }
-file_name ::= UPPER_ID . { printf("parsing uppercase filename\n"); }
-head ::= goal . { printf("parsing head->goal\n"); }
-tail ::= goal . { printf("parsing tail->goal\n"); }
-tail ::= goal COMMA tail . { printf("parsing tail comma\n"); } // TODO: right recursion. Bad!
-goal ::= constant . { printf("parsing goal->constant\n"); }
-goal ::= variable . { printf("parsing goal->variable\n"); }
-goal ::= structure . { printf("parsing goal->structure\n"); }
-constant ::= LOWER_ID . { printf("parsing constant\n"); }
-variable ::= UPPER_ID . { printf("parsing variable\n"); }
-structure ::= LOWER_ID OPEN_PAREN component_list CLOSE_PAREN . { printf("parsing structure\n"); }
-component_list ::= goal . { printf("parsing component_list->goal\n"); }
-component_list ::= goal COMMA component_list . { printf("parsing component_list comma\n"); } // TODO: right recursion. Bad!
+line ::= sentence PERIOD . 
+sentence ::= rule .
+sentence ::= query .
+sentence ::= command .
+rule ::= head . // add a null tail and assert the fact into the global database
+rule ::= head IMPLIED_BY tail . // assert the rule into the global database
+query ::= BEGIN_QUERY tail . // solve the query
+command ::= INCLUDE file_name . // tell the lexer to push the new file onto the stack of streams
+command ::= EXIT . // halt, or possibly tell the lexer to halt
+file_name ::= LOWER_ID . 
+file_name ::= UPPER_ID . 
+head ::= goal . 
+tail ::= goal . 
+tail(A) ::= goal(B) COMMA tail(C) . { A= cons(B, C); } // TODO: right recursion. Bad!
+goal ::= constant . 
+goal ::= variable . 
+goal ::= structure . 
+constant ::= LOWER_ID . 
+variable ::= UPPER_ID . 
+structure ::= LOWER_ID OPEN_PAREN component_list CLOSE_PAREN . 
+component_list ::= goal . 
+component_list(A) ::= goal(B) COMMA component_list(C) . { A= cons(B, C); } // TODO: right recursion. Bad!
