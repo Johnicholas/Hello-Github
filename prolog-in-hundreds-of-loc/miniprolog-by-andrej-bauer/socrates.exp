@@ -1,0 +1,5 @@
+spawn miniprolog
+send "man(socrates).\n"
+send "mortal(X) :- man(X).\n"
+send "?- mortal(socrates).\n"
+expect "Yes"
