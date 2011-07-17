@@ -1,0 +1,5 @@
+spawn ./miniprolog
+send "last(X, cons(X, nil)).\n"
+send "last(X, cons(Y, Z)) :- last(X, Z).\n"
+send "?- last(X, cons(a, cons(b, cons(c, cons(d, nil))))).\n"
+expect "X = d"
