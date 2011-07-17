@@ -59,7 +59,7 @@ let shell () =
                            | _ -> "EOF");
   print_endline " to exit.";
   print_endline "Input syntax: ";
-  print_endline "  -? query.              Make a query.";
+  print_endline "  ?- query.              Make a query.";
   print_endline "  a(t1, ..., tn).        Assert an atomic proposition.";
   print_endline "  A :- B1, ..., Bn.      Assert an inference rule.";
   print_endline "  $quit                  Exit interpreter.";
