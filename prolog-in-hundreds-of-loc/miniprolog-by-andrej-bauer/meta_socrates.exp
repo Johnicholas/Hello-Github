@@ -1,0 +1,8 @@
+spawn ./miniprolog
+send "solve(nil).\n"
+send "solve(cons(Goal,Goals)) :- solve(Goal),solve(Goals).\n"
+send "solve(Goal) :- clause(Goal,Tail),solve(Tail).\n"
+send "clause(man(socrates),nil).\n"
+send "clause(mortal(X),cons(man(X),nil)).\n"
+send "?- solve(mortal(socrates)).\n"
+expect "Yes"

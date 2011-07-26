@@ -1,0 +1,5 @@
+spawn ./miniprolog
+send "append(nil, X, X).\n"
+send "append(cons(X,Xs),Ys,cons(X,Zs)) :- append(Xs,Ys,Zs).\n"
+send "?- append(cons(a,cons(b,nil)),cons(c,nil),Z).\n"
+expect "Z = cons(a,cons(b,cons(c,nil)))"

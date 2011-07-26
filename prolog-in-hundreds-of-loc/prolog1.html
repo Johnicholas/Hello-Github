@@ -1,3 +1,637 @@
+<HTML>
+<HEAD>
+<TITLE>
+	Prolog in Javascript (!)
+</TITLE>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+	function cls() {
+		document.output.output.value = "";
+	}
 
-<!-- saved from url=(0030)http://ioctl.org/logic/prolog1 -->
-<HTML><BODY><DIV class="webkit-line-gutter-backdrop"></DIV><TABLE><TBODY><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;HTML&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;HEAD&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;TITLE&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	Prolog in Javascript (!)</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/TITLE&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;SCRIPT <SPAN class="webkit-html-attribute-name">LANGUAGE</SPAN>="<SPAN class="webkit-html-attribute-value">JavaScript</SPAN>"&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">&lt;!--</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function cls() {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		document.output.output.value = "";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function print (str) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		document.output.output.value += str;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function freeform() {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		cls();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var rules = document.rules.rules.value;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var query = document.input.query.value;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		print ("Parsing rulesets.\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		rules = rules.split("\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var outr = [], outi=0;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		for (var r=0; r &lt; rules.length; r++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var rule = rules[r];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (rule.substring(0, 1) == "#" || rule == "") continue;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var or = ParseRule(new Tokeniser(rule));</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (or == null) continue;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			outr[outi++] = or;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// print ("Rule "+outi+" is : ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			or.print()</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		print ("\nParsing query.\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var q = ParseBody(new Tokeniser(query));</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (q == null) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			print ("An error occurred parsing the query.\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		q = new Body(q);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		print ("Query is: ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		q.print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		print ("\n\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var vs = varNames(q.list);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// Prove the query.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		prove(renameVariables(q.list, 0), [], outr, 1, vs);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Some auxiliary bits and pieces... environment-related.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Print out an environment's contents.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function printEnv(env) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (env == null) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			print ("null\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var k=false;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		for (var i in env) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			k=true;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			print (" " + i + " = ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			env[i].print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			print ("\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (!k) print("true\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// The value of x in a given environment</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function value(x, env) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (x.type == "Term") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var l = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			for (var i=0; i&lt;x.partlist.list.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				l[i] = value(x.partlist.list[i], env);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			return new Term(x.name, l);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (x.type != "Variable") return x;		// We only need to check the values of variables...</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var binding = env[x.name];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (binding == null) return x;		// Just the variable, no binding.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return value(binding, env);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Give a new environment from the old with "n" (a string variable name) bound to "z" (a part)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Part is Atom|Term|Variable</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function newEnv(n, z, e) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// We assume that n has been 'unwound' or 'followed' as far as possible</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// in the environment. If this is not the case, we could get an alias loop.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var ne = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		ne[n] = z;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		for (var i in e)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (i != n) ne[i] = e[i];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return ne;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// More substantial utility functions.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Unify two terms in the current environment. Returns a new environment.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// On failure, returns null.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function unify(x, y, env) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		x = value(x, env);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		y = value(y, env);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (x.type == "Variable") return newEnv(x.name, y, env);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (y.type == "Variable") return newEnv(y.name, x, env);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (x.type == "Atom" || y.type == "Atom")</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (x.type == y.type &amp;&amp; x.name == y.name)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				return env;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			else</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// x.type == y.type == Term...</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (x.name != y.name) return null;	// Ooh, so first-order.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (x.partlist.list.length != y.partlist.list.length) return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		for (var i=0; i&lt;x.partlist.list.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			env = unify(x.partlist.list[i], y.partlist.list[i], env);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (env == null) return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return env;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Go through a list of terms (ie, a Body or Partlist's list) renaming variables</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// by appending 'level' to each variable name.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// How non-graph-theoretical can this get?!?</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function renameVariables(list, level) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var out = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		for (var i = 0; i &lt; list.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (list[i].type == "Atom") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				out[i] = list[i];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			} else if (list[i].type == "Variable") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				out[i] = new Variable(list[i].name + level);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			} else if (list[i].type == "Term") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				out[i] = new Term(list[i].name, renameVariables(list[i].partlist.list, level));</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return out;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Return a list of all variables mentioned in a list of Terms.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function varNames(list) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var out = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		main: for (var i=0; i &lt; list.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (list[i].type == "Variable") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				for (var j=0; j &lt; out.length; j++)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					if (out[j].name == list[i].name) continue main;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				out[out.length] = list[i];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			} else if (list[i].type == "Term") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var o2 = varNames(list[i].partlist.list);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				inner: for (var j=0; j&lt;o2.length; j++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					for (var k=0; k&lt;out.length; k++)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						if (o2[j].name == out[k].name) continue inner;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					out[out.length] = o2[j];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return out;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// The meat of this thing... js-tinyProlog.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Don't expect built-ins at present. To come:</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	//	unification of term heads, cut, fail, call, bagof</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	//	(in that order, probably).</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// The main proving engine. Returns: null (keep going), other (drop out)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function prove(goalList, environment, db, level, origVars) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (goalList.length == 0) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Print bindings.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (origVars.length == 0) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				print ("true\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			} else {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				for (var i=0; i&lt;origVars.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					print (origVars[i].name);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					print (" = ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					(value(new Variable(origVars[i].name + 0), environment)).print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					print ("\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			print ("\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			//if (!more) return "done";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// Prove the first term in the goallist. We do this by trying to</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// unify that term with the rules in our database. For each</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// matching rule, replace the term with the body of the matching</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// rule, with appropriate substitutions.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// Then prove the new goallist. (recursive call)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var thisTerm = goalList[0];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		for (var i = 0; i &lt; db.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var rule = db[i];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// We'll need better unification to allow the 2nd-order</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// rule matching ... later.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (rule.head.name != thisTerm.name) continue;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Rename the variables in the head and body</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var renamedHead = new Term(rule.head.name, renameVariables(rule.head.partlist.list, level));</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var env2 = unify(thisTerm, renamedHead, environment);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (env2 == null) continue;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var body = rule.body;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (body != null) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var newFirstGoals = renameVariables(rule.body.list, level);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				// Stick the new body list</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var newGoals = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var j, k;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				for (j=0; j&lt;newFirstGoals.length; j++) newGoals[j] = newFirstGoals[j];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				for (k=1; k&lt;goalList.length; k++) newGoals[j++] = goalList[k];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var ret = prove(newGoals, env2, db, level+1, origVars);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (ret != null) return ret;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			} else {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				// Just prove the rest of the goallist, recursively.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var newGoals = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var j;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				for (j=1; j&lt;goalList.length; j++) newGoals[j-1] = goalList[j];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var ret = prove(newGoals, env2, db, level+1, origVars);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (ret != null) return ret;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Object (of a style...) definitions:</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Rule = (Head, Body)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Head = Term</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Body = [Term]</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Term = (id, Parameters)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Parameters {Partlist} = [Part]</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// Part = Variable | Atom | Term</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Variable(head) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.name = head;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// I had a sneaking suspicion that the (rather nice, I reckon)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// idiom below returned a closure-like reference rather than an</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// anonymous function reference. It does; but I'm not overly</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// concerned with efficiency here. This is is Prolog interpreter</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// written in JS, for goodness' sake!</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.print = function () { print (this.name); };</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.type = "Variable";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Atom(head) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.name = head;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.print = function () { print (this.name); };</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.type = "Atom";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Term(head, list) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.name = head;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.partlist = new Partlist(list);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.print =</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			function () {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (this.name == "cons") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					var x = this;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					while (x.type == "Term" &amp;&amp; x.name == "cons" &amp;&amp; x.partlist.list.length == 2) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						x = x.partlist.list[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					if ((x.type == "Atom" &amp;&amp; x.name == "nil") || x.type == "Variable") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						x = this;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						print ("[");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						var com = false;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						while (x.type == "Term" &amp;&amp; x.name == "cons" &amp;&amp; x.partlist.list.length == 2) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">							if (com) print (", ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">							x.partlist.list[0].print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">							com = true;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">							x = x.partlist.list[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						if (x.type == "Variable") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">							print (" | ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">							x.print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						print ("]");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				print ("" + this.name + "(");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				this.partlist.print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				print (")");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			};</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.type = "Term";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Partlist(list) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.list = list;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.print =</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			function () {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				for (var i = 0; i &lt; this.list.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.list[i].print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					if (i &lt; this.list.length - 1)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						print (", ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			};</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Body(list) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.list = list;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.print =</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			function () {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				for (var i = 0; i &lt; this.list.length; i++) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.list[i].print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					if (i &lt; this.list.length - 1)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">						print (", ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			};</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Rule(head) { return new Rule(head, null); }</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Rule(head, bodylist) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.head = head;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (bodylist != null)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			this.body = new Body(bodylist);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		else</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			this.body = null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.print =</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			function () {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (this.body == null) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.head.print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					print (".\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				} else {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.head.print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					print (" :- ");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.body.print();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					print (".\n");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			};</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// The Tiny-Prolog parser goes here.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function Tokeniser(string) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.remainder = string;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.current = null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.type = null;	// "eof", "id", "var", "punc" etc.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.consume =</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			function () {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (this.type == "eof") return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				// Eat any leading WS</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var r = this.remainder.match(/^\s*(.*)$/);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (r) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.remainder = r[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (this.remainder == "") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.current = null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.type = "eof";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				r = this.remainder.match(/^([\(\)\.,\[\]\|]|\:\-)(.*)$/);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (r) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.remainder = r[2];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.current = r[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.type = "punc";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				r = this.remainder.match(/^([A-Z][a-zA-Z0-9]*)(.*)$/);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (r) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.remainder = r[2];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.current = r[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.type = "var";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				// URLs in angle-bracket pairs</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				r = this.remainder.match(/^(\&lt;[^\&gt;]*\&gt;)(.*)$/);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (r) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.remainder = r[2];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.current = r[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.type = "id";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				// Quoted strings</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				r = this.remainder.match(/^("[^"]*")(.*)$/);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (r) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.remainder = r[2];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.current = r[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.type = "id";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				r = this.remainder.match(/^([a-zA-Z0-9]*)(.*)$/);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (r) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.remainder = r[2];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.current = r[1];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					this.type = "id";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">					return;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				this.current = null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				this.type = "eof";</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			};</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		this.consume();	// Load up the first token.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	var tokenstring;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	var currenttoken;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function ParseRule(tk) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// A rule is a Head followed by . or by :- Body</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var h = ParseHead(tk);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (!h) return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.current == ".") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// A simple rule.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			return new Rule(h);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.current != ":-") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var b = ParseBody(tk);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.current != ".") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return new Rule(h, b);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function ParseHead(tk) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// A head is simply a term. (errors cascade back up)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return ParseTerm(tk);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function ParseTerm(tk) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// Term -&gt; id ( optParamList )</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.type != "id") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var name = tk.current;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.current != "(") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var p = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var i = 0;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		while (tk.current != ")") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.type == "eof") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var part = ParsePart(tk);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (part == null) return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.current == ",") tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			else if (tk.current != ")") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Add the current Part onto the list...</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			p[i++] = part;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return new Term(name, p);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	// This was a beautiful piece of code. It got kludged to add [a,b,c|Z] sugar.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function ParsePart(tk) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// Part -&gt; var | id | id(optParamList)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// Part -&gt; [ listBit ] ::-&gt; cons(...)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.type == "var") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var n = tk.current;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			return new Variable(n);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.type != "id") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.type != "punc" || tk.current != "[") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Parse a list (syntactic sugar goes here)</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Special case: [] = new atom(nil).</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.type == "punc" &amp;&amp; tk.current == "]") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				return new Atom("nil");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Get a list of parts into l</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var l = [], i=0;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			while (true) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				var t = ParsePart(tk);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (t == null) return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				l[i++] = t;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (tk.current != ",") break;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Find the end of the list ... "| Var ]" or "]".</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var append;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.current == "|") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				if (tk.type != "var") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				append = new Variable(tk.current);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			} else {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">				append = new Atom("nil");</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.current != "]") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Return the new cons.... of all this rubbish.</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			for (i--; i&gt;=0; i--) append = new Term("cons", [l[i], append]);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			return append;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var name = tk.current;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (tk.current != "(") return new Atom(name);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var p = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var i = 0;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		while (tk.current != ")") {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.type == "eof") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			var part = ParsePart(tk);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (part == null) return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.current == ",") tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			else if (tk.current != ")") return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			// Add the current Part onto the list...</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			p[i++] = part;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return new Term(name, p);</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	function ParseBody(tk) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		// Body -&gt; Term {, Term...}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var p = [];</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var i = 0;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		var t;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		while ((t = ParseTerm(tk)) != null) {</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			p[i++] = t;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			if (tk.current != ",") break;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">			tk.consume();</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		if (i == 0) return null;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">		return p;</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">	}</SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment"> </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-comment">// --&gt; </SPAN></TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/SCRIPT&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/HEAD&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;BODY&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;p&gt;</SPAN>	<SPAN class="webkit-html-tag">&lt;a <SPAN class="webkit-html-attribute-name">href</SPAN>="<A class="webkit-html-attribute-value webkit-html-external-link" target="_blank" href="http://ioctl.org/">../</A>"&gt;</SPAN>jan's home page<SPAN class="webkit-html-tag">&lt;/a&gt;</SPAN> <SPAN class="webkit-html-tag">&lt;a <SPAN class="webkit-html-attribute-name">href</SPAN>="<A class="webkit-html-attribute-value webkit-html-external-link" target="_blank" href="http://ioctl.org/logic/">./</A>"&gt;</SPAN>logic programming<SPAN class="webkit-html-tag">&lt;/a&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	<SPAN class="webkit-html-tag">&lt;a <SPAN class="webkit-html-attribute-name">href</SPAN>="<A class="webkit-html-attribute-value webkit-html-external-link" target="_blank" href="http://ioctl.org/logic/prolog2">prolog2</A>"&gt;</SPAN>next<SPAN class="webkit-html-tag">&lt;/a&gt;</SPAN> <SPAN class="webkit-html-tag">&lt;a <SPAN class="webkit-html-attribute-name">href</SPAN>="<A class="webkit-html-attribute-value webkit-html-external-link" target="_blank" href="http://ioctl.org/logic/prolog-latest">prolog-latest</A>"&gt;</SPAN>latest<SPAN class="webkit-html-tag">&lt;/a&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/p&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;H1&gt;</SPAN> Prolog in Javascript <SPAN class="webkit-html-tag">&lt;/H1&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	This is not a WAM implementation, although I would be quite</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	tempted to try such a beast.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	No cut or bagof at the moment, but that ought to come shortly.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;H2&gt;</SPAN> To-do list <SPAN class="webkit-html-tag">&lt;/H2&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;UL&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;LI&gt;</SPAN>	Lets face it, there's nothing special about the X in <SPAN class="webkit-html-tag">&lt;B&gt;</SPAN>X(a,b,c)<SPAN class="webkit-html-tag">&lt;/B&gt;</SPAN>.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;LI&gt;</SPAN>	Built-ins: hook to handle predicates with JS definitions.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;LI&gt;</SPAN>	Parse <SPAN class="webkit-html-tag">&lt;B&gt;</SPAN>T1, !, T4<SPAN class="webkit-html-tag">&lt;/B&gt;</SPAN> as <SPAN class="webkit-html-tag">&lt;B&gt;</SPAN>#cut(T1, T4)<SPAN class="webkit-html-tag">&lt;/B&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;LI&gt;</SPAN>	<SPAN class="webkit-html-tag">&lt;B&gt;</SPAN>not<SPAN class="webkit-html-tag">&lt;/B&gt;</SPAN>, <SPAN class="webkit-html-tag">&lt;B&gt;</SPAN>bagof<SPAN class="webkit-html-tag">&lt;/B&gt;</SPAN>.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;LI&gt;</SPAN>	Parse <SPAN class="webkit-html-tag">&lt;B&gt;</SPAN>X = Y<SPAN class="webkit-html-tag">&lt;/B&gt;</SPAN> as <SPAN class="webkit-html-tag">&lt;B&gt;</SPAN>unify(X, Y)<SPAN class="webkit-html-tag">&lt;/B&gt;</SPAN>.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;LI&gt;</SPAN>	Builtins for arithmetic.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;LI&gt;</SPAN>	String, URL literals.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/UL&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;HR&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;FORM <SPAN class="webkit-html-attribute-name">NAME</SPAN>="<SPAN class="webkit-html-attribute-value">rules</SPAN>"&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;TEXTAREA <SPAN class="webkit-html-attribute-name">COLS</SPAN>=<SPAN class="webkit-html-attribute-value">70</SPAN> <SPAN class="webkit-html-attribute-name">ROWS</SPAN>=<SPAN class="webkit-html-attribute-value">20</SPAN> <SPAN class="webkit-html-attribute-name">NAME</SPAN>=<SPAN class="webkit-html-attribute-value">rules</SPAN>&gt;</SPAN># Enter your ruleset in here.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">father(tom, mary).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">father(dick, tom).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">father(george, dick).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">mother(mary, jan).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">parent(X, Y) :- father(X, Y).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">parent(X, Y) :- mother(X, Y).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">ancestor(X, Y) :- parent(X, Y).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"># Some list-processing stuff...</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">append([], Z, Z).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">append([A|B], Z, [A|Z2]) :- append(B, Z, Z2).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">reverse([], []).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">reverse([A|B], Z) :- reverse(B, Brev), append(Brev, [A], Z).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"># Broken parsing bits...</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">rule1(a, b, <SPAN class="webkit-html-tag">&lt;a <SPAN class="webkit-html-attribute-name">URL</SPAN> <SPAN class="webkit-html-attribute-name">in</SPAN> <SPAN class="webkit-html-attribute-name">angle</SPAN> <SPAN class="webkit-html-attribute-name">brackets</SPAN>&gt;</SPAN>, d).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">rule1(a, b, "a string", d).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"># This next one doesn't work at the moment - see line 389</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"># and improve the regexp code if you like.</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">#rule1(a, b, "a string with \" embedded", d).</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/TEXTAREA&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/FORM&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;FORM <SPAN class="webkit-html-attribute-name">NAME</SPAN>="<SPAN class="webkit-html-attribute-value">input</SPAN>" <SPAN class="webkit-html-attribute-name">ACTION</SPAN>="<SPAN class="webkit-html-attribute-value">javascript:freeform(); //</SPAN>"&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	Enter your query:</TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	<SPAN class="webkit-html-tag">&lt;INPUT <SPAN class="webkit-html-attribute-name">TYPE</SPAN>=<SPAN class="webkit-html-attribute-value">TEXT</SPAN> <SPAN class="webkit-html-attribute-name">NAME</SPAN>=<SPAN class="webkit-html-attribute-value">query</SPAN> <SPAN class="webkit-html-attribute-name">VALUE</SPAN>="<SPAN class="webkit-html-attribute-value">append(X, Y, [1, 2, 3, 4, 5, 6])</SPAN>" <SPAN class="webkit-html-attribute-name">SIZE</SPAN>=<SPAN class="webkit-html-attribute-value">70</SPAN>&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content">	<SPAN class="webkit-html-tag">&lt;INPUT <SPAN class="webkit-html-attribute-name">TYPE</SPAN>=<SPAN class="webkit-html-attribute-value">BUTTON</SPAN> <SPAN class="webkit-html-attribute-name">VALUE</SPAN>="<SPAN class="webkit-html-attribute-value">Run query</SPAN>" <SPAN class="webkit-html-attribute-name">ONCLICK</SPAN>="<SPAN class="webkit-html-attribute-value">freeform(); return true;</SPAN>"&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/P&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/FORM&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;FORM <SPAN class="webkit-html-attribute-name">NAME</SPAN>="<SPAN class="webkit-html-attribute-value">output</SPAN>"&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;TEXTAREA <SPAN class="webkit-html-attribute-name">ROWS</SPAN>=<SPAN class="webkit-html-attribute-value">20</SPAN> <SPAN class="webkit-html-attribute-name">COLS</SPAN>=<SPAN class="webkit-html-attribute-value">70</SPAN> <SPAN class="webkit-html-attribute-name">NAME</SPAN>="<SPAN class="webkit-html-attribute-value">output</SPAN>"&gt;</SPAN><SPAN class="webkit-html-tag">&lt;/TEXTAREA&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/FORM&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/BODY&gt;</SPAN> </TD></TR><TR><TD class="webkit-line-number"><TD class="webkit-line-content"><SPAN class="webkit-html-tag">&lt;/HTML&gt;</SPAN> </TD></TR></TBODY></TABLE></BODY></HTML>
+	function print (str) {
+		document.output.output.value += str;
+	}
+
+	function freeform() {
+		cls();
+
+		var rules = document.rules.rules.value;
+		var query = document.input.query.value;
+
+		print ("Parsing rulesets.\n");
+
+		rules = rules.split("\n");
+		var outr = [], outi=0;
+		for (var r=0; r < rules.length; r++) {
+			var rule = rules[r];
+			if (rule.substring(0, 1) == "#" || rule == "") continue;
+			var or = ParseRule(new Tokeniser(rule));
+			if (or == null) continue;
+			outr[outi++] = or;
+			// print ("Rule "+outi+" is : ");
+			or.print()
+		}
+
+		print ("\nParsing query.\n");
+		var q = ParseBody(new Tokeniser(query));
+		if (q == null) {
+			print ("An error occurred parsing the query.\n");
+			return;
+		}
+		q = new Body(q);
+		print ("Query is: ");
+		q.print();
+		print ("\n\n");
+
+		var vs = varNames(q.list);
+
+		// Prove the query.
+		prove(renameVariables(q.list, 0), [], outr, 1, vs);
+	}
+
+	// Some auxiliary bits and pieces... environment-related.
+
+	// Print out an environment's contents.
+	function printEnv(env) {
+		if (env == null) {
+			print ("null\n");
+			return;
+		}
+		var k=false;
+		for (var i in env) {
+			k=true;
+			print (" " + i + " = ");
+			env[i].print();
+			print ("\n");
+		}
+		if (!k) print("true\n");
+	}
+
+	// The value of x in a given environment
+	function value(x, env) {
+		if (x.type == "Term") {
+			var l = [];
+			for (var i=0; i<x.partlist.list.length; i++) {
+				l[i] = value(x.partlist.list[i], env);
+			}
+			return new Term(x.name, l);
+		}
+		if (x.type != "Variable") return x;		// We only need to check the values of variables...
+		var binding = env[x.name];
+		if (binding == null) return x;		// Just the variable, no binding.
+		return value(binding, env);
+	}
+
+	// Give a new environment from the old with "n" (a string variable name) bound to "z" (a part)
+	// Part is Atom|Term|Variable
+	function newEnv(n, z, e) {
+		// We assume that n has been 'unwound' or 'followed' as far as possible
+		// in the environment. If this is not the case, we could get an alias loop.
+		var ne = [];
+		ne[n] = z;
+		for (var i in e)
+			if (i != n) ne[i] = e[i];
+
+		return ne;
+	}
+
+	// More substantial utility functions.
+
+	// Unify two terms in the current environment. Returns a new environment.
+	// On failure, returns null.
+	function unify(x, y, env) {
+		x = value(x, env);
+		y = value(y, env);
+		if (x.type == "Variable") return newEnv(x.name, y, env);
+		if (y.type == "Variable") return newEnv(y.name, x, env);
+		if (x.type == "Atom" || y.type == "Atom")
+			if (x.type == y.type && x.name == y.name)
+				return env;
+			else
+				return null;
+
+		// x.type == y.type == Term...
+		if (x.name != y.name) return null;	// Ooh, so first-order.
+		if (x.partlist.list.length != y.partlist.list.length) return null;
+
+		for (var i=0; i<x.partlist.list.length; i++) {
+			env = unify(x.partlist.list[i], y.partlist.list[i], env);
+			if (env == null) return null;
+		}
+			
+		return env;
+	}
+
+	// Go through a list of terms (ie, a Body or Partlist's list) renaming variables
+	// by appending 'level' to each variable name.
+	// How non-graph-theoretical can this get?!?
+	function renameVariables(list, level) {
+		var out = [];
+
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].type == "Atom") {
+				out[i] = list[i];
+			} else if (list[i].type == "Variable") {
+				out[i] = new Variable(list[i].name + level);
+			} else if (list[i].type == "Term") {
+				out[i] = new Term(list[i].name, renameVariables(list[i].partlist.list, level));
+			}
+		}
+
+		return out;
+	}
+
+	// Return a list of all variables mentioned in a list of Terms.
+	function varNames(list) {
+		var out = [];
+
+		main: for (var i=0; i < list.length; i++) {
+			if (list[i].type == "Variable") {
+				for (var j=0; j < out.length; j++)
+					if (out[j].name == list[i].name) continue main;
+				out[out.length] = list[i];
+			} else if (list[i].type == "Term") {
+				var o2 = varNames(list[i].partlist.list);
+				inner: for (var j=0; j<o2.length; j++) {
+					for (var k=0; k<out.length; k++)
+						if (o2[j].name == out[k].name) continue inner;
+					out[out.length] = o2[j];
+				}
+			}
+		}
+		return out;
+	}
+
+	// The meat of this thing... js-tinyProlog.
+	// Don't expect built-ins at present. To come:
+	//	unification of term heads, cut, fail, call, bagof
+	//	(in that order, probably).
+
+	// The main proving engine. Returns: null (keep going), other (drop out)
+	function prove(goalList, environment, db, level, origVars) {
+		if (goalList.length == 0) {
+			// Print bindings.
+			if (origVars.length == 0) {
+				print ("true\n");
+			} else {
+				for (var i=0; i<origVars.length; i++) {
+					print (origVars[i].name);
+					print (" = ");
+					(value(new Variable(origVars[i].name + 0), environment)).print();
+					print ("\n");
+				}
+			}
+			print ("\n");
+
+			//if (!more) return "done";
+			return null;
+		}
+
+		// Prove the first term in the goallist. We do this by trying to
+		// unify that term with the rules in our database. For each
+		// matching rule, replace the term with the body of the matching
+		// rule, with appropriate substitutions.
+		// Then prove the new goallist. (recursive call)
+		
+		var thisTerm = goalList[0];
+
+		for (var i = 0; i < db.length; i++) {
+			var rule = db[i];
+
+			// We'll need better unification to allow the 2nd-order
+			// rule matching ... later.
+			if (rule.head.name != thisTerm.name) continue;
+
+			// Rename the variables in the head and body
+			var renamedHead = new Term(rule.head.name, renameVariables(rule.head.partlist.list, level));
+
+			var env2 = unify(thisTerm, renamedHead, environment);
+			if (env2 == null) continue;
+
+			var body = rule.body;
+			if (body != null) {
+				var newFirstGoals = renameVariables(rule.body.list, level);
+				// Stick the new body list
+				var newGoals = [];
+				var j, k;
+				for (j=0; j<newFirstGoals.length; j++) newGoals[j] = newFirstGoals[j];
+				for (k=1; k<goalList.length; k++) newGoals[j++] = goalList[k];
+				var ret = prove(newGoals, env2, db, level+1, origVars);
+				if (ret != null) return ret;
+			} else {
+				// Just prove the rest of the goallist, recursively.
+				var newGoals = [];
+				var j;
+				for (j=1; j<goalList.length; j++) newGoals[j-1] = goalList[j];
+				var ret = prove(newGoals, env2, db, level+1, origVars);
+				if (ret != null) return ret;
+			}
+		}
+
+		return null;
+	}
+
+
+	// Object (of a style...) definitions:
+	// Rule = (Head, Body)
+	// Head = Term
+	// Body = [Term]
+	// Term = (id, Parameters)
+	// Parameters {Partlist} = [Part]
+	// Part = Variable | Atom | Term
+
+	function Variable(head) {
+		this.name = head;
+		// I had a sneaking suspicion that the (rather nice, I reckon)
+		// idiom below returned a closure-like reference rather than an
+		// anonymous function reference. It does; but I'm not overly
+		// concerned with efficiency here. This is is Prolog interpreter
+		// written in JS, for goodness' sake!
+		this.print = function () { print (this.name); };
+		this.type = "Variable";
+	}
+
+	function Atom(head) {
+		this.name = head;
+		this.print = function () { print (this.name); };
+		this.type = "Atom";
+	}
+
+	function Term(head, list) {
+		this.name = head;
+		this.partlist = new Partlist(list);
+		this.print =
+			function () {
+				if (this.name == "cons") {
+					var x = this;
+					while (x.type == "Term" && x.name == "cons" && x.partlist.list.length == 2) {
+						x = x.partlist.list[1];
+					}
+					if ((x.type == "Atom" && x.name == "nil") || x.type == "Variable") {
+						x = this;
+						print ("[");
+						var com = false;
+						while (x.type == "Term" && x.name == "cons" && x.partlist.list.length == 2) {
+							if (com) print (", ");
+							x.partlist.list[0].print();
+							com = true;
+							x = x.partlist.list[1];
+						}
+						if (x.type == "Variable") {
+							print (" | ");
+							x.print();
+						}
+						print ("]");
+						return;
+					}
+				}
+				print ("" + this.name + "(");
+				this.partlist.print();
+				print (")");
+			};
+		this.type = "Term";
+	}
+
+	function Partlist(list) {
+		this.list = list;
+		this.print =
+			function () {
+				for (var i = 0; i < this.list.length; i++) {
+					this.list[i].print();
+					if (i < this.list.length - 1)
+						print (", ");
+				}
+			};
+	}
+
+	function Body(list) {
+		this.list = list;
+		this.print =
+			function () {
+				for (var i = 0; i < this.list.length; i++) {
+					this.list[i].print();
+					if (i < this.list.length - 1)
+						print (", ");
+				}
+			};
+	}
+
+	function Rule(head) { return new Rule(head, null); }
+	function Rule(head, bodylist) {
+		this.head = head;
+		if (bodylist != null)
+			this.body = new Body(bodylist);
+		else
+			this.body = null;
+
+		this.print =
+			function () {
+				if (this.body == null) {
+					this.head.print();
+					print (".\n");
+				} else {
+					this.head.print();
+					print (" :- ");
+					this.body.print();
+					print (".\n");
+				}
+			};
+	}
+
+
+	// The Tiny-Prolog parser goes here.
+	function Tokeniser(string) {
+		this.remainder = string;
+		this.current = null;
+		this.type = null;	// "eof", "id", "var", "punc" etc.
+		this.consume =
+			function () {
+				if (this.type == "eof") return;
+				// Eat any leading WS
+				var r = this.remainder.match(/^\s*(.*)$/);
+				if (r) {
+					this.remainder = r[1];
+				}
+
+				if (this.remainder == "") {
+					this.current = null;
+					this.type = "eof";
+					return;
+				}
+
+				r = this.remainder.match(/^([\(\)\.,\[\]\|]|\:\-)(.*)$/);
+				if (r) {
+					this.remainder = r[2];
+					this.current = r[1];
+					this.type = "punc";
+					return;
+				}
+
+				r = this.remainder.match(/^([A-Z][a-zA-Z0-9]*)(.*)$/);
+				if (r) {
+					this.remainder = r[2];
+					this.current = r[1];
+					this.type = "var";
+					return;
+				}
+
+				// URLs in angle-bracket pairs
+				r = this.remainder.match(/^(\<[^\>]*\>)(.*)$/);
+				if (r) {
+					this.remainder = r[2];
+					this.current = r[1];
+					this.type = "id";
+					return;
+				}
+
+				// Quoted strings
+				r = this.remainder.match(/^("[^"]*")(.*)$/);
+				if (r) {
+					this.remainder = r[2];
+					this.current = r[1];
+					this.type = "id";
+					return;
+				}
+
+				r = this.remainder.match(/^([a-zA-Z0-9]*)(.*)$/);
+				if (r) {
+					this.remainder = r[2];
+					this.current = r[1];
+					this.type = "id";
+					return;
+				}
+
+				this.current = null;
+				this.type = "eof";
+
+			};
+		this.consume();	// Load up the first token.
+	}
+
+	var tokenstring;
+	var currenttoken;
+
+	function ParseRule(tk) {
+		// A rule is a Head followed by . or by :- Body
+
+		var h = ParseHead(tk);
+		if (!h) return null;
+
+		if (tk.current == ".") {
+			// A simple rule.
+			return new Rule(h);
+		}
+
+		if (tk.current != ":-") return null;
+		tk.consume();
+		var b = ParseBody(tk);
+
+		if (tk.current != ".") return null;
+
+		return new Rule(h, b);
+	}
+
+	function ParseHead(tk) {
+		// A head is simply a term. (errors cascade back up)
+		return ParseTerm(tk);
+	}
+
+	function ParseTerm(tk) {
+		// Term -> id ( optParamList )
+
+		if (tk.type != "id") return null;
+		var name = tk.current;
+		tk.consume();
+
+		if (tk.current != "(") return null;
+		tk.consume();
+
+		var p = [];
+		var i = 0;
+		while (tk.current != ")") {
+			if (tk.type == "eof") return null;
+
+			var part = ParsePart(tk);
+			if (part == null) return null;
+
+			if (tk.current == ",") tk.consume();
+			else if (tk.current != ")") return null;
+
+			// Add the current Part onto the list...
+			p[i++] = part;
+		}
+		tk.consume();
+
+		return new Term(name, p);
+	}
+
+	// This was a beautiful piece of code. It got kludged to add [a,b,c|Z] sugar.
+	function ParsePart(tk) {
+		// Part -> var | id | id(optParamList)
+		// Part -> [ listBit ] ::-> cons(...)
+		if (tk.type == "var") {
+			var n = tk.current;
+			tk.consume();
+			return new Variable(n);
+		}
+
+		if (tk.type != "id") {
+			if (tk.type != "punc" || tk.current != "[") return null;
+			// Parse a list (syntactic sugar goes here)
+			tk.consume();
+			// Special case: [] = new atom(nil).
+			if (tk.type == "punc" && tk.current == "]") {
+				tk.consume();
+				return new Atom("nil");
+			}
+
+			// Get a list of parts into l
+			var l = [], i=0;
+
+			while (true) {
+				var t = ParsePart(tk);
+				if (t == null) return null;
+
+				l[i++] = t;
+				if (tk.current != ",") break;
+				tk.consume();
+			}
+
+			// Find the end of the list ... "| Var ]" or "]".
+			var append;
+			if (tk.current == "|") {
+				tk.consume();
+				if (tk.type != "var") return null;
+				append = new Variable(tk.current);
+				tk.consume();
+			} else {
+				append = new Atom("nil");
+			}
+			if (tk.current != "]") return null;
+			tk.consume();
+			// Return the new cons.... of all this rubbish.
+			for (i--; i>=0; i--) append = new Term("cons", [l[i], append]);
+			return append;
+		}
+			
+		var name = tk.current;
+		tk.consume();
+
+		if (tk.current != "(") return new Atom(name);
+		tk.consume();
+
+		var p = [];
+		var i = 0;
+		while (tk.current != ")") {
+			if (tk.type == "eof") return null;
+
+			var part = ParsePart(tk);
+			if (part == null) return null;
+
+			if (tk.current == ",") tk.consume();
+			else if (tk.current != ")") return null;
+
+			// Add the current Part onto the list...
+			p[i++] = part;
+		}
+		tk.consume();
+
+		return new Term(name, p);
+	}
+
+	function ParseBody(tk) {
+		// Body -> Term {, Term...}
+
+		var p = [];
+		var i = 0;
+
+		var t;
+		while ((t = ParseTerm(tk)) != null) {
+			p[i++] = t;
+			if (tk.current != ",") break;
+			tk.consume();
+		}
+
+		if (i == 0) return null;
+		return p;
+	}
+
+
+// -->
+</SCRIPT>
+</HEAD>
+<BODY>
+
+<p>	<a href="../">jan's home page</a> <a href="./">logic programming</a>
+	<a href="prolog2">next</a> <a href="prolog-latest">latest</a>
+</p>
+
+<H1> Prolog in Javascript </H1>
+
+<P>
+	This is not a WAM implementation, although I would be quite
+	tempted to try such a beast.
+</P>
+<P>
+	No cut or bagof at the moment, but that ought to come shortly.
+</P>
+
+<H2> To-do list </H2>
+
+<UL>
+<LI>	Lets face it, there's nothing special about the X in <B>X(a,b,c)</B>.
+<LI>	Built-ins: hook to handle predicates with JS definitions.
+<LI>	Parse <B>T1, !, T4</B> as <B>#cut(T1, T4)</B>
+<LI>	<B>not</B>, <B>bagof</B>.
+<LI>	Parse <B>X = Y</B> as <B>unify(X, Y)</B>.
+<LI>	Builtins for arithmetic.
+<LI>	String, URL literals.
+</UL>
+
+<HR>
+
+<FORM NAME="rules">
+<TEXTAREA COLS=70 ROWS=20 NAME=rules># Enter your ruleset in here.
+father(tom, mary).
+father(dick, tom).
+father(george, dick).
+mother(mary, jan).
+parent(X, Y) :- father(X, Y).
+parent(X, Y) :- mother(X, Y).
+ancestor(X, Y) :- parent(X, Y).
+ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).
+
+# Some list-processing stuff...
+append([], Z, Z).
+append([A|B], Z, [A|Z2]) :- append(B, Z, Z2).
+reverse([], []).
+reverse([A|B], Z) :- reverse(B, Brev), append(Brev, [A], Z).
+
+# Broken parsing bits...
+rule1(a, b, <a URL in angle brackets>, d).
+rule1(a, b, "a string", d).
+# This next one doesn't work at the moment - see line 389
+# and improve the regexp code if you like.
+#rule1(a, b, "a string with \" embedded", d).
+
+</TEXTAREA>
+</FORM>
+<FORM NAME="input" ACTION="javascript:freeform(); //">
+<P>
+	Enter your query:
+</P>
+<P>
+	<INPUT TYPE=TEXT NAME=query VALUE="append(X, Y, [1, 2, 3, 4, 5, 6])" SIZE=70>
+</P>
+<P>
+	<INPUT TYPE=BUTTON VALUE="Run query" ONCLICK="freeform(); return true;">
+</P>
+</FORM>
+<FORM NAME="output">
+<TEXTAREA ROWS=20 COLS=70 NAME="output"></TEXTAREA>
+</FORM>
+
+</BODY>
+</HTML>
+
