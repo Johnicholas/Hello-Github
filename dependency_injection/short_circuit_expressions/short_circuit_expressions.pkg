@@ -1,0 +1,79 @@
+// forward declarations
+class Tree;
+
+class Action : public Tree {
+public:
+  // Constructor.
+  explicit Action(std::string action);
+};
+
+$[
+_Action= Action
+function Action(argstable)
+  return _Action:new(args.action)
+end
+$]
+
+class And : public Tree {
+public:
+  // Constructor.
+  And();
+  // Mutator.
+  void Add(Tree& to_add);
+};
+
+$[
+_And= And
+function And(argstable)
+  local answer= _And:new()
+  for i,v in ipairs(argstable) do
+    answer:Add(v)
+  end
+  return answer
+end
+$]
+
+class Equals : public Tree {
+public:
+  // Constructor.
+  Equals(std::string key, std::string value);
+};
+
+$[
+_Equals= Equals
+function Equals(argstable)
+  return _Equals:new(argstable.key, argstable.value)
+end
+$]
+
+class IsSet : public Tree {
+public:
+  // Constructor.
+  explicit IsSet(std::string key);
+};
+
+$[
+_IsSet= IsSet
+function IsSet(argstable)
+  return _IsSet:new(argstable.key)
+end
+$]
+
+class Or : public Tree {
+public:
+  // Constructor.
+  Or();
+  // Mutator.
+  void Add(Tree& to_add);
+};
+
+$[
+_Or= Or
+function Or(argstable)
+  local answer= _Or:new()
+  for i,v in ipairs(argstable) do
+    answer:Add(v)
+  end
+  return answer
+end
+$]

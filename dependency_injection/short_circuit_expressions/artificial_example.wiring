@@ -1,0 +1,10 @@
+all = And ( )
+ . Add ( IsSet ( "alpha" ) )
+ . Add ( IsSet ( "beta" ) )
+ . Add ( IsSet ( "gamma" ) )
+,
+atleastone = Or ( )
+ . Add ( all )
+ . Add ( Equals ( "alpha" , "epsilon" ) )
+ . Add ( Equals ( "beta" , "epsilon" ) )
+ . Add ( Equals ( "gamma" , "epsilon" ) )
