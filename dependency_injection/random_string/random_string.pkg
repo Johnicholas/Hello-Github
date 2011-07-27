@@ -1,0 +1,37 @@
+// forward declaration
+class language_implementation;
+
+class and_language : public language_implementation {
+ public:
+  // constructor.
+  and_language(language* left, language* right);
+};
+
+$[
+function And(argstable)
+  return and_language:new(argstable.left, argstable.right)
+end
+$]
+
+class or_language : public language_implementation {
+ public:
+ // constructor.
+  or_language(language* left, language* right);
+};
+
+$[
+function Or(argstable)
+  return or_language:new(argstable.left, argstable.right)
+end
+$]
+
+class singleton_language : public language_implementation {
+ public:
+  singleton_language(std::string s);
+};
+
+$[
+function Singleton(argstable)
+  return singleton_language:new(argstable.s)
+end
+$]
