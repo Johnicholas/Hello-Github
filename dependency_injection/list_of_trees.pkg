@@ -1,0 +1,64 @@
+// forward declarations
+class ListOfTrees;
+class Tree;
+
+class Empty : public ListOfTrees {
+public:
+  // Constructor.
+  Empty()
+  {}
+private:
+};
+
+$[
+function LEmpty(argstable)
+  return Empty:new()
+end
+$]
+
+class Nonempty : public ListOfTrees {
+public:
+  // Constructor.
+  Nonempty(Tree* first, ListOfTrees* rest) :
+    first(first),
+    rest(rest)
+  {}
+};
+
+$[
+function LNonempty(argstable)
+  return Nonempty(argstable.first, argstable.rest)
+end
+$]
+
+
+class Tree;
+
+class Leaf : public Tree {
+public:
+  // Constructor.
+  Leaf(int value) :
+    value(value)
+  {}
+};
+
+$[
+function LLeaf(argstable)
+  return Leaf:new(argstable.value)
+end
+$]
+
+class Branch : public Tree {
+public:
+  // Constructor.
+  Branch(Tree* left, Tree* right) :
+    left(left),
+    right(right)
+  {}
+};
+
+$[
+function LBranch(argstable)
+  return Branch:new(argstable.eft, argstable.right)
+end
+$]
