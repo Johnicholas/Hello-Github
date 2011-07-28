@@ -3,6 +3,10 @@ Tiny (hundreds of loc) bytecode interpreters in C:
 * The Cult of Bound Variable's universal machine from ICFP 2006.
 * Lennart Augustsson's 1996 ioccc entry, a vm that supports both a self-hosting interpreter and a compiler from a subset of C to bytecode.
 * A bf interpreter by Daniel Cristofani
+* tinyGP by Riccardo Poli -  a GP system based on a bytecode interpreter
+
+Large "serious" bytecode interpreters:
+* The truetype interpreter, used for font hinting.
 
 Other possibilities:
 * an older (and therefore smaller) version of lua
@@ -12,9 +16,12 @@ Other possibilities:
 * tinyrb (several kloc)
 * littlesmalltalk and derivatives like tumbleweed (>1kloc)
 * Various languages by Darius Bacon such as tusl, wren, uts.
-* Kragen Sittaker's alculusvaporis/cavosim.c, a simulator for his tiny cpu.
+* Kragen Sittaker's calculusvaporis/cavosim.c, a simulator for his tiny cpu.
 * Tom Jennings's Universal Machine simulator (but it's in perl - rewrite?)
 
 Not exactly bytecode interpreters, but relevant:
 * The garbage collector from Darius Bacon's ichbins.
 * Ian Piumarta's id-objmodel/obj.h, polymorphism in 144 lines of C.
+* the Fuun DNA machine from ICFP (a spec, but many people implemented it)
+* the Leszek esolang, string-rewriting interpreter
+* il4c and roseshank, a compiler and 4k demo respectively, by XMunkki
