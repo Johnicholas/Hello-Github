@@ -7,6 +7,7 @@ Tiny (hundreds of loc) bytecode interpreters in C:
 
 Large "serious" bytecode interpreters:
 * The truetype interpreter, used for font hinting.
+* GDB's agent expressions, used for real-time debugging.
 
 Other possibilities:
 * an older (and therefore smaller) version of lua
