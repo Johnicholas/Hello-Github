@@ -1,0 +1,9 @@
+touch V2
+cat boot.lsp >>V2
+cat lecteur.lsp >> V2
+cat blocs.lsp >> V2
+cat utili.lsp >> V2
+cat unify.lsp >> V2
+cat resol.lsp >> V2
+cat pred.lsp >> V2
+mv V2 V2.lsp
