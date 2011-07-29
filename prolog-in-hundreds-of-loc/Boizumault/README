@@ -1,0 +1,15 @@
+This directory contains the various Prolog interpreters developped in the
+third part of the book : The implementation of Prolog, P. Boizumault, Princeton
+University Press, 1993.
+
+Each Directory corresponds respectively to the programs developped in Appendix
+A (microCprolog), B (microWam), C (microPrologII) and D (microUtili).
+
+The directory microEx contains examples that can be run independantly on each version.
+Beware that the files ending with the digit 3 can only be executed with microPrologII
+due to the use of the predicates dif and freeze.
+
+Enjoy it and you can reach me in case of any problem at : boizu@ucoima.math-appli-uco.fr
+
+Patrice Boizumault, 8/12/93
+

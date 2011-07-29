@@ -1,0 +1,15 @@
+
+
+
+touch V1
+cat boot.lsp >> V1
+cat ../microUt/clecteur.lsp >> V1
+cat lecteur.lsp >> V1
+cat blocs.lsp >> V1
+cat ../microUt/cutili.lsp >> V1
+cat unify.lsp >> V1
+cat ../microUt/cunify.lsp >> V1
+cat resol.lsp >> V1
+cat pred.lsp >> V1
+cat ../microUt/cpred.lsp >> V1
+mv V1 V1.lsp

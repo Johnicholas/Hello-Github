@@ -4,10 +4,12 @@ Tiny (hundreds of loc) bytecode interpreters in C:
 * Lennart Augustsson's 1996 ioccc entry, a vm that supports both a self-hosting interpreter and a compiler from a subset of C to bytecode.
 * A bf interpreter by Daniel Cristofani
 * tinyGP by Riccardo Poli -  a GP system based on a bytecode interpreter
+* Nils Holm's "useless" language
 
 Large "serious" bytecode interpreters:
 * The truetype interpreter, used for font hinting.
 * GDB's agent expressions, used for real-time debugging.
+* Possibly Grub's shell-like scripting? or U-boot's?
 
 Other possibilities:
 * an older (and therefore smaller) version of lua
@@ -20,9 +22,20 @@ Other possibilities:
 * Kragen Sittaker's calculusvaporis/cavosim.c, a simulator for his tiny cpu.
 * Tom Jennings's Universal Machine simulator (but it's in perl - rewrite?)
 
-Not exactly bytecode interpreters, but relevant:
+There's a few string-rewriting machines:
+* the Fuun DNA machine from ICFP (a spec, but many people implemented it)
+** In particular, endomorphose by Hoenicke is an implementation
+* the Leszek esolang, string-rewriting interpreter
+* the Thue esolang
+* m4
+
+Not exactly bytecode interpreters, but possibly relevant:
 * The garbage collector from Darius Bacon's ichbins.
 * Ian Piumarta's id-objmodel/obj.h, polymorphism in 144 lines of C.
-* the Fuun DNA machine from ICFP (a spec, but many people implemented it)
-* the Leszek esolang, string-rewriting interpreter
 * il4c and roseshank, a compiler and 4k demo respectively, by XMunkki
+* The spreadsheet expression language from jarijyrki.c (postfix)
+* Dick Grune's "how to produce all sentences from a two-level grammar"
+* Decompression can be a bit like a bytecode (or perhaps bitcode) vm.
+* argc, argv option-handling often has that switch machine structure.
+* a fractran interpreter?
+
