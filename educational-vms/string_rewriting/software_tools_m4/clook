@@ -1,0 +1,5 @@
+common /clook/ lastp, lastt, namptr(MAXPTR), table(MAXTBL)
+   integer lastp		# last used in namptr; init = 0
+   integer lastt		# last used in table; init = 0
+   integer namptr		# name pointers
+   character table		# actual text of names and defns

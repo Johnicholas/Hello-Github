@@ -1,0 +1,4 @@
+common /cmacro/ cp, ep, evalst(EVALSIZE)
+   integer cp			# current call stack pointer
+   integer ep			# next free position in evalst
+   character evalst		# evaluation stack

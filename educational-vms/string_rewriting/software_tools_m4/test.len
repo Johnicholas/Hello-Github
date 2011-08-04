@@ -1,0 +1,5 @@
+define(len,[ifelse($1,,0,[incr(len(substr($1,2)))])])
+len(abc)
+len(ab)
+len(a)
+len()

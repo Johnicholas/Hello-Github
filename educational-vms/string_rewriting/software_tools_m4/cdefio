@@ -1,0 +1,4 @@
+define BUFSIZE 500
+common /cdefio/ bp, buf(BUFSIZE)
+   integer bp		# next available character; init = 0
+   character buf	# pushed\(hyback characters
