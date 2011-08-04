@@ -1,0 +1,240 @@
+m4 starts with some builtin macros defined
+define is a builtin macro, that allows creating new macros
+example:
+define( AUTHOR, W. Shakespeare )
+the whitespace between "define" and "AUTHOR" is discarded
+quoting supresses macro expansion
+// comments also suppress macro expansion, but they
+// get passed through to the output automatically
+the opening and closing parens for a macro's arguments
+are treated specially?
+
+Frozen-file format, which might hint what the state
+of the m4 virtual machine is.
+1. C - the begin-comment and end-comment strings
+2. D - specify the contents of a diversion,
+or which diversion is active,
+or the standard output buffer
+diversions and the standard output buffer start empty
+diversion 0 (stdout) 
+3. F - pushes a changeword for a builtin
+each builtin has a stack of strings, names for that builtin,
+and that builtin is accessible only by the topmost name
+4. Q - the begin-quote and end-quote strings
+5. T - pushes a definition for a non-builtin macro,
+each word (not just builtin) has a stack of right hand sides,
+and which one it expands to is only the most recent
+6. V - version of the frozen file
+
+m4 operates on tokens.
+A token is either a name, a quoted-string, or a single character.
+A name is the longest alphanum, possibly with underscore, but the first character cannot be a digit.
+A quoted string is a sequence of characters surrounded by
+quote characters where the nested begin and end quotes
+are balanced.
+Comments are similar, but they cannot be nested.
+A character that is not part of a name or a quoted string
+is a token by itself.
+Outside macro expansion context, characters are copied.
+Inside macro expansion context,
+whitespace, parens, comma, and dollar have special roles.
+
+pushdef takes a name and string,
+and pushes the string on the stack of the name's definitions.
+popdef takes a name and pops the stack of the name's definitions.
+
+What's the difference between define and pushdef?
+
+Basic m4:
+1. Don't repeat yourself literally - instead,
+choose a name for the repeated chunk,
+add a definition of that name that expands to that chunk,
+and use the name instead of the repeated chunk.
+2. Don't repeat parallel structures - instead,
+define the repetitious structure generically,
+and invoke it in several different contexts,
+or with several different arguments
+3. Use conditional logic to configure the same file
+to different locales or purposes.
+
+1 loc - execute a system command
+syscmd(ifdef(`__windows__',`dir',`ls'))dnl
+
+It's simple to execute a command using syscmd.
+If you need the output of executing a command, use esyscmd.
+To test whether a macro is defined, use ifdef.
+
+1 loc - comments
+m4 has three kinds of comments.
+First, from # to end of line is ignored, but goes into the output file
+Second, from dnl to end of line is ignored and deleted, including the new line
+Third, "block comments" can be formed by diverting to -1.
+
+1 loc - detect divide by zero
+ifelse(eval(2/0),`',`detected divide by zero')
+
+Eval will return the empty string if there was a problem.
+However, it will unconditionally report the problem to stderr,
+so your m4 script is limited in its options for how to handle
+the error - better to test before dividing.
+
+1 loc - ackermann
+ackermann takes two ints, m and n, and returns an int
+if m is zero, then returns n+1
+if n is sero, then recurses, returning ackermann(m-1,1)
+else recurses, returning ackermann(m-1, ackermann(m, n-1))
+
+divert(-1)
+define(ack,
+  `ifelse($1, 0,
+    `incr($2)',
+    `ifelse($2, 0,
+      `ack(decr($1), 1)',
+      `ack(decr($1), ack($1, decr($2)))')')')
+divert`'dnl
+ack(3,3)
+
+Explanation: 
+We use divert to a negative number to start a "block comment".
+Then we define ack to be a macro that takes two arguments
+(all macros in m4 can take any number of arguments, with missing
+arguments presumed to be the empty string), and expands to an ifelse.
+
+Ifelse in m4 normally takes three or four arguments, and
+uses the first two as if there was a string compare-for-equality to
+decide whether to expand the third or fourth arguments.
+(three-argument ifelse expands to nothing if the first two arguments
+are not equal)
+
+incr increments a string, assuming it is a decimal number
+
+decr decrements a string, assuming it is a number
+
+whitespace after open parens and commas is ignored,
+but not whitespace before close parens.
+
+m4 tokenizes and so when you want two builtins next to one another,
+sometimes you have to insert an empty quoted string, just to break up
+the tokenization.
+
+1 loc - exponentiation
+define(power,`ifelse($2, 0, 1, `eval($1*power($1,decr($2)))')')dnl
+power(2,10)
+
+Define the macro "power" to expand to an ifelse.
+The ifelse tests the second argument (the exponent) against zero.
+If the exponent is zero, then it expands to its third argument, 1.
+If the exponent is nonzero, then it recurses, and returns
+
+1 loc - factorial
+define(`factorial',`ifelse(`$1',0,1,`eval($1*factorial(decr($1)))')')dnl
+dnl
+factorial(5)
+
+Just like power - a standard recursive definition.
+
+1 loc - function definition
+define(`foo',`bar$1baz')
+foo(qux)
+
+1 loc - increment integer string
+incr(123)
+
+1 loc - reverse a string
+define(`invert',`ifelse(len(`$1'),0,,`invert(substr(`$1',1))'`'substr(`$1',0,1))')
+
+2 loc - arithmetic/integer
+eval(1+1)
+
+Eval can be used to do math.
+
+2 loc - case
+define(`upcase', `translit(`$1', `a-z', `A-Z')')
+define(`downcase', `translit(`$1', `A-Z', `a-z')')
+
+Translit takes three arguments - a string to transform, and two
+strings representing what should be transformed into what.
+
+2 loc - generic swap
+define(`swap', `$2$1')
+
+3 loc - fibonacci
+define(`fib',
+  `ifelse($1,0,
+    1,
+    `ifelse($1,1,
+      1,
+      `eval(fib(decr($1))+fib(decr(decr($1))))')')')
+fib(10)
+
+3 loc - mutual recursion
+
+This is straightforward
+
+3 loc - quine
+
+quines are trivial in m4 - everything that doesn't use
+any macros is a quine. For a quine to be interesting,
+we need some other quality (a biquine?)
+
+4 loc - look and say (with regex)
+4 loc - variadic function
+5 loc - arithmetic mean
+5 loc - dynamic variable names
+5 loc - enumerations
+5 loc - palindrome
+6 loc - powerset (long lines)
+7 loc - apply a callback to an array
+define(`foreach', `pushdef(`$1')_foreach($@)popdef(`$1')')dnl
+define(`_arg1', `$1')dnl
+define(`_foreach', `ifelse(`$2', `()', `',
+   `define(`$1', _arg1$2)$3`'$0(`$1', (shift$2), `$3')')')dnl
+dnl
+define(`apply',`foreach(`x',$1,`$2(x)')')dnl
+dnl
+define(`z',`eval(`$1*2') ')dnl
+apply(`(1,2,3)',`z')
+
+foreach expects to be called with a variable name in the first position,
+and it hides any previous definition of that name, and delegates to _foreach.
+_arg1 is defined to be something that expands to $1 - a delayed $1
+_foreach has a base case and a recursive case.
+In the base case, where $2 is the empty list, it expands to nothing.
+In the recursive case, it expands to three things:
+1. a (re)definition of the variable; it calls $2
+2. an occurrence of $3
+3. a recursive call to _foreach, shifting $2.
+
+apply takes a list and a macro, and chooses a specific iteration variable, x.
+
+8 loc - binary search
+
+
+8 loc - fizzbuzz
+9 loc - 99 bottles
+10 loc - 100 doors
+11 loc - sieve of eratothenes
+11 loc - tokenize a string (nearly comprehensible)
+12 loc - day of week
+12 loc - max licenses
+12 loc - primality by trial division
+13 loc - roman numerals (dumb)
+14 loc - SEDOLS
+15 loc - greatest subsequential sum
+15 loc - perfect numbers
+17 loc - longest common subsequence
+20 loc - zigzag
+21 loc - knuth shuffle
+22 loc - combinations
+27 loc - knapsack (brute force)
+29 loc - one dimensional automata
+32 loc - playing cards
+35 loc - bogosort
+36 loc - associative arrays/iteration
+40 loc - anagrams
+
+mogensin's sint
+define(`run',`apply(0,$1,$2,$1)')
+define(`apply',`ifelse($1,0,
+	`eval(first($2),$3,$4)',
+	`apply(decr($1)
