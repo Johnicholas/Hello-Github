@@ -1,0 +1,28 @@
+Contents
+--------
+
+This package contains version 0.02 of bfdb, an optimizing interpreter, 
+debugger, and compiler for the BF programming language, bflen, a short 
+utility to compute the length of BF programs, and bfref, a simple
+reference interpreter for BF.  bfdb, bflen and bfref are written in C++, C,
+and C, respectively.  Man pages are provided (as source) in bfdb.1, bflen.1,
+and bfref.1.
+
+Installation
+------------
+
+bfdb uses the GNU multiple precision library, libgmp.  You may use the supplied
+makefile to build bfdb, bflen, and bfref. `make test' will test bfdb.  This 
+test assumes that integers are 32 bits in length and will fail if this is not 
+the case.
+
+License
+-------
+
+bfdb is released under the GNU GPL, version 2 or later.  For a copy of
+version 2 of the GPL, look at the file COPYING.
+
+Acknowledgment
+--------------
+
+The BF programming language was invented by Urban Müller.

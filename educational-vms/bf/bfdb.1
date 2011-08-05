@@ -1,0 +1,296 @@
+.TH bfdb 1 "4 May 2006"
+.SH NAME
+bfdb \- BF interpreter, debugger and compiler 
+.SH SYNOPSIS
+\fBbfdb\fR [ \fB-\fR[\fBn\fR][\fBs\fR][\fBu\fR] ] [ \fIBF-program-file-name\fR ]
+.SH DESCRIPTION
+\fBbfdb\fR is an interactive interpreter, debugger and compiler for the BF
+language.  Once run, it prompts the user for \fBbfdb\fR commands, which it
+then executes.  Available \fBbfdb\fR commands are listed below under COMMANDS.
+Alternatively, the name of a file containing a BF program may be passed
+to \fBbfdb\fR, in which case, rather than prompt for \fBbfdb\fR commands,
+it will run the program.
+.SH LANGUAGE
+BF runs on a tape-based virtual machine.  Each cell of the tape
+is indexed by an integer (its address), and in addition, contains one 
+integer.  Initially, each cell in the tape contains zero.
+The tape has one head, which can point to any cell on the tape; initially,
+the head is at address zero.
+A BF program consists of a sequence of ASCII characters.  The eight 
+characters \fB+\fR, \fB-\fR, \fB>\fR, \fB<\fR, \fB[\fR, \fB]\fR, \fB,\fR, 
+and \fB.\fR are the executable instructions of BF.  All other characters
+have no effect when executed and may be used to comment the BF program.
+The eight characters are executed as follows:
+.TP
+ \fB+\fR
+Increment the value in the head's cell by one.
+.TP
+ \fB-\fR
+Decrement the value in the head's cell by one.
+.TP
+ \fB>\fR
+Move the head one cell to the right (i.e., increment its address by one.)
+.TP
+ \fB<\fR
+Move the head one cell to the left (i.e., decrement its address by one.)
+.PP
+The instructions \fB[\fR and \fB]\fR are matched in pairs, using the
+usual conventions for parenthesization.  If this cannot be done because
+the occurrences of
+\fB[\fR and \fB]\fR are not balanced, the BF program is ill-formed.
+.TP
+ \fB[\fR
+If the head's cell contains zero, jump forward to the instruction following
+the matching \fB]\fR.
+.TP
+ \fB]\fR
+Jump backwards to the matching \fB[\fR.  (The \fB[\fR...\fB]\fR construct
+thus serves as a \fIwhile\fR loop that executes as long as the head's cell is 
+nonzero.)
+.TP
+ \fB,\fR
+Accept one character of input and place its value in the head's cell.
+.TP
+ \fB.\fR
+Take the value in the head's cell and write an output character whose 
+value equals this value.
+.SH LANGUAGE VARIANTS
+\fBbfdb\fR supports a doubly infinite tape; it also supports a tape
+which is bounded, either at the left, at the right, or both.
+In addition, the values of tape cells can be constrained to lie
+between lower and upper bounds.  If one of these bounds is reached, 
+\fBbfdb\fR will either abort, limit the head position or cell value at the
+bound, exhibit undefined behavior,
+or wrap the head position or cell value around to the opposite bound.
+The user may specify which of these is done.
+.PP
+\fBbfdb\fR can read characters either as signed (with values from -128 to
+127) or unsigned (with values from 0 to 255); writing characters is always 
+done by taking the low 8 bits of the value's binary representation.
+\fBbfdb\fR can also optionally read and write decimal numbers instead of
+characters.
+.PP
+If the BF program attempts to read past end-of-file, the user can 
+choose to have \fBbfdb\fR 
+abort the program, halt it normally, do nothing,
+or store a specified end-of-file value into the head's tape cell.
+.SH OPTIONS
+.TP
+\fB\-n\fR
+Non-interactive mode: all prompts are suppressed.
+.TP
+\fB\-s\fR
+Program termination messages are suppressed.
+.TP
+\fB\-u\fR
+Set the default cell bounds to be the minimum and maximum values expressible 
+in the C type \fBunsigned int\fR.  If this option is not
+present, the default cell bounds will be the minimum and maximum values 
+expressible in the C type \fBunsigned char\fR.
+.SH COMMANDS
+.TP
+\fB%\fR \fItext\fR
+Lines starting with \fB%\fR have no effect and may be used to comment
+debugger input.
+.TP
+\fB?\fR
+Show a summary of available commands.
+.TP
+\fBbreak at\fR \fIlocation\fR
+Set a breakpoint at \fIlocation\fR.  Locations are measured in
+characters from the start of the program; the start of the program is 
+considered to be at 0.
+.TP
+\fBclear\fR
+Clear tape to all zeroes.  Does not move the head.
+.TP
+\fBcompile\fR [ \fB"\fR\fIoutput-file-name\fR\fB"\fR ]
+Compile the program into C and write the C code to \fIoutput-file-name\fR.
+See NOTES below for remarks on compilation.  If \fIoutput-file-name\fR is
+omitted, the code is written to standard output.
+.TP
+\fBdelete\fR \fInumber\fR
+Delete the \fInumber\fRth breakpoint.
+.TP
+\fBexit\fR
+Leave \fBbfdb\fR.
+.TP
+\fBhelp\fR
+Same as \fB?\fR.
+.TP
+\fBload\fR \fB"\fR\fIcode-string\fR\fB"\fR
+Load the BF program given by the sequence of characters in \fIcode-string\fR.
+The PC (execution location) is reset to 0, and all breakpoints are deleted.
+.TP
+\fBquit\fR
+Same as \fBexit\fR.
+.TP
+\fBread\fR \fB"\fR\fIfilename\fR\fB"\fR
+Read the BF program contained in \fIfilename\fR.
+The PC is reset to 0, and all breakpoints are deleted.
+.TP
+\fBrun\fR (\fBat\fR \fIloc\fR) (\fBfor\fR \fInum\fR)
+Run the program starting at location \fIloc\fR 
+until it halts, reaches a breakpoint, aborts with an error, 
+or executes \fInum\fR instructions.  If \fBat\fR \fIloc\fR is omitted,
+execution starts at the current PC.
+If \fBfor\fI \fInum\fR is omitted, execution continues until the program
+halts, reaches a breakpoint, or aborts with an error.
+.TP
+\fBset\fR \fIbound\fR \fInum\fR
+Place the bound \fIbound\fR at \fInum\fR.
+\fIbound\fR may be \fBleft\fR, \fBright\fR, \fBlow\fR, or \fBhigh\fR.
+.TP
+\fBset\fR \fIbound\fR (\fInum\fR) \fBabort\fR
+Cause the bound \fIbound\fR to abort upon being hit 
+and, if \fInum\fR is present, place it at \fInum\fR.
+.TP
+\fBset\fR \fIbound\fR (\fInum\fR) \fBlimiting\fR
+Make the bound \fIbound\fR limiting and, if \fInum\fR is present,
+place it at \fInum\fR.
+.TP
+\fBset\fR \fIbound\fR (\fInum\fR) \fBundefined\fR
+Make the bound \fIbound\fR undefined and, if \fInum\fR is present,
+place it at \fInum\fR.
+.TP
+\fBset\fR \fIbound\fR (\fInum\fR) \fBwrap\fR(\fBaround\fR)
+Make the bound \fIbound\fR wraparound and, if \fInum\fR is present,
+place it at \fInum\fR.  A wraparound bound may not be placed opposite to an
+infinite bound.
+.TP
+\fBset\fR \fIbound\fR \fBinfinite\fR
+Make the bound \fIbound\fR infinite (i.e., delete it.)  
+A bound placed opposite to a wraparound bound may not be made infinite.
+.TP
+\fBset\fR \fBcell\fR \fItypename\fR
+Make cell upper and lower bounds both wraparound, place the lower bound
+at the minimum value representable by the C type \fItypename\fR, and 
+place the upper bound at the maximum value representable by this type.
+\fItypename\fR may be \fBchar\fR, \fBsigned char\fR, \fBunsigned char\fR,
+\fBshort\fR, \fBunsigned short\fR, \fBint\fR, \fBunsigned\fR,
+\fBlong\fR, or \fBunsigned long\fR.
+.TP
+\fBset default\fR
+Reset the bounds, input method, output method, and EOF processing method
+to the default, which is: no tape bounds; cell bounds as for \fBset cell 
+unsigned char\fR (or \fBset cell unsigned\fR if \fB-u\fR was specified
+when \fBbfdb\fR was run); take input as unsigned characters; write output as 
+characters; and set the head's tape cell to 0 upon encountering EOF.
+.TP
+\fBset eof abort\fR
+Change EOF processing to abort the program.
+.TP
+\fBset eof halt\fR
+Change EOF processing to halt the program normally.
+.TP
+\fBset eof nop\fR
+Change EOF processing to do nothing.
+.TP
+\fBset eof\fR (\fBvalue\fR) \fInum\fR
+Change EOF processing to place \fInum\fR in the head's tape cell.
+.TP
+\fBset input decimal\fR
+Change the input method to read in decimal numbers.
+.TP
+\fBset input signed\fR (\fBchar\fR)
+Change the input method to read in signed characters.
+.TP
+\fBset input\fR (\fBunsigned\fR) \fBchar\fR
+Change the input method to read in unsigned characters.
+.TP
+\fBset input\fR \fBunsigned\fR
+Same as \fBset input unsigned char\fR.
+.TP
+\fBset output char\fR
+Change the output method to write characters.
+.TP
+\fBset output decimal\fR
+Change the output method to write decimal numbers.
+.TP
+\fBset pc\fR \fInum\fR
+Set the PC to \fInum\fR.
+.TP
+\fBset position\fR \fInum\fR
+Set the head's address to \fInum\fR.
+.TP
+\fBset tape\fR \fIaddress\fR \fInum\fR.
+Set the value in cell \fIaddress\fR to \fInum\fR.
+.TP
+\fBshow\fR
+Show the current PC, head position, breakpoints, bounds, input method, output
+method, and EOF processing method.
+.TP
+\fBshow copying\fR
+Show license info.
+.TP
+\fBshow license\fR
+Same as \fBshow copying\fR.
+.TP
+\fBshow prog\fR (\fInum\fR) (\fBat\fR \fIloc\fR)
+Show \fInum\fR characters of the program around location \fIloc\fR.
+If \fBat\fR \fIloc\fR is omitted, the characters around the current PC
+are shown.
+.TP
+\fBshow tape\fR (\fInum\fR) (\fBat\fR \fIloc\fR)
+Show \fInum\fR cells of the tape around location \fIloc\fR.
+If \fBat\fR \fIloc\fR is omitted, the cells around the head are shown.
+.TP
+\fBshow warranty\fR
+Inform the user that there is absolutely no warranty.
+.SH NOTES
+Breakpoints are not renumbered when a breakpoint is deleted.
+.PP
+If a value in a cell becomes invalid because the cell value bounds are
+changed, then, regardless of the bound processing option, the value is
+truncated to the relevant bound.  This is also done if the value to
+write upon EOF becomes invalid because the cell value bounds are changed,
+the user attempts to set a tape cell to an invalid value from the \fBbfdb\fR
+command line, the user attempts to set an invalid value to write upon EOF
+from the \fBbfdb\fR command line,
+a character or decimal number whose value is outside the cell 
+value bounds is read in from the \fBbfdb\fR interpreter, 
+or the head position becomes invalid because the tape bounds are changed.
+.PP
+The interpreter will usually be faster if each of the four bounds is either 
+infinite, undefined, or wraparound, and faster still if the low and high
+cell value bounds are as produced by \fBset cell\fR \fItypename\fR.
+.PP
+For compilation, both tape bounds must be finite; the compiled code will
+usually be faster if both tape bounds are undefined or 
+wraparound.  In addition, the low and high cell value bounds must be equal
+to those produced by \fBset cell\fR \fItypename\fR, for some appropriate type;
+the compiled code will be faster if both cell bounds are undefined or
+wraparound.  The compiler assumes (1) that the size of and values taken by 
+the chosen type on the target 
+architecture are the same as on the architecture on which \fBbfdb\fR is
+running, (2) that these integral types are represented on the target 
+architecture by unsigned binary numbers, in the case of unsigned types, or 
+two's-complement binary numbers, in the case of signed types, (3) that the
+width of the type is at 
+least 8 bits, and (4) that the number of cells in the tape is no 
+bigger than the maximum value representable by \fBsize_t\fR on the target 
+architecture.
+.PP
+The interpreter may detect some infinite loops and halt if it encounters
+them.  This is also the case for the code produced by the compiler.
+.PP
+Unless a program file is run from the command line or the
+\fB-s\fR option is specified,
+the interpreter will indicate upon program termination whether the
+program terminated because it executed the specified number of instructions,
+hit a breakpoint, halted normally, reached end of file, overran its cell or
+tape bounds, or fell into an infinite loop.  For programs run from the 
+command line, and for compiled code, the return status of the program 
+will indicate whether it halted normally, overran its tape bounds,
+reached end of file, or fell into an infinite loop.
+.PP
+When an infinite loop is detected and \fBbfdb\fR returns to the
+\fBbfdb\fR prompt, the contents of the tape may be incorrect in the 
+sense that it would not occur at any point of the execution of the infinite
+loop.
+.PP
+The BF language was invented by Urban Müller.
+.SH "SEE ALSO"
+bflen(1), bfref(1)
+.SH AUTHOR
+David Moews \- dmoews@fastmail.fm

@@ -1,0 +1,72 @@
+.TH bfref 1 "4 May 2006"
+.SH NAME
+bfref \- BF reference interpreter
+.SH SYNOPSIS
+\fBbfref\fR \fIBF-program-file-name\fR 
+.SH DESCRIPTION
+\fBbfref\fR is a simple interpreter for the BF language.
+It runs a BF program whose name is supplied on the command line.
+.SH LANGUAGE
+BF runs on a tape-based virtual machine.  Each cell of the tape
+is indexed by an integer (its address), and in addition, contains one 
+integer.  Initially, each cell in the tape contains zero.
+The tape has one head, which can point to any cell on the tape; initially,
+the head is at address zero.
+A BF program consists of a sequence of ASCII characters.  The eight 
+characters \fB+\fR, \fB-\fR, \fB>\fR, \fB<\fR, \fB[\fR, \fB]\fR, \fB,\fR, 
+and \fB.\fR are the executable instructions of BF.  All other characters
+have no effect when executed and may be used to comment the BF program.
+The eight characters are executed as follows:
+.TP
+ \fB+\fR
+Increment the value in the head's cell by one.
+.TP
+ \fB-\fR
+Decrement the value in the head's cell by one.
+.TP
+ \fB>\fR
+Move the head one cell to the right (i.e., increment its address by one.)
+.TP
+ \fB<\fR
+Move the head one cell to the left (i.e., decrement its address by one.)
+.PP
+The instructions \fB[\fR and \fB]\fR are matched in pairs, using the
+usual conventions for parenthesization.  If this cannot be done because
+the occurrences of
+\fB[\fR and \fB]\fR are not balanced, the BF program is ill-formed.
+.TP
+ \fB[\fR
+If the head's cell contains zero, jump forward to the instruction following
+the matching \fB]\fR.
+.TP
+ \fB]\fR
+Jump backwards to the matching \fB[\fR.  (The \fB[\fR...\fB]\fR construct
+thus serves as a \fIwhile\fR loop that executes as long as the head's cell is 
+nonzero.)
+.TP
+ \fB,\fR
+Accept one character of input and place its value in the head's cell.
+.TP
+ \fB.\fR
+Take the value in the head's cell and write an output character whose 
+value equals this value.
+.SH NOTES
+The virtual machine implemented by \fBbfref\fR has a tape 
+1048576 cells long, each of whose cells can hold a number between 0 and 255.
+If the head moves off the left end of the tape, it is placed at the right
+end, and vice versa.  Similarly, if a tape cell is incremented beyond 255,
+it is set to 0, and if a cell is decremented beyond 0, it is set to 255.
+If the \fB,\fR instruction attempts to read past end-of-file, it reads
+the value 0.  Programs run by \fBbfref\fR can be up to 4194304 characters
+long and nest \fB[\fR...\fB]\fR loops up to 1000 levels deep.
+.PP
+The \fBbfdb\fR interpeter is more flexible than \fBbfref\fR, and
+is often faster.  However, there are also cases where \fBbfref\fR is
+faster.  Also, \fBbfref\fR is far simpler, so it is likely to have
+fewer bugs.
+.PP
+The BF language was invented by Urban Müller.
+.SH "SEE ALSO"
+bfdb(1), bflen(1)
+.SH AUTHOR
+David Moews \- dmoews@fastmail.fm
