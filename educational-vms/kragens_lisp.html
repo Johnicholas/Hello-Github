@@ -1,0 +1,504 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<!-- saved from url=(0076)http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000464.html -->
+<HTML><HEAD><META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+   <TITLE> a small Lisp interpreter (under 4K)
+   </TITLE>
+   <LINK rel="Index" href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/index.html">
+   <LINK rel="made" href="mailto:kragen-hacks%40canonical.org?Subject=a%20small%20Lisp%20interpreter%20%28under%204K%29&In-Reply-To=">
+   <META name="robots" content="index,nofollow">
+   
+   <LINK rel="Previous" href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000463.html">
+   
+ </HEAD><BODY bgcolor="#ffffff">
+   <H1>a small Lisp interpreter (under 4K)</H1>
+    <B>Kragen Javier Sitaker</B> 
+    <A href="mailto:kragen-hacks%40canonical.org?Subject=a%20small%20Lisp%20interpreter%20%28under%204K%29&In-Reply-To=" title="a small Lisp interpreter (under 4K)">kragen at pobox.com
+       </A><BR>
+    <I>Sun Sep 23 23:11:08 EDT 2007</I>
+    <P></P><UL>
+        <LI>Previous message: <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000463.html">non-chalantly paper napkin
+</A></LI>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/date.html#464">[ date ]</A>
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/thread.html#464">[ thread ]</A>
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/subject.html#464">[ subject ]</A>
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/author.html#464">[ author ]</A>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>So Darius Bacon and I were chatting about small programming languages
+--- in 1992 someone implemented a pseudo-FORTH for IOCCC in about 800
+bytes of C (see
+<A href="http://ftp.funet.fi/pub/doc/IOCCC/1992/buzzard.2.design">http://ftp.funet.fi/pub/doc/IOCCC/1992/buzzard.2.design</A> --- cited by
+Richard W. M. Jones's recent literate FORTH written in the GNU
+assembler preprocessor, "A sometimes minimal FORTH compiler and
+tutorial", aka "jonesforth"), and we were wondering about Lisps.
+
+Rather than taking the obvious approach and looking to see if anyone
+had written a Lisp interpreter for the IOCCC before, I thought I would
+see how small I could make the Lisp 1.5 metacircular interpreter in C.
+
+I've only spent about three hours on it so far, and now I have a
+runnable Lisp system; it does have some drawbacks, though.
+
+1. There's no garbage collection, just memory leaking.  I made some
+   notes on this in October; the two-finger stop-and-copy Cheney GC I
+   jotted down in my notebook in C was 21 lines of code, so this
+   shouldn't inflate the code by much more.
+
+2. However, it's already fairly large, far too large for IOCCC; even
+   the version where I removed the comments and shortened some common
+   names is nearly 4KB.  It could probably be shortened a bit more;
+   Darius mentioned that he thought someone had written an IOCCC Lisp
+   interpreter that performed CAR, CDR, and CONS directly on character
+   strings rather than having a separate parser.
+
+3. There are a bunch of easy-to-fix bugs, most copied from the Lisp
+   1.5 metacircular interpreter:
+   - it thinks newline is an atom character;
+   - it ignores anything after the first s-expression on input;
+   - fortunately, if you put a space before your newline, those two 
+     bugs cancel out;
+   - it signals syntax errors by calling abort();
+   - assq signals "no key found" by segfaulting;
+   - calling a function with too few arguments is reported with a segfault;
+   - calling a function with too many arguments will ignore the extras;
+   - extra items in a COND clause will be ignored;
+   - missing consequents in a COND clause are reported with a segfault;
+   - if all the conditions in a COND clause are false, it will segfault;
+   - I haven't actually tested LABELS, so it probably doesn't work either.
+
+4. To be actually useful, it would need at least DEFUN, and probably
+   SETQ also, and probably also FUNARGS (or lexical scoping!).
+
+Here's the code:
+
+/* Tiny Lisp: how small can you make Lisp?
+ *
+ * The Lisp 1.5 manual's definition of Lisp in itself is 1222
+ * characters by my count; it doesn't include read, print, atom
+ * interning, memory management, or activation record management.  How
+ * small could I make a C version?  This version is 6.5K.
+ */
+#define _GNU_SOURCE
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdarg.h&gt;
+
+/* Start with cons, print, and atoms: ============================== */
+
+#define MAXATOMS 1024
+
+typedef struct pair { struct pair *car; struct pair *cdr; } pair;
+pair *cons(pair *car, pair *cdr) {
+  pair *rv = malloc(sizeof(*rv));
+  rv-&gt;car = car;
+  rv-&gt;cdr = cdr;
+  return rv;
+}
+int streq(char *string, int len, char *ref) {
+  if (strlen(ref) != len) return 0;
+  return memcmp(string, ref, len) == 0;
+}
+typedef char **atom;
+/* considered putting the actual strings in here instead of
+   strdupping; it made things slightly more complex */
+char *atomtable[MAXATOMS] = {0};
+atom intern(char *string, int len) {
+  atom i;
+  for (i = atomtable; *i; i++)
+    if (streq(string, len, *i)) return i;
+  if (i == &amp;atomtable[MAXATOMS-1]) abort();
+  *i = strndup(string, len);
+  return i;
+}
+atom as_atom(pair *x) {
+  atom i = (atom)x;
+  if (i &gt;= atomtable &amp;&amp; i &lt; &amp;atomtable[MAXATOMS]) return i;
+  return 0;
+}
+void print(pair *expr) {
+  atom x = as_atom(expr);
+  if (x) {
+    printf(*x);
+    return;
+  }
+  printf("(");
+  while (expr) {
+    print(expr-&gt;car);
+    expr = expr-&gt;cdr;
+    if (expr) printf(" ");
+  }
+  printf(")");
+}
+
+/* now "read": =============================================== */
+
+int is_atom_char(char c) {
+  return (c &amp;&amp; c != ')' &amp;&amp; c != '(' &amp;&amp; c != ' ');
+}
+pair *lread_atom(char **in) {
+  char *org = *in;
+  do (*in)++;			/* do-while: avoid empty atoms */
+  while (is_atom_char(**in));
+  return (pair*)intern(org, *in-org);
+}
+pair *lread(char **in);
+pair *lread_list_tail(char **in) {
+  pair *car;
+  if (!**in) abort();
+  if (**in == ')') { (*in)++; return 0; }
+  if (**in == ' ') { (*in)++; return lread_list_tail(in); }
+  car = lread(in);
+  return cons(car, lread_list_tail(in));
+}
+pair *lread(char **in) {
+  if (!**in) abort();
+  if (**in == '(') { (*in)++; return lread_list_tail(in); }
+  if (**in == ' ') { (*in)++; return lread(in); }
+  return lread_atom(in);
+}
+
+/* evaluation ===================================================== */
+
+/* so now we have cons (7 loc), atoms (21 loc), print (14 loc), and
+   read (24 loc); we can ignore memory management (for now) and
+   activation records; what about evaluation? */
+
+/* evalquote[fn;x] = apply[fn;x;NIL] */
+
+pair *apply(pair *fn, pair *x, pair *a);
+pair *evalquote(pair *fn, pair *x) {
+  return apply(fn, x, 0);
+}
+
+atom car_atom, cdr_atom, cons_atom, atom_atom, eq_atom, lambda_atom, 
+  label_atom, t_atom, quote_atom, cond_atom;
+pair *basic_env;
+void init() {
+  car_atom = intern("car", 3);
+  cdr_atom = intern("cdr", 3);
+  cons_atom = intern("cons", 4);
+  atom_atom = intern("atom", 4);
+  eq_atom = intern("eq", 2);
+  lambda_atom = intern("lambda", 6);
+  label_atom = intern("label", 5);
+  t_atom = intern("t", 1);
+  quote_atom = intern("quote", 5);
+  cond_atom = intern("cond", 4);
+  basic_env = cons(cons((pair*)t_atom, (pair*)t_atom), 0);
+}
+
+pair *truth_value_of(int x) { return x ? (pair*)t_atom : 0; }
+
+/* apply[fn;x;a] = */
+/*      [atom[fn] -&gt; [eq[fn;CAR] -&gt; caar[x]; */
+/*                    eq[fn;CDR] -&gt; cdar[x]; */
+/*                    eq[fn;CONS] -&gt; cons[car[x];cadr[x]]; */
+/*                    eq[fn;ATOM] -&gt; atom[car[x]]; */
+/*                    eq[fn;EQ] -&gt; eq[car[x];cadr[x]]; */
+/*                    T -&gt; apply[eval[fn;a];x;a]]; */
+/*       eq[car[fn];LAMBDA] -&gt; eval[caddr[fn];pairlis[cadr[fn];x;a]]; */
+/*       eq[car[fn];LABEL] -&gt; apply[caddr[fn];x;cons[cons[cadr[fn]; */
+/*                                                   caddr[fn]];a]]] */
+
+pair *eval(pair *fn, pair *a);
+pair *pairlis(pair *x, pair *y, pair *a);
+pair *apply(pair *fn, pair *x, pair *a) {
+  atom fn_atom = as_atom(fn);
+  if (fn_atom == car_atom) return x-&gt;car-&gt;car;
+  if (fn_atom == cdr_atom) return x-&gt;car-&gt;cdr;
+  if (fn_atom == cons_atom) return cons(x-&gt;car, x-&gt;cdr-&gt;car);
+  if (fn_atom == atom_atom) return truth_value_of(!!as_atom(x-&gt;car));
+  if (fn_atom == eq_atom) return truth_value_of(x-&gt;car == x-&gt;cdr-&gt;car);
+  if (fn_atom) return apply(eval(fn, a), x, a);
+  if (as_atom(fn-&gt;car) == lambda_atom) 
+    return eval(fn-&gt;cdr-&gt;cdr-&gt;car, pairlis(fn-&gt;cdr-&gt;car, x, a));
+  if (as_atom(fn-&gt;car) == label_atom)
+    return apply(fn-&gt;cdr-&gt;cdr-&gt;car, x, cons(cons(fn-&gt;cdr-&gt;car, fn-&gt;cdr-&gt;cdr-&gt;car), a));
+  return 0;
+}
+
+/* eval[e;a] = [atom[e] -&gt; cdr[assoc[e;a]]; */
+/*       atom[car[e]] -&gt;  */
+/*               [eq[car[e],QUOTE] -&gt; cadr[e]; */
+/*               eq[car[e];COND] -&gt; evcon[cdr[e];a]; */
+/*               T -&gt; apply[car[e];evlis[cdr[e];a];a]]; */
+/*       T -&gt; apply[car[e];evlis[cdr[e];a];a]] */
+/* (note i am using assq rather than assoc so i don't need equal) */
+
+pair *assq(pair *e, pair *a);
+pair *evcon(pair *c, pair *a);
+pair *evlis(pair *m, pair *a);
+pair *eval(pair *e, pair *a) {
+  atom ea;
+  if (as_atom(e)) return assq(e, a)-&gt;cdr;
+  ea = as_atom(e-&gt;car);
+  if (ea)
+    if (ea == quote_atom) return e-&gt;cdr-&gt;car;
+    else if (ea == cond_atom) return evcon(e-&gt;cdr, a);
+  /* duplicated case condensed */
+  return apply(e-&gt;car, evlis(e-&gt;cdr, a), a);
+}
+
+/* evcon[c;a] = [eval[caar[c];a] -&gt; eval[cadar[c];a]; */
+/*               T -&gt; evcon[cdr[c];a]] */
+
+pair *evcon(pair *c, pair *a) {
+  if (eval(c-&gt;car-&gt;car, a)) return eval(c-&gt;car-&gt;cdr-&gt;car, a);
+  else return evcon(c-&gt;cdr, a);
+}
+
+/* evlis[m;a] = [null[m] -&gt; NIL; */
+/*                T -&gt; cons[eval[car[m];a];evlis[cdr[m];a]]] */
+
+pair *evlis(pair *m, pair *a) {
+  if (!m) return 0;
+  return cons(eval(m-&gt;car, a), evlis(m-&gt;cdr, a));
+}
+
+/* pairlis[x;y;a] = [null[x]-&gt;a;T-&gt;cons[cons[car[x];car[y]]; */
+/*                  pairlis[cdr[x];cdr[y];a]]] */
+
+pair *pairlis(pair *x, pair *y, pair *a) {
+  if (!x) return a;
+  return cons(cons(x-&gt;car, y-&gt;car), pairlis(x-&gt;cdr, y-&gt;cdr, a));
+}
+
+/* assoc[x;a] = [equal[caar[a];x]-&gt;car[a];T-&gt;assoc[x;cdr[a]]] */
+
+pair *assq(pair *x, pair *a) {
+  if (a-&gt;car-&gt;car == x) return a-&gt;car;
+  else return assq(x, a-&gt;cdr);
+}
+
+int main(int argc, char **argv) {
+  pair *expr;
+  init();
+  for (;;) {
+    char buf[1024];
+    char *c;
+    printf("» ");
+    fflush(stdout);
+    if (!fgets(buf, sizeof(buf), stdin)) break;
+    c = buf;
+    expr = lread(&amp;c);
+    print(expr);
+    printf("\n");
+    print(eval(expr, basic_env));
+    printf("\n");
+  }
+  return 0;
+}
+  
+Here's the lightly compressed version that gets below 4K (3909
+characters):
+
+#define _GNU_SOURCE
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdarg.h&gt;
+#define MAXATOMS 1024
+
+typedef struct p { struct p *l; struct p *r; } p;
+p *cons(p *l, p *r) {
+  p *rv = malloc(sizeof(*rv));
+  rv-&gt;l = l;
+  rv-&gt;r = r;
+  return rv;
+}
+int streq(char *string, int len, char *ref) {
+  if (strlen(ref) != len) return 0;
+  return memcmp(string, ref, len) == 0;
+}
+typedef char **t;
+char *atomtable[MAXATOMS] = {0};
+t intern(char *string, int len) {
+  t i;
+  for (i = atomtable; *i; i++)
+    if (streq(string, len, *i)) return i;
+  if (i == &amp;atomtable[MAXATOMS-1]) abort();
+  *i = strndup(string, len);
+  return i;
+}
+t as_atom(p *x) {
+  t i = (t)x;
+  if (i &gt;= atomtable &amp;&amp; i &lt; &amp;atomtable[MAXATOMS]) return i;
+  return 0;
+}
+void print(p *expr) {
+  t x = as_atom(expr);
+  if (x) {
+    printf(*x);
+    return;
+  }
+  printf("(");
+  while (expr) {
+    print(expr-&gt;l);
+    expr = expr-&gt;r;
+    if (expr) printf(" ");
+  }
+  printf(")");
+}
+int is_atom_char(char c) {
+  return (c &amp;&amp; c != ')' &amp;&amp; c != '(' &amp;&amp; c != ' ');
+}
+p *lread_atom(char **in) {
+  char *org = *in;
+  do (*in)++;
+  while (is_atom_char(**in));
+  return (p*)intern(org, *in-org);
+}
+p *lread(char **in);
+p *lread_list_tail(char **in) {
+  p *l;
+  if (!**in) abort();
+  if (**in == ')') { (*in)++; return 0; }
+  if (**in == ' ') { (*in)++; return lread_list_tail(in); }
+  l = lread(in);
+  return cons(l, lread_list_tail(in));
+}
+p *lread(char **in) {
+  if (!**in) abort();
+  if (**in == '(') { (*in)++; return lread_list_tail(in); }
+  if (**in == ' ') { (*in)++; return lread(in); }
+  return lread_atom(in);
+}
+p *apply(p *fn, p *x, p *a);
+p *evalquote(p *fn, p *x) {
+  return apply(fn, x, 0);
+}
+t car_atom, cdr_atom, cons_atom, atom_atom, eq_atom, lambda_atom, 
+  label_atom, t_atom, quote_atom, cond_atom;
+p *basic_env;
+void init() {
+  car_atom = intern("car", 3);
+  cdr_atom = intern("cdr", 3);
+  cons_atom = intern("cons", 4);
+  atom_atom = intern("atom", 4);
+  eq_atom = intern("eq", 2);
+  lambda_atom = intern("lambda", 6);
+  label_atom = intern("label", 5);
+  t_atom = intern("t", 1);
+  quote_atom = intern("quote", 5);
+  cond_atom = intern("cond", 4);
+  basic_env = cons(cons((p*)t_atom, (p*)t_atom), 0);
+}
+p *truth_value_of(int x) { return x ? (p*)t_atom : 0; }
+p *eval(p *fn, p *a);
+p *plis(p *x, p *y, p *a);
+p *apply(p *fn, p *x, p *a) {
+  t fn_atom = as_atom(fn);
+  if (fn_atom == car_atom) return x-&gt;l-&gt;l;
+  if (fn_atom == cdr_atom) return x-&gt;l-&gt;r;
+  if (fn_atom == cons_atom) return cons(x-&gt;l, x-&gt;r-&gt;l);
+  if (fn_atom == atom_atom) return truth_value_of(!!as_atom(x-&gt;l));
+  if (fn_atom == eq_atom) return truth_value_of(x-&gt;l == x-&gt;r-&gt;l);
+  if (fn_atom) return apply(eval(fn, a), x, a);
+  if (as_atom(fn-&gt;l) == lambda_atom) 
+    return eval(fn-&gt;r-&gt;r-&gt;l, plis(fn-&gt;r-&gt;l, x, a));
+  if (as_atom(fn-&gt;l) == label_atom)
+    return apply(fn-&gt;r-&gt;r-&gt;l, x, cons(cons(fn-&gt;r-&gt;l, fn-&gt;r-&gt;r-&gt;l), a));
+  return 0;
+}
+p *assq(p *e, p *a);
+p *evcon(p *c, p *a);
+p *evlis(p *m, p *a);
+p *eval(p *e, p *a) {
+  t ea;
+  if (as_atom(e)) return assq(e, a)-&gt;r;
+  ea = as_atom(e-&gt;l);
+  if (ea)
+    if (ea == quote_atom) return e-&gt;r-&gt;l;
+    else if (ea == cond_atom) return evcon(e-&gt;r, a);
+  return apply(e-&gt;l, evlis(e-&gt;r, a), a);
+}
+p *evcon(p *c, p *a) {
+  if (eval(c-&gt;l-&gt;l, a)) return eval(c-&gt;l-&gt;r-&gt;l, a);
+  else return evcon(c-&gt;r, a);
+}
+p *evlis(p *m, p *a) {
+  if (!m) return 0;
+  return cons(eval(m-&gt;l, a), evlis(m-&gt;r, a));
+}
+p *plis(p *x, p *y, p *a) {
+  if (!x) return a;
+  return cons(cons(x-&gt;l, y-&gt;l), plis(x-&gt;r, y-&gt;r, a));
+}
+p *assq(p *x, p *a) {
+  if (a-&gt;l-&gt;l == x) return a-&gt;l;
+  else return assq(x, a-&gt;r);
+}
+int main(int argc, char **argv) {
+  p *expr;
+  init();
+  for (;;) {
+    char buf[1024];
+    char *c;
+    printf("» ");
+    fflush(stdout);
+    if (!fgets(buf, sizeof(buf), stdin)) break;
+    c = buf;
+    expr = lread(&amp;c);
+    print(expr);
+    printf("\n");
+    print(eval(expr, basic_env));
+    printf("\n");
+  }
+  return 0;
+} 
+
+And here's the outline of a Cheney GC from my notebook in October:
+
+void gc_visit(int *cell) {
+  if (consp(*cell)) {
+    if (car(*cell) == BROKEN_HEART) { *cell = cdr(*cell); }
+    else {
+      int dest = tospacep++;
+      tospace[dest] = fromspace[*cell];
+      set_car(*cell, BROKEN_HEART);
+      set_cdr(*cell, dest);
+      *cell = dest;
+    }
+  }
+}
+void gc() {
+  tospacep = 0;
+  int tovisit = 0;
+  get_roots();
+  while (tovisit &lt; tospacep) {
+    gc_visit(&amp;tospace[tovisit].car);
+    gc_visit(&amp;tospace[tovisit].cdr);
+    tovisit++;
+  }
+  swap(&amp;fromspace, &amp;tospace);
+}
+
+Clearly between these two functions, I changed my mind about how to
+represent conses.
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P></P><UL>
+        <!--threads-->
+	<LI>Previous message: <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000463.html">non-chalantly paper napkin
+</A></LI>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/date.html#464">[ date ]</A>
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/thread.html#464">[ thread ]</A>
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/subject.html#464">[ subject ]</A>
+              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/author.html#464">[ author ]</A>
+         </LI>
+       </UL>
+
+<HR>
+<A href="http://lists.canonical.org/mailman/listinfo/kragen-hacks">More information about the Kragen-hacks
+mailing list</A><BR>
+
+</BODY></HTML>

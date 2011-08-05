@@ -1,0 +1,5 @@
+define(return,[ifelse($1,,[[return]],{pname=$1;[[return]]})])
+define(proc,fun $1($2)[define(pname,$1)])
+proc(zip)
+return
+return(abc)

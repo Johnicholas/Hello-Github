@@ -1,0 +1,9 @@
+define(len,[ifelse($1,,0,[incr(len(substr($1,2)))])])
+define(string,[integer $1(len(substr($2,2)))
+str($1,substr($2,2),0)
+data $1(len(substr($2,2)))/EOS/
+])
+define(str,[ifelse($2,",,data $1(incr($3))/[LET]substr($2,1,1)/
+[str($1,substr($2,2),incr($3))])])
+string(xxx,"abc")
+string(yyyy,"123456789")
