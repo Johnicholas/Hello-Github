@@ -1,0 +1,235 @@
+  ADR PROGRAM
+LOUT1:
+  TEST '*1'
+  BF L1
+  CL 'GN1'
+  OUT
+  OUT
+L1:
+  BT L0
+  TEST '*2'
+  BF L2
+  CL 'GN2'
+  OUT
+  OUT
+L2:
+  BT L0
+  TEST '*'
+  BF L3
+  CL 'C1'
+  OUT
+  OUT
+L3:
+  BT L0
+  SR
+  BF L4
+  CL 'CL '
+  CI
+  OUT
+  OUT
+L4:
+L0:
+  R
+LOUTPUT:
+  TEST '.OUT'
+  BF L8
+  TEST '('
+  BE
+L9:
+  CLL LOUT1
+  BT L9
+  SET
+  BE
+  TEST ')'
+  BE
+  OUT
+L8:
+  BT L7
+  TEST '.LABEL'
+  BF L10
+  CL 'LB'
+  OUT
+  CLL LOUT1
+  BE
+  OUT
+L10:
+L7:
+  BF L6
+  CL 'OUT'
+  OUT
+  OUT
+L6:
+L5:
+  R
+LEX3:
+  ID
+  BF L12
+  CL 'CLL'
+  CI
+  OUT
+  OUT
+L12:
+  BT L11
+  SR
+  BF L13
+  CL 'TST'
+  CI
+  OUT
+  OUT
+L13:
+  BT L11
+  TEST '.ID'
+  BF L14
+  CL 'ID'
+  OUT
+  OUT
+L14:
+  BT L11
+  TEST '.NUMBER'
+  BF L15
+  CL 'NUM'
+  OUT
+  OUT
+L15:
+  BT L11
+  TEST '.STRING'
+  BF L16
+  CL 'SR'
+  OUT
+  OUT
+L16:
+  BT L11
+  TEST '('
+  BF L17
+  CLL LEX1
+  BE
+  TEST ')'
+  BE
+  OUT
+L17:
+  BT L11
+  TEST '.EMPTY'
+  BF L18
+  CL 'SET'
+  OUT
+  OUT
+L18:
+  BT L11
+  TEST '.REPEAT'
+  BF L19
+  LB
+  GN1
+  OUT
+  CLL LEX3
+  BE
+  CL 'BT '
+  GN1
+  OUT
+  CL 'SET'
+  OUT
+  OUT
+L19:
+L11:
+  R
+LEX2:
+  CLL LEX3
+  BF L23
+  CL 'BF '
+  GN1
+  OUT
+  OUT
+L23:
+  BT L22
+  CLL LOUTPUT
+  BF L24
+  OUT
+L24:
+L22:
+  BF L21
+L25:
+  CLL LEX3
+  BF L27
+  CL 'BE'
+  OUT
+  OUT
+L27:
+  BT L26
+  CLL LOUTPUT
+  BF L28
+  OUT
+L28:
+L26:
+  BT L25
+  SET
+  BE
+  LB
+  GN1
+  OUT
+  OUT
+L21:
+L20:
+  R
+LEX1: // definition of ex1
+  CLL LEX2 // first, call ex2
+  BF L30 // if that didn't match go to L30
+L31:
+  TEST '/' // check whether the next token is a slash
+  BF L33 // if that didn't match go to L33
+  CL 'BT ' // output a branch true
+  GN1 // if there isn't already a label 1 (in the stack) generate it. regardless, output it.
+  OUT // start a new card
+  CLL LEX2 // call the ex2 subroutine
+  BE // assert that matched
+  OUT // start a new card
+L33: // are these in the wrong order?
+L32:
+  BT L31 // go back to L31
+  SET // set the match flag
+  BE // assert that the match flag is set
+  LB // emit a label
+  GN1 // if the current label 1 cell is clear, generate a label there. regardless, output it.
+  OUT // newline
+  OUT // newline
+L30:
+L29:
+  R
+LST: // beginning of the statement subroutine
+  ID // match an identifier
+  BF L35 // if that didn't match, go to label 35
+  LB // set the output counter to card column 1
+  CI // copy the recently-matched identifier to the card
+  OUT // punch card and reset output counter
+  TEST '=' // match an =
+  BE // assert that succeeded
+  CLL LEX1 // Call the EX1 subroutine
+  BE // assert that succeeded
+  TEST ';' // match a semicolon
+  BE // assert that succeeded
+  CL 'R' // output a return opcode
+  OUT // newline
+  OUT // newline
+L35:
+L34:
+  R // return
+LPROGRAM: // a program is
+  TEST '.SYNTAX' // a .syntax
+  BF L37 // if that doesn't work, branch to done
+  ID // then an identifier
+  BE // if that doesn't work, explode
+  CL 'ADR' // print adr
+  CI // print the last characters - the identifier
+  OUT // punch card and reset output counter to column 8
+L38:
+  CLL LST // call the statement subroutine
+  BT L38 // if the statement succeeded, go back to l38
+  SET // set the match on, even though the statement failed
+  BE // assert match
+  TEST '.END' // test that the next token is .END
+  BE // assert match
+  CL 'END' // print "end" to the output
+  OUT // punch card and reset output counter to column 8
+  OUT // punch card and reset output counter to column 8
+L37:
+L36:
+  R // return
+  END

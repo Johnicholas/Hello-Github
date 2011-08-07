@@ -1,4 +1,5 @@
 \documentclass[twocolumn]{article}
+\usepackage{verbatim}
 \title{META II\\A SYNTAX-ORIENTED COMPILER WRITING LANGUAGE}
 \date{}
 \author{D. V. Schorre\\UCLA Computing Facility}
@@ -51,7 +52,7 @@ Symbols in the target language are represented as strings of characters,
 surrounded by quotes.
 Metalinguistic variables have the same form as identifiers in ALGOL, viz. a
 letter followed by a sequence of letters or digits.
-Items are written consecutively to indicate concatenation and separated by a
+tems are written consecutively to indicate concatenation and separated by a
 slash to indicate alternation. Each equation ends with a semicolon which,
 due to keypunch liminations, is represented by a period followed by a comma.
 An example of a syntax equation is:
@@ -669,51 +670,7 @@ TODO: real bibtex and citations
 \pagebreak
 
 \section{THE VALGOL I COMPILER WRITTEN IN META II LANGUAGE\\FIGURE 1}
-\begin{verbatim}
-.SYNTAX PROGRAM
-
-PRIMARY = .ID .OUT('LD ' *) /
-     .NUMBER .OUT('LDL' *) /
-     '(' EXP ')' .,
-
-TERM = PRIMARY $('*' PRIMARY .OUT('MLT') ) .,
-
-EXP1 = TERM $('+' TERM .OUT('ADD') /
-     '-' TERM .OUT('SUB') ) .,
-
-EXP = EXP1 ( '.=' EXP1 .OUT('EQU') / .EMPTY) .,
-
-ASSIGNST = EXP '=' .ID .OUT('ST ' *) .,
-
-UNTILST = '.UNTIL' .LABEL *1 EXP '.DO' .OUT('BTP' *2)
-     ST .OUT('B ' *1) .LABEL *2 .,
-
-CONDITIONALST = '.IF' EXP '.THEN' .OUT('BFP' *1)
-     ST '.ELSE' .OUT('B ' *2) .LABEL *1
-     ST .LABEL *2 .,
-
-IOST = 'EDIT' '(' EXP ',' .STRING
-     .OUT('EDT' *) ')' /
-     'PRINT' .OUT('PNT') .,
-
-IDSEQ1 = .ID .LABEL * .OUT('BLK 1') .,
-
-IDSEQ = IDSEQ1 $(',' IDSEQ1) .,
-
-DEC = '.REAL' .OUT('B ' *1) IDSEQ .LABEL *1 .,
-
-BLOCK = '.BEGIN' (DEC '.,' / .EMPTY)
-     ST $('.,' ST) '.END' .,
-
-ST = IOST / ASSIGNST / UNTILST /
-     CONDITIONALST / BLOCK .,
-
-PROGRAM = BLOCK .OUT('HLT')
-     .OUT('SP 1') .OUT('END') .,
-
-.END
-\end{verbatim}
-
+\verbatiminput{valgol_1_in_meta_2.txt}
 
 \section{ORDER LIST OF THE VALGOL I MACHINE\\FIGURE 2}
 
@@ -767,39 +724,7 @@ the print area, no movement takes place.
 \pagebreak
 
 \section{THE META II COMPILER WRITTEN IN ITS OWN LANGUAGE\\FIGURE 5}
-
-\begin{verbatim}
-.SYNTAX PROGRAM
-
-OUT1 = '*1' .OUT('GN1') / '*2' .OUT('GN2') /
-'*' .OUT('C1') / .STRING .OUT('CL ' *).,
-
-OUTPUT = ('.OUT' '('
-\$ OUT1 ')' / '.LABEL' .OUT('LB') OUT1) .OUT('OUT') .,
-
-EX3 = .ID .OUT ('CLL' *) / .STRING
-.OUT('TST' *) / '.ID' .OUT('ID') /
-'.NUMBER' .OUT('NUM') /
-'.STRING' .OUT('SR') / '(' EX1 ')' /
-'.EMPTY' .OUT('SET') /
-'\$' .LABEL *1 EX3
-.OUT ('BT ' *1) .OUT('SET').,
-
-EX2 = (EX3 .OUT('BF ' *1) / OUTPUT)
-\$(EX3 .OUT('BE') / OUTPUT)
-.LABEL *1 .,
-
-EX1 = EX2 \$( '/' .OUT('BT ' *1) EX2)
-.LABEL *1 .,
-
-ST = .ID .LABEL * '=' EX1
-'.,' .OUT('R').,
-
-PROGRAM = '.SYNTAX' .ID .OUT('ADR' *)
-\$ ST '.END' .OUT('END').,
-
-.END
-\end{verbatim}
+\verbatiminput{meta_2_in_meta_2.txt}
 
 \section{ORDER LIST OF THE META II MACHINE\\FIGURE 6}
 
@@ -872,141 +797,12 @@ identifier as a constant.
 \pagebreak
 
 \section{VALGOL II COMPILER WRITTEN IN META II\\FIGURE 7}
+\verbatiminput{valgol_2_in_meta_2.txt}
 
-\begin{verbatim}
-.SYNTAX PROGRAM
-
-ARRAYPART = '(.' EXP '.)' .OUT('AIA') .,
-
-CALLPART = '(' .OUT('LDF') (EXP \$(',' EXP) /
-     .EMPTY) '}' .OUT('CLL') .,
-
-VARIABLE = .ID .OUT('LD ' *) (ARRAYPART / .EMPTY) .,
-
-PRIMARY = 'WHOLE' '(' EXP ')' .OUT('WHL') /
-     .ID .OUT('LD ' *) (ARRAYPART / CALLPART / .EMPTY) /
-     '.TRUE' .OUT('SET') / '.FALSE' .OUT('RST') /
-     '0 ' .OUT('RST') / '1 ' .OUT('SET') /
-     .NUMBER .OUT('LDL' *) /
-     '(' EXP ')' .,
-
-TERM = PRIMARY \$ ('*' PRIMARY .OUT('MLT') /
-     '/' PRIMARY .OUT('DIV') /
-     './.' PRIMARY .OUT('DIV') .OUT('WHL') ) .
-
-EXP2 = '-' TERM .OUT('NEG') /
-     '+' TERM / TERM .,
-
-EXP1 = EXP2 \$('+' TERM .OUT('ADD') /
-     '-' TERM .OUT('SUB')) .,
-
-RELATION = EXP1(
-     '.L=' EXP1 .OUT('LEQ') /
-     '.L' EXP1 .OUT('LES') /
-     '.=' EXP1 .OUT('EQU') /
-     '.-=' EXP1 .OUT('EQU') .OUT('NOT') /
-     '.G=' EXP1 .OUT('LES') .OUT('NOT') /
-     '.G' EXP1 .OUT('LEQ') .OUT('NOT') /
-     .EMPTY) .,
-
-BPRIMARY = '.-' RELATION .OUT('NOT') /
-     RELATION .,
-
-BTERM = BPRIMARY \$ ('.,' .OUT('BF ' *1)
-     .OUT('POP') BPRIMARY)
-     .LABEL *1 .,
-
-IMPLICATION1 = '.IMP' .OUT('NOT')
-     .OUT('BT '*1) .OUT('POP')
-     BEXP1 .LABEL *1 .,
-
-IMPLICATION = BEXP1 \$ IMPLICATION1 .,
-
-EQUIV = IMPLICATION \$('.EQ' .OUT('EQU') ) .,
-
-EXP = '.IF' EXP '.THEN' .OUT('BFP' *1)
-     EXP .OUT('B ' *2) .LABEL *1
-     '.ELSE' EXP .LABEL *2 /
-     EQUIV .,
-
-ASSIGNPART = '= EXP ( ASSIGNPART .OUT('ST') /
-     .EMPTY .OUT('SST') ) .,
-
-ASSIGNCALLST = .ID .OUT('LD ' *) (ARRAYPART ASSIGNPART /
-     ASSIGNPART / (CALLPART / .EMPTY
-     .OUT('LDF') .OUT('CLL') )
-     .OUT('POP') ) .,
-
-UNTILST = '.UNTIL' .LABEL *1 EXP
-     '.DO' .OUT('BTP ' *2) ST
-     .OUT('B  ' *1) .LABEL *2 .,
-
-WHILECLAUSE = '.WHILE' .OUT('BF ' *1)
-     .OUT('POP') EXP .LABEL *1 / .EMPTY .,
-
-FORCLAUSE = VARIABLE '=' .OUT('FLP')
-     .OUT('BFP' *1) EXP '.STEP'
-     .OUT('SST') .OUT('B  ' *2)
-     .LABEL *1 EXP '.UNTIL' .OUT('ADS')
-     .LABEL *2 .OUT('RSR') EXP
-     .OUT('LEQ') WHILECLAUSE '.DO' .,
-
-FORST = '.FOR' .OUT('SET' .LABEL *
-     FORCLAUSE .OUT('BFP' *2) ST
-     .OUT('RST') .OUT('B  ' *1)
-     .LABEL *2 .,
-
-IOCALL = 'READ' '(' VARIABLE ',' EXP ')' .OUT('RED') /
-     'WRITE' '(' VARIABLE ',' EXP ')' .OUT('WRT') /
-     'EDIT' '(' EXP ',' .STRING
-     .OUT('EDT' *) ')' /
-     'PRINT' .OUT('PNT') /
-     'EJECT' .OUT('EJT') .,
-
-IDSEQ1 = .ID .LABEL* .OUT('BLK 1')
-
-IDSEQ = IDSEQ1 \$('.' IDSEQ1) .,
-
-TYPEDEC = '.REAL' IDSEQ ., ARRA1) .,
-
-PROCEDURE = '.PROCEDURE' .ID .LABEL *
-     .LABEL *1 .OUT('BLK 1') '('
-     (IDSEQ / .EMPTY) ')' .OUT('SP  1') '.,'
-     ST .OUT('R  ' *1) .,
-
-ARRAY1 = .ID .LABEL * '(.' 'O' '..' .NUMBER
-     .OUT('BLK 1') .OUT('BLK' *) '.)' .,
-
-ARRAYDEC = '.ARRAY' ARRAY1 \$( ',' 
-
-
-DEC = TYPEDEC / ARRAYDEC / PROCEDURE .,
-
-BLOCK = '.BEGIN' .OUT('B ' *1) \$(DEC '.,')
-     .LABEL *1 ST \$('.,' ST) '.END'
-     (.ID / .EMPTY) .,
-
-UNCONDITIONALST = IOCALL / ASSIGNCALLST /
-     BLOCK .,
-
-CONDST = '.IF' EXP '.THEN' .OUT('BFP' *1)
-     (UNCONDITIONALST ('.ELSE' .OUT('B  ' *2)
-     .LABEL *1 ST .LABEL *2 / .EMPTY
-     .LABEL *1) / (FORST / UNTILST)
-     .LABEL *1) .,
-
-ST = CONDST / UNCONDITIONALST / FORST /
-     UNTILST / .EMPTY .,
-
-PROGRAM = BLOCK
-     .OUT('HLT') .OUT('SP  1') .OUT('END') .,
-
-.END
-\end{verbatim}
 
 \pagebreak
 
-\section{ORDER LSIT OF THE VALGOL II MACHINE\\FIGURE 8}
+\section{ORDER LIST OF THE VALGOL II MACHINE\\FIGURE 8}
 
 \subsection{Machine Codes}
 \begin{description}
@@ -1108,62 +904,7 @@ contents before beginning this operation.
 Note 2: Same as note 1, but applies to the top two items.
 
 \section{EXAMPLE PROGRAM IN VALGOL II\\FIGURE 9}
-\begin{verbatim}
-.BEGIN
-.PROCEDURE DETERMINANT(A, N) .,
-.BEGIN
-.PROCEDURE DUMP() .,
-.BEGIN
-.REAL D .,
-.FOR D = 0 .STEP 1 .UNTIL n-1 .DO
-     WRITE(MATRIX(. N*D .), N) .,
-PRINT
-.END DUMP .,
-.PROCEDURE ABS(X) .,
-     ABS = .IF 0 .L= X .THEN X .ELSE -X .,
-.REAL PRODUCT, FACTOR, TEMP, R, I, J .,
-PRODUCT = 1 .,
-.FOR R = 0 .STEP 1 .UNTIL N-2
-.WHILE PRODUCT .-= 0 .DO .BEGIN
-     I = R .,
-     .FOR J = R+1 .STEP 1 .UNTIL N-1 .DO
-         .IF ABS( A(. N*I + R .) ) .L
-         ABS( A(. N@J + R .) ) .THEN
-              I = J .,
-     .IF A(. N*I + R .) .= 0 .THEN
-          PRODUCT = 0
-     .ELSE
-          .IF I .-= R .THEN .BEGIN
-               PRODUCT = -PRODUCT .,
-               .FOR J = R .STEP 1 .UNTIL N-1 .DO
-               .BEGIN
-                    TEMP = A(. N*R + J .) .,
-                    A(. N*R + J .) = A(. N*I + J .) .,
-                    A(. N*I + J .) * TEMP .END .END .,
-          TEMP = A(. N*R + R .) .,
-          .FOR I = R+1 .STEP 1 .UNTIL N-1 .DO
-          .BEGIN
-               FACTOR = A(. N*I + R .) / TEMP .,
-               .FOR J = R .STEP 1 .UNTIL N-1 .DO
-                    A(. N*I + J .) = A(. N*I + J .)
-                    -FACTOR * A(. N*R + J .) .,
-          DUMP
-          .END .END .,
-.FOR I = 0 .STEP 1 .UNTIL N-1 .DO
-     PRODUCT = PRODUCT * A(. N*I + I .)
-DETERMINANT = PRODUCT
-.END DETERMINANT .,
-.REAL M, W, T ., .ARRAY MATRIX (. 0 .. 24 .) .,
-.UNTIL .FALSE .DO .BEGIn
-     EDIT(1, 'FIND DETERMINANT OF' ) ., PRINT., PRINT.,
-     READ(M, 1) .,
-     .FOR W = 0 .STEP 1 .UNTIL M-1 .DO .BEGIN
-          READ(MATRIX I, M*W .). M) .,
-          WRITE(MATRIX (. M*W .). M) .END .,
-     PRINT ., T = DETERMINANT (MATRIX, M) .,
-     WRITE(T, 1) ., PRINT., PRINT .END
-.END PROGRAM
-\end{verbatim}
+\verbatiminput{example_in_valgol_2.txt}
 
 
 \end{document}

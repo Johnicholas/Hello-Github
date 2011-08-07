@@ -1,0 +1,235 @@
+  ADR PROGRAM
+LOUT1:
+  TEST '*1'
+  BF L1
+  CL 'GN1'
+  OUT
+  OUT
+L1:
+  BT L0
+  TEST '*2'
+  BF L2
+  CL 'GN2'
+  OUT
+  OUT
+L2:
+  BT L0
+  TEST '*'
+  BF L3
+  CL 'C1'
+  OUT
+  OUT
+L3:
+  BT L0
+  SR
+  BF L4
+  CL 'CL '
+  CI
+  OUT
+  OUT
+L4:
+L0:
+  R
+LOUTPUT:
+  TEST '.OUT'
+  BF L8
+  TEST '('
+  BE
+L9:
+  CLL LOUT1
+  BT L9
+  SET
+  BE
+  TEST ')'
+  BE
+  OUT
+L8:
+  BT L7
+  TEST '.LABEL'
+  BF L10
+  CL 'LB'
+  OUT
+  CLL LOUT1
+  BE
+  OUT
+L10:
+L7:
+  BF L6
+  CL 'OUT'
+  OUT
+  OUT
+L6:
+L5:
+  R
+LEX3:
+  ID
+  BF L12
+  CL 'CLL'
+  CI
+  OUT
+  OUT
+L12:
+  BT L11
+  SR
+  BF L13
+  CL 'TST'
+  CI
+  OUT
+  OUT
+L13:
+  BT L11
+  TEST '.ID'
+  BF L14
+  CL 'ID'
+  OUT
+  OUT
+L14:
+  BT L11
+  TEST '.NUMBER'
+  BF L15
+  CL 'NUM'
+  OUT
+  OUT
+L15:
+  BT L11
+  TEST '.STRING'
+  BF L16
+  CL 'SR'
+  OUT
+  OUT
+L16:
+  BT L11
+  TEST '('
+  BF L17
+  CLL LEX1
+  BE
+  TEST ')'
+  BE
+  OUT
+L17:
+  BT L11
+  TEST '.EMPTY'
+  BF L18
+  CL 'SET'
+  OUT
+  OUT
+L18:
+  BT L11
+  TEST '.REPEAT'
+  BF L19
+  LB
+  GN1
+  OUT
+  CLL LEX3
+  BE
+  CL 'BT '
+  GN1
+  OUT
+  CL 'SET'
+  OUT
+  OUT
+L19:
+L11:
+  R
+LEX2:
+  CLL LEX3
+  BF L23
+  CL 'BF '
+  GN1
+  OUT
+  OUT
+L23:
+  BT L22
+  CLL LOUTPUT
+  BF L24
+  OUT
+L24:
+L22:
+  BF L21
+L25:
+  CLL LEX3
+  BF L27
+  CL 'BE'
+  OUT
+  OUT
+L27:
+  BT L26
+  CLL LOUTPUT
+  BF L28
+  OUT
+L28:
+L26:
+  BT L25
+  SET
+  BE
+  LB
+  GN1
+  OUT
+  OUT
+L21:
+L20:
+  R
+LEX1:
+  CLL LEX2
+  BF L30
+L31:
+  TEST '/'
+  BF L33
+  CL 'BT '
+  GN1
+  OUT
+  CLL LEX2
+  BE
+  OUT
+L33:
+L32:
+  BT L31
+  SET
+  BE
+  LB
+  GN1
+  OUT
+  OUT
+L30:
+L29:
+  R
+LST:
+  ID
+  BF L35
+  LB
+  CI
+  OUT
+  TEST '='
+  BE
+  CLL LEX1
+  BE
+  TEST ';'
+  BE
+  CL 'R'
+  OUT
+  OUT
+L35:
+L34:
+  R
+LPROGRAM:
+  TEST '.SYNTAX'
+  BF L37
+  ID
+  BE
+  CL 'ADR'
+  CI
+  OUT
+L38:
+  CLL LST
+  BT L38
+  SET
+  BE
+  TEST '.END'
+  BE
+  CL 'END'
+  OUT
+  OUT
+L37:
+L36:
+  R
+  END

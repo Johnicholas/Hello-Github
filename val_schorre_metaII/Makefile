@@ -2,12 +2,16 @@
 # configuration
 
 STEM=val_schorre_metaII
+HELPERS=example_in_valgol_2.txt \
+	valgol_2_in_meta_2.txt \
+	meta_2_in_meta_2.txt \
+	valgol_1_in_meta_2.txt
 
 # default target
 default: all
 .PHONY: default
 
-$(STEM).pdf: $(STEM).tex
+$(STEM).pdf: $(STEM).tex $(HELPERS)
 	latex $(STEM).tex
 	latex $(STEM).tex
 	latex $(STEM).tex
