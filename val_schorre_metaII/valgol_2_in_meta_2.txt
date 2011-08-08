@@ -1,128 +1,123 @@
 .SYNTAX PROGRAM
 
-ARRAYPART = '(.' EXP '.)' .OUT('AIA') .,
+ARRAYPART = '(.' EXP '.)' .OUT('AIA') ;
 
-CALLPART = '(' .OUT('LDF') (EXP \$(',' EXP) /
-     .EMPTY) '}' .OUT('CLL') .,
+CALLPART = '(' .OUT ( 'LDF' ) ( EXP .REPEAT ( ',' EXP ) / .EMPTY ) '}' .OUT('CLL') ;
 
-VARIABLE = .ID .OUT('LD ' *) (ARRAYPART / .EMPTY) .,
+VARIABLE = .ID .OUT ( 'LD' * ) ( ARRAYPART / .EMPTY ) ;
 
-PRIMARY = 'WHOLE' '(' EXP ')' .OUT('WHL') /
-     .ID .OUT('LD ' *) (ARRAYPART / CALLPART / .EMPTY) /
-     '.TRUE' .OUT('SET') / '.FALSE' .OUT('RST') /
-     '0 ' .OUT('RST') / '1 ' .OUT('SET') /
-     .NUMBER .OUT('LDL' *) /
-     '(' EXP ')' .,
+PRIMARY = 'WHOLE' '(' EXP ')' .OUT ( 'WHL' ) /
+     .ID .OUT ( 'LD' * ) ( ARRAYPART / CALLPART / .EMPTY ) /
+     '.TRUE' .OUT ( 'SET' ) / '.FALSE' .OUT ( 'RST' ) /
+     '0 ' .OUT ( 'RST' ) / '1 ' .OUT ( 'SET' ) /
+     .NUMBER .OUT ( 'LDL' * ) /
+     '(' EXP ')' ;
 
-TERM = PRIMARY \$ ('*' PRIMARY .OUT('MLT') /
-     '/' PRIMARY .OUT('DIV') /
-     './.' PRIMARY .OUT('DIV') .OUT('WHL') ) .
+TERM = PRIMARY .REPEAT ( '*' PRIMARY .OUT ( 'MLT' ) /
+     '/' PRIMARY .OUT ( 'DIV' ) /
+     './.' PRIMARY .OUT ( 'DIV' ) .OUT ( 'WHL' ) ) ;
 
-EXP2 = '-' TERM .OUT('NEG') /
-     '+' TERM / TERM .,
+EXP2 = '-' TERM .OUT ( 'NEG' ) /
+     '+' TERM / TERM ;
 
-EXP1 = EXP2 \$('+' TERM .OUT('ADD') /
-     '-' TERM .OUT('SUB')) .,
+EXP1 = EXP2 .REPEAT ( '+' TERM .OUT ( 'ADD' ) /
+     '-' TERM .OUT ( 'SUB' ) ) ;
 
-RELATION = EXP1(
-     '.L=' EXP1 .OUT('LEQ') /
-     '.L' EXP1 .OUT('LES') /
-     '.=' EXP1 .OUT('EQU') /
-     '.-=' EXP1 .OUT('EQU') .OUT('NOT') /
-     '.G=' EXP1 .OUT('LES') .OUT('NOT') /
-     '.G' EXP1 .OUT('LEQ') .OUT('NOT') /
-     .EMPTY) .,
+RELATION = EXP1 (
+     '.L=' EXP1 .OUT ( 'LEQ' ) /
+     '.L' EXP1 .OUT ( 'LES' ) /
+     '.=' EXP1 .OUT ( 'EQU' ) /
+     '.-=' EXP1 .OUT ( 'EQU' ) .OUT ( 'NOT' ) /
+     '.G=' EXP1 .OUT ( 'LES' ) .OUT ( 'NOT' ) /
+     '.G' EXP1 .OUT ( 'LEQ' ) .OUT ( 'NOT' ) /
+     .EMPTY ) ;
 
-BPRIMARY = '.-' RELATION .OUT('NOT') /
-     RELATION .,
+BPRIMARY = '.-' RELATION .OUT ( 'NOT' ) /
+     RELATION ;
 
-BTERM = BPRIMARY \$ ('.,' .OUT('BF ' *1)
-     .OUT('POP') BPRIMARY)
-     .LABEL *1 .,
+BTERM = BPRIMARY .REPEAT ( '.,' .OUT ( 'BF' *1 )
+     .OUT ( 'POP' ) BPRIMARY )
+     .LABEL *1 ;
 
-IMPLICATION1 = '.IMP' .OUT('NOT')
-     .OUT('BT '*1) .OUT('POP')
-     BEXP1 .LABEL *1 .,
+IMPLICATION1 = '.IMP' .OUT ( 'NOT' )
+     .OUT ( 'BT '*1 ) .OUT ( 'POP' )
+     BEXP1 .LABEL *1 ;
 
-IMPLICATION = BEXP1 \$ IMPLICATION1 .,
+IMPLICATION = BEXP1 .REPEAT IMPLICATION1 ;
 
-EQUIV = IMPLICATION \$('.EQ' .OUT('EQU') ) .,
+EQUIV = IMPLICATION .REPEAT ( '.EQ' .OUT ( 'EQU' ) ) ;
 
-EXP = '.IF' EXP '.THEN' .OUT('BFP' *1)
-     EXP .OUT('B ' *2) .LABEL *1
+EXP = '.IF' EXP '.THEN' .OUT ( 'BFP' *1 )
+     EXP .OUT ( 'B' *2 ) .LABEL *1
      '.ELSE' EXP .LABEL *2 /
-     EQUIV .,
+     EQUIV ;
 
-ASSIGNPART = '= EXP ( ASSIGNPART .OUT('ST') /
-     .EMPTY .OUT('SST') ) .,
+ASSIGNPART = '=' EXP ( ASSIGNPART .OUT ( 'ST' ) /
+     .EMPTY .OUT ( 'SST' ) ) ;
 
-ASSIGNCALLST = .ID .OUT('LD ' *) (ARRAYPART ASSIGNPART /
-     ASSIGNPART / (CALLPART / .EMPTY
-     .OUT('LDF') .OUT('CLL') )
-     .OUT('POP') ) .,
+ASSIGNCALLST = .ID .OUT ( 'LD' * ) ( ARRAYPART ASSIGNPART /
+     ASSIGNPART / ( CALLPART / .EMPTY
+     .OUT ( 'LDF' ) .OUT ( 'CLL' ) )
+     .OUT ( 'POP' ) ) ;
 
 UNTILST = '.UNTIL' .LABEL *1 EXP
-     '.DO' .OUT('BTP ' *2) ST
-     .OUT('B  ' *1) .LABEL *2 .,
+     '.DO' .OUT ( 'BTP' *2 ) ST
+     .OUT ( 'B' *1 ) .LABEL *2 ;
 
-WHILECLAUSE = '.WHILE' .OUT('BF ' *1)
-     .OUT('POP') EXP .LABEL *1 / .EMPTY .,
+WHILECLAUSE = '.WHILE' .OUT ( 'BF ' *1 )
+     .OUT ( 'POP' ) EXP .LABEL *1 / .EMPTY ;
 
-FORCLAUSE = VARIABLE '=' .OUT('FLP')
-     .OUT('BFP' *1) EXP '.STEP'
-     .OUT('SST') .OUT('B  ' *2)
-     .LABEL *1 EXP '.UNTIL' .OUT('ADS')
-     .LABEL *2 .OUT('RSR') EXP
-     .OUT('LEQ') WHILECLAUSE '.DO' .,
+FORCLAUSE = VARIABLE '=' .OUT ( 'FLP' )
+     .OUT ( 'BFP' *1 ) EXP '.STEP'
+     .OUT ( 'SST' ) .OUT ( 'B' *2 )
+     .LABEL *1 EXP '.UNTIL' .OUT ( 'ADS' )
+     .LABEL *2 .OUT ( 'RSR' ) EXP
+     .OUT ( 'LEQ' ) WHILECLAUSE '.DO' ;
 
-FORST = '.FOR' .OUT('SET' .LABEL *
-     FORCLAUSE .OUT('BFP' *2) ST
-     .OUT('RST') .OUT('B  ' *1)
-     .LABEL *2 .,
+FORST = '.FOR' .OUT ( 'SET' ) .LABEL *
+     FORCLAUSE .OUT ( 'BFP' *2 ) ST
+     .OUT ( 'RST' ) .OUT ('B' *1 )
+     .LABEL *2 ;
 
-IOCALL = 'READ' '(' VARIABLE ',' EXP ')' .OUT('RED') /
-     'WRITE' '(' VARIABLE ',' EXP ')' .OUT('WRT') /
+IOCALL = 'READ' '(' VARIABLE ',' EXP ')' .OUT ( 'RED' ) /
+     'WRITE' '(' VARIABLE ',' EXP ')' .OUT ( 'WRT' ) /
      'EDIT' '(' EXP ',' .STRING
-     .OUT('EDT' *) ')' /
-     'PRINT' .OUT('PNT') /
-     'EJECT' .OUT('EJT') .,
+     .OUT ( 'EDT' * ) ')' /
+     'PRINT' .OUT ( 'PNT' ) /
+     'EJECT' .OUT ( 'EJT' ) ;
 
-IDSEQ1 = .ID .LABEL* .OUT('BLK 1')
+IDSEQ1 = .ID .LABEL * .OUT ( 'BLK 1' ) ;
 
-IDSEQ = IDSEQ1 \$('.' IDSEQ1) .,
+IDSEQ = IDSEQ1 .REPEAT ( '.' IDSEQ1 ) ;
 
-TYPEDEC = '.REAL' IDSEQ ., ARRA1) .,
+TYPEDEC = '.REAL' IDSEQ ARRAY1 ;
 
 PROCEDURE = '.PROCEDURE' .ID .LABEL *
-     .LABEL *1 .OUT('BLK 1') '('
-     (IDSEQ / .EMPTY) ')' .OUT('SP  1') '.,'
-     ST .OUT('R  ' *1) .,
+     .LABEL *1 .OUT ( 'BLK 1' ) '('
+     ( IDSEQ / .EMPTY ) ')' .OUT ( 'SP' '1' ) '.,'
+     ST .OUT ( 'R' *1 ) ;
 
 ARRAY1 = .ID .LABEL * '(.' 'O' '..' .NUMBER
-     .OUT('BLK 1') .OUT('BLK' *) '.)' .,
+     .OUT ( 'BLK 1' ) .OUT ( 'BLK' * ) '.)' ;
 
-ARRAYDEC = '.ARRAY' ARRAY1 \$( ',' 
+ARRAYDEC = '.ARRAY' ARRAY1 .REPEAT ( ',' ) ;
 
+DEC = TYPEDEC / ARRAYDEC / PROCEDURE ;
 
-DEC = TYPEDEC / ARRAYDEC / PROCEDURE .,
+BLOCK = '.BEGIN' .OUT('B' *1) .REPEAT ( DEC '.,' )
+     .LABEL *1 ST .REPEAT ( '.,' ST ) '.END'
+     ( .ID / .EMPTY ) ;
 
-BLOCK = '.BEGIN' .OUT('B ' *1) \$(DEC '.,')
-     .LABEL *1 ST \$('.,' ST) '.END'
-     (.ID / .EMPTY) .,
+UNCONDITIONALST = IOCALL / ASSIGNCALLST / BLOCK ;
 
-UNCONDITIONALST = IOCALL / ASSIGNCALLST /
-     BLOCK .,
-
-CONDST = '.IF' EXP '.THEN' .OUT('BFP' *1)
-     (UNCONDITIONALST ('.ELSE' .OUT('B  ' *2)
+CONDST = '.IF' EXP '.THEN' .OUT ( 'BFP' *1 )
+     ( UNCONDITIONALST ( '.ELSE' .OUT ( 'B' *2 )
      .LABEL *1 ST .LABEL *2 / .EMPTY
-     .LABEL *1) / (FORST / UNTILST)
-     .LABEL *1) .,
+     .LABEL *1 ) / ( FORST / UNTILST )
+     .LABEL *1 ) ;
 
-ST = CONDST / UNCONDITIONALST / FORST /
-     UNTILST / .EMPTY .,
+ST = CONDST / UNCONDITIONALST / FORST / UNTILST / .EMPTY ;
 
-PROGRAM = BLOCK
-     .OUT('HLT') .OUT('SP  1') .OUT('END') .,
+PROGRAM = BLOCK .OUT ( 'HLT' ) .OUT ( 'SP1' ) .OUT ( 'END' ) ;
 
 .END

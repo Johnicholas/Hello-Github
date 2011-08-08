@@ -254,7 +254,7 @@ Let us study the compiler written in META II (figure 1) in more detail.
 The identifier PROGRAM on the first line indicates that this is the main
 equation, and that control goes there first.
 The equation for PRIMARY is similar to that of EX3 in our previous example,
-but here numbers are recognized and reproduced with a ``load litera'' command.
+but here numbers are recognized and reproduced with a ``load literal'' command.
 TERM is what was previously EX2; and EXP1 what was previously EX1 except for
 recognizing minus for subtraction.
 The equation EXP defines the relational operator ``equal'', which produces a
@@ -524,7 +524,7 @@ Also, truncation seems to be used more frequently.
 The procedure ENTIER can be defined in VALGOL II as follows:
 
 \begin{center}
-{\tt .PROCEUDRE ENTIER(X) .}, \\
+{\tt .PROCEDURE ENTIER(X) .}, \\
 {\tt \ \ \ .IF O .L= X .THEN WHOLE (x) .ELSE} \\
 {\tt \ \ \ .IF WHOLE(X) = X .THEN X .ELSE} \\
 {\tt \ \ \ WHOLE(X) -1}
@@ -730,20 +730,9 @@ the print area, no movement takes place.
 
 \subsection{Machine Codes}
 \begin{description}
-\item[TST STRING] Test: After deleting initial blanks in the input string,
-compare it to the string given as argument. If the comparison is met,
-delete the matched portion from the input and se tswitch. If not met,
-reset switch.
-\item[ID] Identifier: After deleting initial blanks in the input string,
-test if it begins with an identifier, ie., a a letter followed by a sequence
-of letters and/or digits. If so, delete the identifier and set switch.
-If not, reset switch.
-\item[NUM] Number: After deleting initial blanks in the input string, test
-if it begins with a number. A number is a string of digits which may contain
-imbeded periods, but may not begin or end with a period. 
-Moreover, no two periods may be next to one another.
-If a number is found, delete it and set switch.
-If not, reset switch.
+\item[TST STRING] Test: After deleting initial blanks in the input string, compare it to the string given as argument. If the comparison is met, delete the matched portion from the input and set switch. If not met, reset switch.
+\item[ID] Identifier: After deleting initial blanks in the input string, test if it begins with an identifier, ie., a a letter followed by a sequence of letters and/or digits. If so, delete the identifier and set switch. If not, reset switch.
+\item[NUM] Number: After deleting initial blanks in the input string, test if it begins with a number. A number is a string of digits which may contain imbeded periods, but may not begin or end with a period.  Moreover, no two periods may be next to one another. If a number is found, delete it and set switch. If not, reset switch.
 \item[SR] String: After deleting initial blanks in the input string, test if
 it begins with a string. Ie., a single quote followed by a sequence of any
 characters other than single quote followed by another single quote.
@@ -769,8 +758,7 @@ Otherwise, continue in sequence.
 Otherwise, continue in sequence.
 \item[BE] Branch to error if false: Halt if switch is off, otherwsie,
 continue in sequence.
-\item[CL  STRING] Copy literal: Output the variable elngth string given as the
-argument.
+\item[CL  STRING] Copy literal: Output the variable length string given as the argument.
 A blank character will be inserted in the output following the string.
 \item[CI] Copy input: Output the last sequence of characters deleted from the
 input string. This command may not function properly if the last command
@@ -778,7 +766,7 @@ which could cause deletion failed to do so.
 \item[GN1] Generate 1: This concerns the current label 1 cell, ie., the next
 to top cell in the stack, which is either clear or contains a generated label.
 If clear, generate a label and put it into that cell.
-Whether the label has just ben put into the cell or was already there, output
+Whether the label has just been put into the cell or was already there, output
 it.
 Finally, insert a blank character in the output following the label.
 \item[GN2] Generate 2: Same as GN1, except that it concerns the current label

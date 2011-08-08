@@ -2,8 +2,8 @@
 
 OUT1 = '*1' .OUT ( 'GN1' ) / 
      '*2' .OUT ( 'GN2' ) /
-     '*' .OUT ( 'C1' ) /
-     .STRING .OUT ( 'CL ' * ) ;
+     '*' .OUT ( 'CI' ) /
+     .STRING .OUT ( 'CL' * ) ;
 
 OUTPUT = (
        	 '.OUT' '(' .REPEAT OUT1 ')' /
@@ -18,14 +18,14 @@ EX3 = .ID .OUT ( 'CLL' * ) /
       '.STRING' .OUT ( 'SR' ) /
       '(' EX1 ')' /
       '.EMPTY' .OUT ( 'SET' ) /
-      '.REPEAT' .LABEL *1 EX3 .OUT ( 'BT ' *1 ) .OUT('SET')
+      '.REPEAT' .LABEL *1 EX3 .OUT ( 'BT' *1 ) .OUT ( 'SET' )
       ;
 
-EX2 = ( EX3 .OUT ( 'BF ' *1 ) / OUTPUT )
+EX2 = ( EX3 .OUT ( 'BF' *1 ) / OUTPUT )
     .REPEAT ( EX3 .OUT ( 'BE' ) / OUTPUT )
     .LABEL *1 ;
 
-EX1 = EX2 .REPEAT ( '/' .OUT ( 'BT ' *1 ) EX2 ) .LABEL *1 ;
+EX1 = EX2 .REPEAT ( '/' .OUT ( 'BT' *1 ) EX2 ) .LABEL *1 ;
 
 ST = .ID .LABEL * '=' EX1 ';' .OUT ( 'R' ) ;
 

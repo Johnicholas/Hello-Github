@@ -1,235 +1,211 @@
-  ADR PROGRAM
-LOUT1:
-  TEST '*1'
-  BF L1
-  CL 'GN1'
-  OUT
-  OUT
-L1:
-  BT L0
-  TEST '*2'
-  BF L2
-  CL 'GN2'
-  OUT
-  OUT
-L2:
-  BT L0
-  TEST '*'
-  BF L3
-  CL 'C1'
-  OUT
-  OUT
-L3:
-  BT L0
-  SR
-  BF L4
-  CL 'CL '
-  CI
-  OUT
-  OUT
-L4:
-L0:
-  R
-LOUTPUT:
-  TEST '.OUT'
-  BF L8
-  TEST '('
-  BE
-L9:
-  CLL LOUT1
-  BT L9
-  SET
-  BE
-  TEST ')'
-  BE
-  OUT
-L8:
-  BT L7
-  TEST '.LABEL'
-  BF L10
-  CL 'LB'
-  OUT
-  CLL LOUT1
-  BE
-  OUT
-L10:
-L7:
-  BF L6
-  CL 'OUT'
-  OUT
-  OUT
-L6:
-L5:
-  R
-LEX3:
-  ID
-  BF L12
-  CL 'CLL'
-  CI
-  OUT
-  OUT
-L12:
-  BT L11
-  SR
-  BF L13
-  CL 'TST'
-  CI
-  OUT
-  OUT
-L13:
-  BT L11
-  TEST '.ID'
-  BF L14
-  CL 'ID'
-  OUT
-  OUT
-L14:
-  BT L11
-  TEST '.NUMBER'
-  BF L15
-  CL 'NUM'
-  OUT
-  OUT
-L15:
-  BT L11
-  TEST '.STRING'
-  BF L16
-  CL 'SR'
-  OUT
-  OUT
-L16:
-  BT L11
-  TEST '('
-  BF L17
-  CLL LEX1
-  BE
-  TEST ')'
-  BE
-  OUT
-L17:
-  BT L11
-  TEST '.EMPTY'
-  BF L18
-  CL 'SET'
-  OUT
-  OUT
-L18:
-  BT L11
-  TEST '.REPEAT'
-  BF L19
-  LB
-  GN1
-  OUT
-  CLL LEX3
-  BE
-  CL 'BT '
-  GN1
-  OUT
-  CL 'SET'
-  OUT
-  OUT
-L19:
-L11:
-  R
-LEX2:
-  CLL LEX3
-  BF L23
-  CL 'BF '
-  GN1
-  OUT
-  OUT
-L23:
-  BT L22
-  CLL LOUTPUT
-  BF L24
-  OUT
-L24:
-L22:
-  BF L21
-L25:
-  CLL LEX3
-  BF L27
-  CL 'BE'
-  OUT
-  OUT
-L27:
-  BT L26
-  CLL LOUTPUT
-  BF L28
-  OUT
-L28:
-L26:
-  BT L25
-  SET
-  BE
-  LB
-  GN1
-  OUT
-  OUT
-L21:
-L20:
-  R
-LEX1:
-  CLL LEX2
-  BF L30
-L31:
-  TEST '/'
-  BF L33
-  CL 'BT '
-  GN1
-  OUT
-  CLL LEX2
-  BE
-  OUT
-L33:
-L32:
-  BT L31
-  SET
-  BE
-  LB
-  GN1
-  OUT
-  OUT
-L30:
-L29:
-  R
-LST:
-  ID
-  BF L35
-  LB
-  CI
-  OUT
-  TEST '='
-  BE
-  CLL LEX1
-  BE
-  TEST ';'
-  BE
-  CL 'R'
-  OUT
-  OUT
-L35:
-L34:
-  R
-LPROGRAM:
-  TEST '.SYNTAX'
-  BF L37
-  ID
-  BE
-  CL 'ADR'
-  CI
-  OUT
-L38:
-  CLL LST
-  BT L38
-  SET
-  BE
-  TEST '.END'
-  BE
-  CL 'END'
-  OUT
-  OUT
-L37:
-L36:
-  R
-  END
+    ADR PROGRAM
+OUT1
+    TST '*1'
+    BF L0
+    CL 'GN1'
+    OUT 
+L0
+    BT L1
+    TST '*2'
+    BF L2
+    CL 'GN2'
+    OUT 
+L2
+    BT L1
+    TST '*'
+    BF L3
+    CL 'CI'
+    OUT 
+L3
+    BT L1
+    SR 
+    BF L4
+    CL 'CL'
+    CI 
+    OUT 
+L4
+L1
+    R 
+OUTPUT
+    TST '.OUT'
+    BF L5
+    TST '('
+    BE 
+L6
+    CLL OUT1
+    BT L6
+    SET 
+    BE 
+    TST ')'
+    BE 
+L5
+    BT L7
+    TST '.LABEL'
+    BF L8
+    CL 'LB'
+    OUT 
+    CLL OUT1
+    BE 
+L8
+L7
+    BF L9
+    CL 'OUT'
+    OUT 
+L9
+L10
+    R 
+EX3
+    ID 
+    BF L11
+    CL 'CLL'
+    CI 
+    OUT 
+L11
+    BT L12
+    SR 
+    BF L13
+    CL 'TST'
+    CI 
+    OUT 
+L13
+    BT L12
+    TST '.ID'
+    BF L14
+    CL 'ID'
+    OUT 
+L14
+    BT L12
+    TST '.NUMBER'
+    BF L15
+    CL 'NUM'
+    OUT 
+L15
+    BT L12
+    TST '.STRING'
+    BF L16
+    CL 'SR'
+    OUT 
+L16
+    BT L12
+    TST '('
+    BF L17
+    CLL EX1
+    BE 
+    TST ')'
+    BE 
+L17
+    BT L12
+    TST '.EMPTY'
+    BF L18
+    CL 'SET'
+    OUT 
+L18
+    BT L12
+    TST '.REPEAT'
+    BF L19
+    LB 
+    GN1 
+    OUT 
+    CLL EX3
+    BE 
+    CL 'BT'
+    GN1 
+    OUT 
+    CL 'SET'
+    OUT 
+L19
+L12
+    R 
+EX2
+    CLL EX3
+    BF L20
+    CL 'BF'
+    GN1 
+    OUT 
+L20
+    BT L21
+    CLL OUTPUT
+    BF L22
+L22
+L21
+    BF L23
+L24
+    CLL EX3
+    BF L25
+    CL 'BE'
+    OUT 
+L25
+    BT L26
+    CLL OUTPUT
+    BF L27
+L27
+L26
+    BT L24
+    SET 
+    BE 
+    LB 
+    GN1 
+    OUT 
+L23
+L28
+    R 
+EX1
+    CLL EX2
+    BF L29
+L30
+    TST '/'
+    BF L31
+    CL 'BT'
+    GN1 
+    OUT 
+    CLL EX2
+    BE 
+L31
+L32
+    BT L30
+    SET 
+    BE 
+    LB 
+    GN1 
+    OUT 
+L29
+L33
+    R 
+ST
+    ID 
+    BF L34
+    LB 
+    CI 
+    OUT 
+    TST '='
+    BE 
+    CLL EX1
+    BE 
+    TST ';'
+    BE 
+    CL 'R'
+    OUT 
+L34
+L35
+    R 
+PROGRAM
+    TST '.SYNTAX'
+    BF L36
+    ID 
+    BE 
+    CL 'ADR'
+    CI 
+    OUT 
+L37
+    CLL ST
+    BT L37
+    SET 
+    BE 
+    TST '.END'
+    BE 
+    CL 'END'
+    OUT 
+L36
+L38
+    R 
+    END 

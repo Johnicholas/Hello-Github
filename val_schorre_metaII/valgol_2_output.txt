@@ -1,0 +1,911 @@
+    ADR PROGRAM
+ARRAYPART
+    TST '(.'
+    BF L0
+    CLL EXP
+    BE 
+    TST '.)'
+    BE 
+    CL 'AIA'
+    OUT 
+L0
+L1
+    R 
+CALLPART
+    TST '('
+    BF L2
+    CL 'LDF'
+    OUT 
+    CLL EXP
+    BF L3
+L4
+    TST ','
+    BF L5
+    CLL EXP
+    BE 
+L5
+L6
+    BT L4
+    SET 
+    BE 
+L3
+    BT L7
+    SET 
+    BF L8
+L8
+L7
+    BE 
+    TST '}'
+    BE 
+    CL 'CLL'
+    OUT 
+L2
+L9
+    R 
+VARIABLE
+    ID 
+    BF L10
+    CL 'LD'
+    CI 
+    OUT 
+    CLL ARRAYPART
+    BF L11
+L11
+    BT L12
+    SET 
+    BF L13
+L13
+L12
+    BE 
+L10
+L14
+    R 
+PRIMARY
+    TST 'WHOLE'
+    BF L15
+    TST '('
+    BE 
+    CLL EXP
+    BE 
+    TST ')'
+    BE 
+    CL 'WHL'
+    OUT 
+L15
+    BT L16
+    ID 
+    BF L17
+    CL 'LD'
+    CI 
+    OUT 
+    CLL ARRAYPART
+    BF L18
+L18
+    BT L19
+    CLL CALLPART
+    BF L20
+L20
+    BT L19
+    SET 
+    BF L21
+L21
+L19
+    BE 
+L17
+    BT L16
+    TST '.TRUE'
+    BF L22
+    CL 'SET'
+    OUT 
+L22
+    BT L16
+    TST '.FALSE'
+    BF L23
+    CL 'RST'
+    OUT 
+L23
+    BT L16
+    TST '0 '
+    BF L24
+    CL 'RST'
+    OUT 
+L24
+    BT L16
+    TST '1 '
+    BF L25
+    CL 'SET'
+    OUT 
+L25
+    BT L16
+    NUM 
+    BF L26
+    CL 'LDL'
+    CI 
+    OUT 
+L26
+    BT L16
+    TST '('
+    BF L27
+    CLL EXP
+    BE 
+    TST ')'
+    BE 
+L27
+L16
+    R 
+TERM
+    CLL PRIMARY
+    BF L28
+L29
+    TST '*'
+    BF L30
+    CLL PRIMARY
+    BE 
+    CL 'MLT'
+    OUT 
+L30
+    BT L31
+    TST '/'
+    BF L32
+    CLL PRIMARY
+    BE 
+    CL 'DIV'
+    OUT 
+L32
+    BT L31
+    TST './.'
+    BF L33
+    CLL PRIMARY
+    BE 
+    CL 'DIV'
+    OUT 
+    CL 'WHL'
+    OUT 
+L33
+L31
+    BT L29
+    SET 
+    BE 
+L28
+L34
+    R 
+EXP2
+    TST '-'
+    BF L35
+    CLL TERM
+    BE 
+    CL 'NEG'
+    OUT 
+L35
+    BT L36
+    TST '+'
+    BF L37
+    CLL TERM
+    BE 
+L37
+    BT L36
+    CLL TERM
+    BF L38
+L38
+L36
+    R 
+EXP1
+    CLL EXP2
+    BF L39
+L40
+    TST '+'
+    BF L41
+    CLL TERM
+    BE 
+    CL 'ADD'
+    OUT 
+L41
+    BT L42
+    TST '-'
+    BF L43
+    CLL TERM
+    BE 
+    CL 'SUB'
+    OUT 
+L43
+L42
+    BT L40
+    SET 
+    BE 
+L39
+L44
+    R 
+RELATION
+    CLL EXP1
+    BF L45
+    TST '.L='
+    BF L46
+    CLL EXP1
+    BE 
+    CL 'LEQ'
+    OUT 
+L46
+    BT L47
+    TST '.L'
+    BF L48
+    CLL EXP1
+    BE 
+    CL 'LES'
+    OUT 
+L48
+    BT L47
+    TST '.='
+    BF L49
+    CLL EXP1
+    BE 
+    CL 'EQU'
+    OUT 
+L49
+    BT L47
+    TST '.-='
+    BF L50
+    CLL EXP1
+    BE 
+    CL 'EQU'
+    OUT 
+    CL 'NOT'
+    OUT 
+L50
+    BT L47
+    TST '.G='
+    BF L51
+    CLL EXP1
+    BE 
+    CL 'LES'
+    OUT 
+    CL 'NOT'
+    OUT 
+L51
+    BT L47
+    TST '.G'
+    BF L52
+    CLL EXP1
+    BE 
+    CL 'LEQ'
+    OUT 
+    CL 'NOT'
+    OUT 
+L52
+    BT L47
+    SET 
+    BF L53
+L53
+L47
+    BE 
+L45
+L54
+    R 
+BPRIMARY
+    TST '.-'
+    BF L55
+    CLL RELATION
+    BE 
+    CL 'NOT'
+    OUT 
+L55
+    BT L56
+    CLL RELATION
+    BF L57
+L57
+L56
+    R 
+BTERM
+    CLL BPRIMARY
+    BF L58
+L59
+    TST '.,'
+    BF L60
+    CL 'BF'
+    GN1 
+    OUT 
+    CL 'POP'
+    OUT 
+    CLL BPRIMARY
+    BE 
+L60
+L61
+    BT L59
+    SET 
+    BE 
+    LB 
+    GN1 
+    OUT 
+L58
+L62
+    R 
+IMPLICATION1
+    TST '.IMP'
+    BF L63
+    CL 'NOT'
+    OUT 
+    CL 'BT '
+    GN1 
+    OUT 
+    CL 'POP'
+    OUT 
+    CLL BEXP1
+    BE 
+    LB 
+    GN1 
+    OUT 
+L63
+L64
+    R 
+IMPLICATION
+    CLL BEXP1
+    BF L65
+L66
+    CLL IMPLICATION1
+    BT L66
+    SET 
+    BE 
+L65
+L67
+    R 
+EQUIV
+    CLL IMPLICATION
+    BF L68
+L69
+    TST '.EQ'
+    BF L70
+    CL 'EQU'
+    OUT 
+L70
+L71
+    BT L69
+    SET 
+    BE 
+L68
+L72
+    R 
+EXP
+    TST '.IF'
+    BF L73
+    CLL EXP
+    BE 
+    TST '.THEN'
+    BE 
+    CL 'BFP'
+    GN1 
+    OUT 
+    CLL EXP
+    BE 
+    CL 'B'
+    GN2 
+    OUT 
+    LB 
+    GN1 
+    OUT 
+    TST '.ELSE'
+    BE 
+    CLL EXP
+    BE 
+    LB 
+    GN2 
+    OUT 
+L73
+    BT L74
+    CLL EQUIV
+    BF L75
+L75
+L74
+    R 
+ASSIGNPART
+    TST '='
+    BF L76
+    CLL EXP
+    BE 
+    CLL ASSIGNPART
+    BF L77
+    CL 'ST'
+    OUT 
+L77
+    BT L78
+    SET 
+    BF L79
+    CL 'SST'
+    OUT 
+L79
+L78
+    BE 
+L76
+L80
+    R 
+ASSIGNCALLST
+    ID 
+    BF L81
+    CL 'LD'
+    CI 
+    OUT 
+    CLL ARRAYPART
+    BF L82
+    CLL ASSIGNPART
+    BE 
+L82
+    BT L83
+    CLL ASSIGNPART
+    BF L84
+L84
+    BT L83
+    CLL CALLPART
+    BF L85
+L85
+    BT L86
+    SET 
+    BF L87
+    CL 'LDF'
+    OUT 
+    CL 'CLL'
+    OUT 
+L87
+L86
+    BF L88
+    CL 'POP'
+    OUT 
+L88
+L83
+    BE 
+L81
+L89
+    R 
+UNTILST
+    TST '.UNTIL'
+    BF L90
+    LB 
+    GN1 
+    OUT 
+    CLL EXP
+    BE 
+    TST '.DO'
+    BE 
+    CL 'BTP'
+    GN2 
+    OUT 
+    CLL ST
+    BE 
+    CL 'B'
+    GN1 
+    OUT 
+    LB 
+    GN2 
+    OUT 
+L90
+L91
+    R 
+WHILECLAUSE
+    TST '.WHILE'
+    BF L92
+    CL 'BF '
+    GN1 
+    OUT 
+    CL 'POP'
+    OUT 
+    CLL EXP
+    BE 
+    LB 
+    GN1 
+    OUT 
+L92
+    BT L93
+    SET 
+    BF L94
+L94
+L93
+    R 
+FORCLAUSE
+    CLL VARIABLE
+    BF L95
+    TST '='
+    BE 
+    CL 'FLP'
+    OUT 
+    CL 'BFP'
+    GN1 
+    OUT 
+    CLL EXP
+    BE 
+    TST '.STEP'
+    BE 
+    CL 'SST'
+    OUT 
+    CL 'B'
+    GN2 
+    OUT 
+    LB 
+    GN1 
+    OUT 
+    CLL EXP
+    BE 
+    TST '.UNTIL'
+    BE 
+    CL 'ADS'
+    OUT 
+    LB 
+    GN2 
+    OUT 
+    CL 'RSR'
+    OUT 
+    CLL EXP
+    BE 
+    CL 'LEQ'
+    OUT 
+    CLL WHILECLAUSE
+    BE 
+    TST '.DO'
+    BE 
+L95
+L96
+    R 
+FORST
+    TST '.FOR'
+    BF L97
+    CL 'SET'
+    OUT 
+    LB 
+    CI 
+    OUT 
+    CLL FORCLAUSE
+    BE 
+    CL 'BFP'
+    GN2 
+    OUT 
+    CLL ST
+    BE 
+    CL 'RST'
+    OUT 
+    CL 'B'
+    GN1 
+    OUT 
+    LB 
+    GN2 
+    OUT 
+L97
+L98
+    R 
+IOCALL
+    TST 'READ'
+    BF L99
+    TST '('
+    BE 
+    CLL VARIABLE
+    BE 
+    TST ','
+    BE 
+    CLL EXP
+    BE 
+    TST ')'
+    BE 
+    CL 'RED'
+    OUT 
+L99
+    BT L100
+    TST 'WRITE'
+    BF L101
+    TST '('
+    BE 
+    CLL VARIABLE
+    BE 
+    TST ','
+    BE 
+    CLL EXP
+    BE 
+    TST ')'
+    BE 
+    CL 'WRT'
+    OUT 
+L101
+    BT L100
+    TST 'EDIT'
+    BF L102
+    TST '('
+    BE 
+    CLL EXP
+    BE 
+    TST ','
+    BE 
+    SR 
+    BE 
+    CL 'EDT'
+    CI 
+    OUT 
+    TST ')'
+    BE 
+L102
+    BT L100
+    TST 'PRINT'
+    BF L103
+    CL 'PNT'
+    OUT 
+L103
+    BT L100
+    TST 'EJECT'
+    BF L104
+    CL 'EJT'
+    OUT 
+L104
+L100
+    R 
+IDSEQ1
+    ID 
+    BF L105
+    LB 
+    CI 
+    OUT 
+    CL 'BLK 1'
+    OUT 
+L105
+L106
+    R 
+IDSEQ
+    CLL IDSEQ1
+    BF L107
+L108
+    TST '.'
+    BF L109
+    CLL IDSEQ1
+    BE 
+L109
+L110
+    BT L108
+    SET 
+    BE 
+L107
+L111
+    R 
+TYPEDEC
+    TST '.REAL'
+    BF L112
+    CLL IDSEQ
+    BE 
+    CLL ARRAY1
+    BE 
+L112
+L113
+    R 
+PROCEDURE
+    TST '.PROCEDURE'
+    BF L114
+    ID 
+    BE 
+    LB 
+    CI 
+    OUT 
+    LB 
+    GN1 
+    OUT 
+    CL 'BLK 1'
+    OUT 
+    TST '('
+    BE 
+    CLL IDSEQ
+    BF L115
+L115
+    BT L116
+    SET 
+    BF L117
+L117
+L116
+    BE 
+    TST ')'
+    BE 
+    CL 'SP'
+    CL '1'
+    OUT 
+    TST '.,'
+    BE 
+    CLL ST
+    BE 
+    CL 'R'
+    GN1 
+    OUT 
+L114
+L118
+    R 
+ARRAY1
+    ID 
+    BF L119
+    LB 
+    CI 
+    OUT 
+    TST '(.'
+    BE 
+    TST 'O'
+    BE 
+    TST '..'
+    BE 
+    NUM 
+    BE 
+    CL 'BLK 1'
+    OUT 
+    CL 'BLK'
+    CI 
+    OUT 
+    TST '.)'
+    BE 
+L119
+L120
+    R 
+ARRAYDEC
+    TST '.ARRAY'
+    BF L121
+    CLL ARRAY1
+    BE 
+L122
+    TST ','
+    BF L123
+L123
+L124
+    BT L122
+    SET 
+    BE 
+L121
+L125
+    R 
+DEC
+    CLL TYPEDEC
+    BF L126
+L126
+    BT L127
+    CLL ARRAYDEC
+    BF L128
+L128
+    BT L127
+    CLL PROCEDURE
+    BF L129
+L129
+L127
+    R 
+BLOCK
+    TST '.BEGIN'
+    BF L130
+    CL 'B'
+    GN1 
+    OUT 
+L131
+    CLL DEC
+    BF L132
+    TST '.,'
+    BE 
+L132
+L133
+    BT L131
+    SET 
+    BE 
+    LB 
+    GN1 
+    OUT 
+    CLL ST
+    BE 
+L134
+    TST '.,'
+    BF L135
+    CLL ST
+    BE 
+L135
+L136
+    BT L134
+    SET 
+    BE 
+    TST '.END'
+    BE 
+    ID 
+    BF L137
+L137
+    BT L138
+    SET 
+    BF L139
+L139
+L138
+    BE 
+L130
+L140
+    R 
+UNCONDITIONALST
+    CLL IOCALL
+    BF L141
+L141
+    BT L142
+    CLL ASSIGNCALLST
+    BF L143
+L143
+    BT L142
+    CLL BLOCK
+    BF L144
+L144
+L142
+    R 
+CONDST
+    TST '.IF'
+    BF L145
+    CLL EXP
+    BE 
+    TST '.THEN'
+    BE 
+    CL 'BFP'
+    GN1 
+    OUT 
+    CLL UNCONDITIONALST
+    BF L146
+    TST '.ELSE'
+    BF L147
+    CL 'B'
+    GN2 
+    OUT 
+    LB 
+    GN1 
+    OUT 
+    CLL ST
+    BE 
+    LB 
+    GN2 
+    OUT 
+L147
+    BT L148
+    SET 
+    BF L149
+    LB 
+    GN1 
+    OUT 
+L149
+L148
+    BE 
+L146
+    BT L150
+    CLL FORST
+    BF L151
+L151
+    BT L152
+    CLL UNTILST
+    BF L153
+L153
+L152
+    BF L154
+    LB 
+    GN1 
+    OUT 
+L154
+L150
+    BE 
+L145
+L155
+    R 
+ST
+    CLL CONDST
+    BF L156
+L156
+    BT L157
+    CLL UNCONDITIONALST
+    BF L158
+L158
+    BT L157
+    CLL FORST
+    BF L159
+L159
+    BT L157
+    CLL UNTILST
+    BF L160
+L160
+    BT L157
+    SET 
+    BF L161
+L161
+L157
+    R 
+PROGRAM
+    CLL BLOCK
+    BF L162
+    CL 'HLT'
+    OUT 
+    CL 'SP1'
+    OUT 
+    CL 'END'
+    OUT 
+L162
+L163
+    R 
+    END 
