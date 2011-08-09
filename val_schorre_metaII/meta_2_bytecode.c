@@ -28,8 +28,8 @@ enum token {
   TOK_ID_LITERALLY, // ".ID"
   TOK_NUMBER_LITERALLY, // ".NUMBER"
   TOK_STRING_LITERALLY, // ".STRING"
-  TOK_EMPTY_LITERALLY, // ".EMPTY"
-  TOK_REPEAT, // "\\$"
+  TOK_EMPTY, // ".EMPTY"
+  TOK_REPEAT, // ".REPEAT"
   TOK_SYNTAX, // ".SYNTAX"
   TOK_END // ".END"
 };
@@ -136,16 +136,15 @@ int getstring() {
   int c;
 
   strsize= 0;
+  symbol[strsize++]= '\'';
   while ((c= next()) != '\'') {
     if (c == '\\') {
+      symbol[strsize++]= c;
       c= next();
-      if (c == 'n') c= '\n';
-      if (c == 't') c= '\t';
-      if (c == '0') c= 0;
-      /* note that \\ and \" and so on are handled too */
     }
     symbol[strsize++]= c;
   }
+  symbol[strsize++]= '\'';
   symbol[strsize++]= 0;
 }
 
@@ -163,37 +162,37 @@ int getlex() {
     return c;
   }
   if (c == '(') {
-    fprintf(stderr, "getlex returning TOK_OPEN_PAREN\n");
+    // fprintf(stderr, "getlex returning TOK_OPEN_PAREN\n");
     return TOK_OPEN_PAREN;
   }
   if (c == ')') {
-    fprintf(stderr, "getlex returning TOK_CLOSE_PAREN\n");
+    // fprintf(stderr, "getlex returning TOK_CLOSE_PAREN\n");
     return TOK_CLOSE_PAREN;
   }
   if (c == '/') {
-    fprintf(stderr, "getlex returning TOK_SLASH\n");
+    // fprintf(stderr, "getlex returning TOK_SLASH\n");
     return TOK_SLASH;
   }
   if (c == '=') {
-    fprintf(stderr, "getlex returning TOK_EQUALS\n");
+    // fprintf(stderr, "getlex returning TOK_EQUALS\n");
     return TOK_EQUALS;
   }
   if (c == ';') {
-    fprintf(stderr, "getlex returning TOK_SEMICOLON\n");
+    // fprintf(stderr, "getlex returning TOK_SEMICOLON\n");
     return TOK_SEMICOLON;
   }
   if (c == '*') {
     /* could be star, star1 or star2 */
     if (the_char == '1') {
       next();
-      fprintf(stderr, "getlex returning TOK_STAR_1\n");
+      // fprintf(stderr, "getlex returning TOK_STAR_1\n");
       return TOK_STAR_1;
     } else if (the_char == '2') { 
       next();
-      fprintf(stderr, "getlex returning TOK_STAR_2\n");
+      // fprintf(stderr, "getlex returning TOK_STAR_2\n");
       return TOK_STAR_2;
     } else {
-      fprintf(stderr, "getlex returning TOK_STAR\n");
+      // fprintf(stderr, "getlex returning TOK_STAR\n");
       return TOK_STAR;
     }
   }
@@ -201,7 +200,7 @@ int getlex() {
     /* a string literal */
     getstring();
     the_lexval= lookup(symbol);
-    fprintf(stderr, "getlex returning TOK_STRING\n");
+    // fprintf(stderr, "getlex returning TOK_STRING\n");
     return TOK_STRING;
   }
   if (digit(c)) {
@@ -211,7 +210,7 @@ int getlex() {
     while (digit(the_char)) {
       the_lexval= the_lexval * 10 + next() - '0';
     }
-    fprintf(stderr, "getlex returning TOK_NUM\n");
+    // fprintf(stderr, "getlex returning TOK_NUM\n");
     return TOK_NUM;
   }
   /* default, it's either a keyword or identifier */
@@ -223,16 +222,16 @@ int getlex() {
   *p= 0;
   if ((the_lexval= lookup(symbol)) < 9) {
     /* it's a keyword */
-    fprintf(stderr, "getlex returning a keyword, %s\n", symbol);
+    // fprintf(stderr, "getlex returning a keyword, %s\n", symbol);
     return the_lexval + 11; // TODO: explain magic number 11
   } else {
-    fprintf(stderr, "getlex returning TOK_ID, %s\n", symbol);
+    // fprintf(stderr, "getlex returning TOK_ID, %s\n", symbol);
     return TOK_ID;
   }
 }
 
-int test(enum token to_test) {
-  fprintf(stderr, "testing %d against %d\n", the_token, to_test);
+int tst(enum token to_test) {
+  // fprintf(stderr, "testing %d against %d\n", the_token, to_test);
   if (the_token == to_test) {
     lexval= the_lexval;
     the_token= getlex();
@@ -243,130 +242,304 @@ int test(enum token to_test) {
   return match;
 }
 
-int out1() {
-  if (test(TOK_STAR_1)) {
-    printf("  GN1\n");
-  } else if (test(TOK_STAR_2)) {
-    printf("  GN2\n");
-  } else if (test(TOK_STAR)) {
-    printf("  CI\n");
-  } else if (test(TOK_STRING)) {
-    printf("  CL '%s'\n", lookup_by_index(lexval));
+int indent= 1;
+int written= 0;
+
+void do_indent() {
+  if (indent) {
+    printf("    ");
+    indent= 0;
   }
-  return match;
 }
 
-int output() {
-  if (test(TOK_OUT)) {
-    assert(test(TOK_OPEN_PAREN));
-    while (out1()) {
-      ;
-    }
-    match= 1;
-    assert(test(TOK_CLOSE_PAREN));
-  } else if (test(TOK_LABEL)) {
-    printf("  LB\n");
-    assert(out1());
-  }
-  printf("  OUT\n");
-  return match;
+void cl(const char* op) {
+  do_indent();
+  printf("%s ", op);
+  written= 1;
 }
 
-int ex3() {
-  int spot1;
-
-  if (test(TOK_ID)) {
-    printf("  CLL L%s\n", lookup_by_index(lexval));
-  } else if (test(TOK_STRING)) {
-    /* TODO: should this print the quoted string? */
-    printf("  TEST '%s'\n", lookup_by_index(lexval));
-  } else if (test(TOK_ID_LITERALLY)) {
-    printf("  ID\n");
-  } else if (test(TOK_NUMBER_LITERALLY)) {
-    printf("  NUM\n");
-  } else if (test(TOK_STRING_LITERALLY)) {
-    printf("  SR\n");
-  } else if (test(TOK_OPEN_PAREN)) {
-    assert(ex1());
-    assert(test(TOK_CLOSE_PAREN));
-  } else if (test(TOK_EMPTY_LITERALLY)) {
-    printf("  SET\n");
-  } else if (test(TOK_REPEAT)) {
-    spot1= gensym++;
-    printf("L%d:\n", spot1);
-    assert(ex3());
-    printf("  BT L%d\n", spot1);
-    printf("  SET\n");
+void out() {
+  if (written) {
+    printf("\n");
+    indent= 1;
+    written= 0;
   }
-  return match;
 }
 
-int ex2() {
-  int spot1;
+void sr() { tst(TOK_STRING); }
+void id() { tst(TOK_ID); }
+void num() { tst(TOK_NUM); }
+void ci() {
+  printf("%s", lookup_by_index(lexval));
+  written= 1;
+}
 
-  spot1= gensym++;
-  if (ex3()) {
-    printf("  BF L%d\n", spot1);
-  } else {
-    output();
-  }
-  if (match) {
-    do {
-      if (ex3()) {
-	printf("  BE\n");
-      } else {
-	output();
-      }
-    } while (match);
-    match= 1;
-  }
-  printf("L%d:\n", spot1);
-  return match;
+#define be() assert(match);
+void set() { match= 1; }
+void lb() { indent= 0; }
+
+void make_label(int label) {
+  printf("L%d\n", label);
+  indent= 1;
+  written= 0;
+}
+#define gn1() if (label1 == -1) { label1= gensym++; } make_label(label1);
+#define gn2() if (label2 == -1) { label2= gensym++; } make_label(label2);
+#define bf(label) if (! match) { goto label; }
+#define bt(label) if (match) { goto label; }
+#define cll(fun) fun()
+
+// forward declarations
+void out1();
+void output();
+void ex1();
+void ex2();
+void ex3();
+void st();
+void program();
+
+void out1() {
+  int label1= -1;
+  int label2= -1;
+
+  tst(TOK_STAR_1);
+  bf(L0);
+  cl("GN1");
+  out();
+ L0:
+  bt(L1);
+  tst(TOK_STAR_2);
+  bf(L2);
+  cl("GN2");
+  out();
+ L2:
+  bt(L1);
+  tst(TOK_STAR);
+  bf(L3);
+  cl("CI");
+  out();
+ L3:
+  bt(L1);
+  sr();
+  bf(L4);
+  cl("CL");
+  ci();
+  out();
+ L4:
+ L1:
+  return;
+}
+
+void output() {
+  int label1= -1;
+  int label2= -1;
+
+  tst(TOK_OUT);
+  bf(L5);
+  tst(TOK_OPEN_PAREN);
+  be();
+ L6:
+  cll(out1);
+  bt(L6);
+  set();
+  be();
+  tst(TOK_CLOSE_PAREN);
+  be();
+ L5:
+  bt(L7);
+  tst(TOK_LABEL);
+  bf(L8);
+  cl("LB");
+  out();
+  cll(out1);
+  be();
+ L8:
+ L7:
+  bf(L9);
+  cl("OUT");
+  out();
+ L9:
+ L10:
+  return;
+}
+
+void ex3() {
+  int label1= -1;
+  int label2= -1;
+
+  id();
+  bf(L11);
+  cl("CLL");
+  ci();
+  out();
+ L11:
+  bt(L12);
+  sr();
+  bf(L13);
+  cl("TST");
+  ci();
+  out();
+ L13:
+  bt(L12);
+  tst(TOK_ID_LITERALLY);
+  bf(L14);
+  cl("ID");
+  out();
+ L14:
+  bt(L12);
+  tst(TOK_NUMBER_LITERALLY);
+  bf(L15);
+  cl("NUM");
+  out();
+ L15:
+  bt(L12);
+  tst(TOK_STRING_LITERALLY);
+  bf(L16);
+  cl("SR");
+  out();
+ L16:
+  bt(L12);
+  tst(TOK_OPEN_PAREN);
+  bf(L17);
+  cll(ex1);
+  be();
+  tst(TOK_CLOSE_PAREN);
+  be();
+ L17:
+  bt(L12);
+  tst(TOK_EMPTY);
+  bf(L18);
+  cl("SET");
+  out();
+ L18:
+  bt(L12);
+  tst(TOK_REPEAT);
+  bf(L19);
+  lb();
+  gn1();
+  out();
+  cll(ex3);
+  be();
+  cl("BT");
+  gn1();
+  out();
+  cl("SET");
+  out();
+ L19:
+ L12:
+  return;
+}
+
+void ex2() {
+  int label1= -1;
+  int label2= -1;
+  
+  cll(ex3);
+  bf(L20);
+  cl("BF");
+  gn1();
+  out();
+ L20:
+  bt(L21);
+  cll(output);
+  bf(L22);
+ L22:
+ L21:
+  bf(L23);
+ L24:
+  cll(ex3);
+  bf(L25);
+  cl("BE");
+  out();
+ L25:
+  bt(L26);
+  cll(output);
+  bf(L27);
+ L27:
+ L26:
+  bt(L24);
+  set();
+  be();
+  lb();
+  gn1();
+  out();
+ L23:
+ L28:
+  return;
 }  
 
-int ex1() {
-  int spot1;
+void ex1() {
+  int label1= -1;
+  int label2= -1;
 
-  spot1= gensym++;
-
-  if (ex2()) {
-    do {
-      if (test(TOK_SLASH)) {
-	printf("  BT L%d\n", spot1);
-	assert(ex2());
-      }
-    } while (match);
-    match= 1;
-    printf("L%d:\n", spot1);
-  }
-  return match;
+  cll(ex2);
+  bf(L29);
+ L30:
+  tst(TOK_SLASH);
+  bf(L31);
+  cl("BT");
+  gn1();
+  out();
+  cll(ex2);
+  be();
+ L31:
+ L32:
+  bt(L30);
+  set();
+  be();
+  lb();
+  gn1();
+  out();
+ L29:
+ L33:
+  return;
 }
  
-int st() {
-  if (test(TOK_ID)) {
-    printf("L%s:\n", lookup_by_index(lexval));
-    assert(test(TOK_EQUALS));
-    assert(ex1());
-    assert(test(TOK_SEMICOLON));
-    printf("  R\n");
-  }
-  return match;
+void st() {
+  int label1= -1;
+  int label2= -1;
+
+  id();
+  bf(L34);
+  lb();
+  ci();
+  out();
+  tst(TOK_EQUALS);
+  be();
+  cll(ex1);
+  be();
+  tst(TOK_SEMICOLON);
+  be();
+  cl("R");
+  out();
+ L34:
+ L35:
+  return;
 }
 
-int program() {
-  fprintf(stderr, "program %d\n", __LINE__);
-  if (test(TOK_SYNTAX)) {
-    fprintf(stderr, "program %d\n", __LINE__);
-    assert(test(TOK_ID));
-    printf("  ADR %s\n", lookup_by_index(lexval));
-    do {
-      st();
-    } while (match);
-    match= 1;
-    assert(test(TOK_END));
-    printf("  END\n");
-  }
-  return match;
+void program() {
+  int label1= -1;
+  int label2= -1;
+
+  tst(TOK_SYNTAX);
+  bf(L36);
+  id();
+  be();
+  cl("ADR");
+  ci();
+  out();
+ L37:
+  cll(st);
+  bt(L37);
+  set();
+  be();
+  tst(TOK_END);
+  be();
+  cl("END");
+  out();
+ L36:
+ L38:
+  return;
 }
 
 int main() {
@@ -388,7 +561,8 @@ int main() {
   /* initialize the gensym system */
   gensym= 0;
   the_token= getlex();
-  assert(program());
+  program();
+  assert(match);
   
   return 0;
 }
