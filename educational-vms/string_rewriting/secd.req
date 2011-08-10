@@ -1,0 +1,44 @@
+# the source language
+# term ::= LIT( int ) .
+# term ::= VAR( string ) .
+# term ::= LAM( string, term ) .
+# term ::= APP( term, term ) .
+# environments
+# env ::= EMPTY .
+# env ::= EXTEND( string, value, env ) .
+# values
+# value ::= INT( int ) .
+# value ::= SUCC .
+# value ::= CLOSURE( env, string, term ) .
+# initial environment is EXTEND( "succ", SUCC, EMPTY )
+
+# according to Danvy, it should be like this:
+#run_c(?s, ?e, Nil, ?d) == run_d(?s, ?d)
+#run_c(?s, ?e, Term(?t, ?c), ?d) == run_t(?t, ?s, ?e, ?c, ?d)
+#run_c(?s, ?e, Apply(?c), ?d) == run_a(?s, ?e, ?c, ?d)
+# but I prefer the "OO" argument ordering
+run_c(Nil, ?s, ?e, ?d) == run_d(?d, ?s)
+run_c(Term(?t, ?c), ?s, ?e, ?d) == run_t(?t, ?s, ?e, ?c, ?d)
+run_c(Apply(?c), ?s, ?e, ?d) == run_a(?s, ?e, ?c, ?d)
+
+# swap the arguments of run_d
+run_d(EmptyDump, ?s) == unpack_singleton(?s)
+run_d(MakeDump(?s, ?e, ?c, ?d), ?s) == run_c(Cons(the(?s)
+
+# a function for unpacking assumed singleton lists
+#unpack_singleton(Nil) == ARRGGGH!
+unpack_singleton(Cons(?x, ?xs)) == unpack_singleton_helper(?xs, ?x)
+unpack_singleton_helper(Nil, ?x) == ?x
+#unpack_singleton_helper(Cons(?y, ?ys), ?x) == ARRRGGH!
+
+run_t(LIT(?n), ?s, ?e, ?c, ?d) == run_c(?c, Cons(INT(?n), ?s), ?e, ?d)
+run_t(VAR(?x), ?s, ?e, ?c, ?d) == run_c(?c, Cons(lookup(?e, ?x), ?s), ?e, ?d)
+run_t(LAM(?x, ?t), ?s, ?e, ?c, ?d) == run_c(?c, Cons(CLOSURE(?e, ?x, ?t), ?s), ?e, ?d)
+run_t(APP(?t0, ?t1), ?s, ?e, ?c, ?d) == run_t(?t1, ?s, ?e, Cons(TERM(?t0), Cons(APPLY, ?c)), ?d)
+
+#lookup(EMPTY, ?x) == AARRRGG!
+lookup(EXTEND(?x, ?y, ?z), ?w) == if eq
+lookup(?x, EMPTY)
+lookup(?x, EXTEND(?y, ?z, ?e))
+
+run_a(Cons(SUCC
