@@ -8,3 +8,5 @@ lookup one
 lookup two
 lookup three
 lookup four
+install one five
+lookup one

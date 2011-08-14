@@ -1,0 +1,12 @@
+This is me (Johnicholas) working through the trivial macro processor
+that was presented at the beginning of chapter 8 of Software Tools by Kernighan and Plauger.
+
+One refinement that I learned
+(after writing it the wrong way first)
+is that lookup deliberately searches backwards,
+so that later definitions override earlier ones.
+
+TODO:
+Can I do anything interesting with this?
+What if some of the implementation limits were lifted?
+

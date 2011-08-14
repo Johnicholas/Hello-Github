@@ -18,16 +18,18 @@ static int last_table;
 int lookup(const char* name, char* definition) {
   int i;
   int j;
-  int k;
 
-  for (i= 0; i < last_pointer; ++i) {
-    char* candidate_name= table + name_pointer[i];
-    for (j= 0; candidate_name[j] == name[j] && name[j] != '\0'; ++j) {
+  /* Note: we search backwards so that later definitions
+   * will override earlier definitions.
+   */
+  for (i= last_pointer - 1; i >= 0; --i) {
+    char* candidate_match= table + name_pointer[i];
+    for (j= 0; candidate_match[j] == name[j] && name[j] != '\0'; ++j) {
       ; /* deliberately empty loop body */
     }
-    if (candidate_name[j] == name[j]) {
+    if (candidate_match[j] == name[j]) {
       /* found */
-      strcpy(definition, candidate_name + j + 1);
+      strcpy(definition, candidate_match + j + 1);
       return YES;
     }
   }

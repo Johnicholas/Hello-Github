@@ -1,0 +1,15 @@
+one
+define(one,two)
+one
+two
+define(three,four)
+one
+two
+three
+four
+define(two,three)
+one
+two
+three
+four
+
