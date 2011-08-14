@@ -3,7 +3,7 @@
 
 /*
  * This is the interface to the table of names and definitions.
- * Based on Kernighan and Plaugher's Software Tools, Chapter 8.2.
+ * Based on Kernighan and Plauger's Software Tools, Chapter 8.2.
  */
 
 /* max chars in a token */
