@@ -1,0 +1,8 @@
+NO
+NO
+YES, two
+NO
+YES, two
+NO
+YES, four
+NO

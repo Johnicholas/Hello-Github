@@ -1,0 +1,10 @@
+lookup one
+lookup two
+install one two
+lookup one
+lookup two
+install three four
+lookup one
+lookup two
+lookup three
+lookup four
