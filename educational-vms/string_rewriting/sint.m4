@@ -215,14 +215,46 @@ define([_tl_un],[errprint([attempted to take the tail of an empty list
 define([_tl_uc],[$2])
 define([tl],[eat_$1([_tl])])
 
-define([_print_num_z],[Z])
-define([_print_num_s],[S(print_num([$1]))])
-define([print_num],[eat_$1([_print_num])])
-define([_print_ulist_un],[Un])
-define([_print_ulist_uc],[Uc(print_univ([$1],[$2]))])
-define([print_ulist],[eat_$1([_print_ulist],[$2],[$3])])
-define([_print_univ_con],[Con(print_num([$1]),print_ulist([$2]))])
-define([print_univ],[eat_$1([_print_univ],[$2],[$3])])
+# Next there's the functions for translating up an emulation level
+#
+# data num = Z | S num
+#num_up(Z) == Con(Z, Un)
+#num_up(S(?x)) == Con(S(Z), Uc(num_up(?x), Un))
+define([_num_up_z], [con(z, un)])
+define([_num_up_s], [con(s(z), unc(num_up($1), un))])
+define([num_up], [eat_$1(_num_up)])
+# data univ = Con num ulist
+#univ_up(Con(?num, ?ulist)) == Con(Z, Uc(num_up(?num), Uc(ulist_up(?ulist), Un)))
+define([_univ_up_con], [con(z, un(num_up($1), uc(ulist_up($2), un)))])
+define([univ_up], [eat_$1(_univ_up)])
+# data ulist = Un | Uc univ ulist
+#ulist_up(Un) == Con(Z, Un)
+#ulist_up(Uc(?univ, ?ulist)) == Con(S(Z), Uc(univ_up(?univ), Uc(ulist_up(?ulist), Un)))
+define([_ulist_up_un], [con(z, un)])
+define([_ulist_up_uc], [con(s(z), uc(univ_up($1), uc(ulist_up($2), un)))])
+define([ulist_up], [eat_$1(_ulist_up)])
+# data funs = Fn | Fun exp funs
+#funs_up(Fn) == Con(Z, Un)
+#funs_up(Fun(?exp, ?funs)) == Con(S(Z), Uc(exp_up(?exp), Uc(funs_up(?funs), Un)))
+define([_funs_up_fn], [con(z, un)])
+define([_funs_up_fun], [con(s(z), uc(exp_up($1), uc(funs_up($2), un)))])
+define([funs_up], [eat_$1(_funs_up)])
+# data exp = Var num | Fap num elist | Cap num elist | Case exp elist
+#exp_up(Var(?num)) == Con(Z, Uc(num_up(?num), Un))
+#exp_up(Fap(?num, ?elist)) == Con(S(Z), Uc(num_up(?num), Uc(elist_up(?elist), Un)))
+#exp_up(Cap(?num, ?elist)) == Con(S(S(Z)), Uc(num_up(?num), Uc(elist_up(?elist), Un)))
+#exp_up(Case(?exp, ?elist)) == Con(S(S(S(Z))), Uc(exp_up(?exp), Uc(elist_up(?elist), Un)))
+define([_exp_up_var], [con(z, uc(num_up($1), un))])
+define([_exp_up_fap], [con(s(z), uc(num_up($1), uc(elist_up($2), un)))])
+define([_exp_up_cap], [con(s(s(z)), uc(num_up($1), uc(elist_up($2), un)))])
+define([_exp_up_case], [con(s(s(s(z))), uc(exp_up($1), uc(elist_up($2), un)))])
+define([exp_up], [eat_$1(_exp_up)])
+# data elist = En | Ec exp elist
+#elist_up(En) == Con(Z, Un)
+#elist_up(Ec(?exp, ?elist)) == Con(S(Z), Uc(exp_up(?exp), Uc(elist_up(?elist), Un)))
+define([_elist_up_en], [con(z, un)])
+define([_elist_up_ec], [eat_$1(_elist_up)])
+define([elist_up], [eat_$1(_elist_up)])
 
 define([sint],[fun(fap(s(z),
 ec(cap(z,en),
@@ -373,10 +405,24 @@ en)),
 en))),
 fn))])
 
-# value construction helpers
-define([vsingleton],[uc([$1],un)])
-define([vz],[con(z,un)])
-define([vs],[con(s(z),vsingleton([$1]))])
+# various helpers
+define([_print_num_z],[Z])
+define([_print_num_s],[S(print_num([$1]))])
+define([print_num],[eat_$1([_print_num])])
+define([_print_ulist_un],[Un])
+define([_print_ulist_uc],[Uc(print_univ([$1],[$2]))])
+define([print_ulist],[eat_$1([_print_ulist],[$2],[$3])])
+define([_print_univ_con],[Con(print_num([$1]),print_ulist([$2]))])
+define([print_univ],[eat_$1([_print_univ],[$2],[$3])])
+
+define([run_under_layers], [ifelse($1,0,
+[run($2, $3)],
+[run_under_layers(decr($1), sint, uc(funs_up($2), uc(ulist_up($3), un)))])])
+
+# value constructors
+define([vz], [con(z, un)])
+define([vs], [con(s(z), uc($1, un))])
+define([vsingleton], [uc($1, un)])
 
 divert[]dnl
 
@@ -387,5 +433,22 @@ print_univ(run(fibprog,vsingleton(vs(vs(vs(vz))))))
 print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
 print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
 print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
+
+print_univ(run_under_layers(0,fibprog,vsingleton(vz)))
+print_univ(run_under_layers(0,fibprog,vsingleton(vs(vz))))
+print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vz)))))
+print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vz))))))
+print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
+print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
+print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
+
+print_univ(run_under_layers(1,fibprog,vsingleton(vz)))
+print_univ(run_under_layers(1,fibprog,vsingleton(vs(vz))))
+print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vz)))))
+print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vz))))))
+print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
+print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
+print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
+
 
 
