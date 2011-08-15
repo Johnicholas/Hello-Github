@@ -81,20 +81,20 @@ changequote([,])
 #define([reverse_helper],[eat_$1([_reverse_helper],[$2])])
 #define([reverse],[reverse_helper([$1],[nil])])
 
-define([_gensym],[0])
-define([gensym],[_gensym[]define([_gensym],incr(_gensym))])
+define([_gensym], [0])
+define([gensym], [_gensym[]define([_gensym], incr(_gensym))])
 
 # One paragraph for each ADT constructor
 
 # num ::= Z | S( num )
-define([eat_Z],[$1_z(shift($@))])
-define([z],[Z])
-define([_s],[define([eat_S]$1,[$][1_s($2,shift($][@))])S$1])
-define([s],[_s(gensym,$1)])
+define([eat_Z], [$1_z(shift($@))])
+define([z], [Z])
+define([_s], [define([eat_S]$1, [$][1_s($2, shift($][@))])S$1])
+define([s], [_s(gensym, $1)])
 
 # univ ::= Con( num, ulist )
-define([_con],[define([eat_Con]$1,[$][1_con($2,$3,shift($][@))])Con$1])
-define([con],[_con(gensym,$1,$2)])
+define([_con], [define([eat_Con]$1, [$][1_con($2, $3, shift($][@))])Con$1])
+define([con], [_con(gensym, $1, $2)])
 
 # ulist ::= Un | Uc( univ, ulist )
 define([eat_Un],[$1_un(shift($@))])
@@ -204,7 +204,7 @@ define([_hd_un],[errprint([attempted to take the head of an empty list
 ])m4exit(1)])
 define([_hd_uc],[$1])
 define([hd],[eat_$1([_hd])])
-define([_hd_z],[errprint([attempted to take the head of a nonlist!
+define([_hd_z],[errprint([attempted to take the head of a nonlist
 ])m4exit(1)])
 
 
@@ -221,7 +221,7 @@ define([tl],[eat_$1([_tl])])
 #num_up(Z) == Con(Z, Un)
 #num_up(S(?x)) == Con(S(Z), Uc(num_up(?x), Un))
 define([_num_up_z], [con(z, un)])
-define([_num_up_s], [con(s(z), unc(num_up($1), un))])
+define([_num_up_s], [con(s(z), uc(num_up($1), un))])
 define([num_up], [eat_$1(_num_up)])
 # data univ = Con num ulist
 #univ_up(Con(?num, ?ulist)) == Con(Z, Uc(num_up(?num), Uc(ulist_up(?ulist), Un)))
@@ -253,7 +253,7 @@ define([exp_up], [eat_$1(_exp_up)])
 #elist_up(En) == Con(Z, Un)
 #elist_up(Ec(?exp, ?elist)) == Con(S(Z), Uc(exp_up(?exp), Uc(elist_up(?elist), Un)))
 define([_elist_up_en], [con(z, un)])
-define([_elist_up_ec], [eat_$1(_elist_up)])
+define([_elist_up_ec], [con(s(z), uc(exp_up($1), uc(elist_up($2), un)))])
 define([elist_up], [eat_$1(_elist_up)])
 
 define([sint],[fun(fap(s(z),
@@ -408,9 +408,9 @@ fn))])
 # various helpers
 define([_print_num_z],[Z])
 define([_print_num_s],[S(print_num([$1]))])
-define([print_num],[eat_$1([_print_num])])
+define([print_num],[eat_$1([_print_num],[$2])])
 define([_print_ulist_un],[Un])
-define([_print_ulist_uc],[Uc(print_univ([$1],[$2]))])
+define([_print_ulist_uc],[Uc(print_univ([$1]),print_ulist([$2]))])
 define([print_ulist],[eat_$1([_print_ulist],[$2],[$3])])
 define([_print_univ_con],[Con(print_num([$1]),print_ulist([$2]))])
 define([print_univ],[eat_$1([_print_univ],[$2],[$3])])
@@ -426,29 +426,35 @@ define([vsingleton], [uc($1, un)])
 
 divert[]dnl
 
-print_univ(run(fibprog,vsingleton(vz)))
-print_univ(run(fibprog,vsingleton(vs(vz))))
-print_univ(run(fibprog,vsingleton(vs(vs(vz)))))
-print_univ(run(fibprog,vsingleton(vs(vs(vs(vz))))))
-print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
-print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
-print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
+#print_univ(run(fibprog,vsingleton(vz)))
+#print_univ(run(fibprog,vsingleton(vs(vz))))
+#print_univ(run(fibprog,vsingleton(vs(vs(vz)))))
+#print_univ(run(fibprog,vsingleton(vs(vs(vs(vz))))))
+#print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
+#print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
+#print_univ(run(fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
 
-print_univ(run_under_layers(0,fibprog,vsingleton(vz)))
-print_univ(run_under_layers(0,fibprog,vsingleton(vs(vz))))
-print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vz)))))
-print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vz))))))
-print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
-print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
-print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
+#print_univ(run_under_layers(0,fibprog,vsingleton(vz)))
+#print_univ(run_under_layers(0,fibprog,vsingleton(vs(vz))))
+#print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vz)))))
+#print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vz))))))
+#print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
+#print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
+#print_univ(run_under_layers(0,fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
 
-print_univ(run_under_layers(1,fibprog,vsingleton(vz)))
-print_univ(run_under_layers(1,fibprog,vsingleton(vs(vz))))
-print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vz)))))
-print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vz))))))
-print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
-print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
-print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
+#print_univ(funs_up(fibprog))
+
+#print_ulist(ulist_up(vsingleton(vz)))
+#print_univ(funs_up(fibprog))
+traceon
+run(sint, uc(funs_up(fibprog), uc(ulist_up(vsingleton(vz)), un)))
+#print_ulist(Uc880)
+#print_univ(run_under_layers(1,fibprog,vsingleton(vs(vz))))
+#print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vz)))))
+#print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vz))))))
+#print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vz)))))))
+#print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vs(vz))))))))
+#print_univ(run_under_layers(1,fibprog,vsingleton(vs(vs(vs(vs(vs(vs(vz)))))))))
 
 
 
