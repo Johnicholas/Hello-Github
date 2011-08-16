@@ -1,37 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<!-- saved from url=(0076)http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000464.html -->
-<HTML><HEAD><META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-   <TITLE> a small Lisp interpreter (under 4K)
-   </TITLE>
-   <LINK rel="Index" href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/index.html">
-   <LINK rel="made" href="mailto:kragen-hacks%40canonical.org?Subject=a%20small%20Lisp%20interpreter%20%28under%204K%29&In-Reply-To=">
-   <META name="robots" content="index,nofollow">
-   
-   <LINK rel="Previous" href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000463.html">
-   
- </HEAD><BODY bgcolor="#ffffff">
-   <H1>a small Lisp interpreter (under 4K)</H1>
-    <B>Kragen Javier Sitaker</B> 
-    <A href="mailto:kragen-hacks%40canonical.org?Subject=a%20small%20Lisp%20interpreter%20%28under%204K%29&In-Reply-To=" title="a small Lisp interpreter (under 4K)">kragen at pobox.com
-       </A><BR>
-    <I>Sun Sep 23 23:11:08 EDT 2007</I>
-    <P></P><UL>
-        <LI>Previous message: <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000463.html">non-chalantly paper napkin
-</A></LI>
-        
-         <LI> <B>Messages sorted by:</B> 
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/date.html#464">[ date ]</A>
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/thread.html#464">[ thread ]</A>
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/subject.html#464">[ subject ]</A>
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/author.html#464">[ author ]</A>
-         </LI>
-       </UL>
-    <HR>  
-<!--beginarticle-->
-<PRE>So Darius Bacon and I were chatting about small programming languages
+a small Lisp interpreter (under 4K)
+Kragen Javier Sitaker
+
+So Darius Bacon and I were chatting about small programming languages
 --- in 1992 someone implemented a pseudo-FORTH for IOCCC in about 800
-bytes of C (see
-<A href="http://ftp.funet.fi/pub/doc/IOCCC/1992/buzzard.2.design">http://ftp.funet.fi/pub/doc/IOCCC/1992/buzzard.2.design</A> --- cited by
+bytes of C (see http://ftp.funet.fi/pub/doc/IOCCC/1992/buzzard.2.design --- cited by
 Richard W. M. Jones's recent literate FORTH written in the GNU
 assembler preprocessor, "A sometimes minimal FORTH compiler and
 tutorial", aka "jonesforth"), and we were wondering about Lisps.
@@ -83,10 +55,10 @@ Here's the code:
  * small could I make a C version?  This version is 6.5K.
  */
 #define _GNU_SOURCE
-#include &lt;string.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdarg.h&gt;
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /* Start with cons, print, and atoms: ============================== */
 
@@ -95,8 +67,8 @@ Here's the code:
 typedef struct pair { struct pair *car; struct pair *cdr; } pair;
 pair *cons(pair *car, pair *cdr) {
   pair *rv = malloc(sizeof(*rv));
-  rv-&gt;car = car;
-  rv-&gt;cdr = cdr;
+  rv->car = car;
+  rv->cdr = cdr;
   return rv;
 }
 int streq(char *string, int len, char *ref) {
@@ -111,13 +83,13 @@ atom intern(char *string, int len) {
   atom i;
   for (i = atomtable; *i; i++)
     if (streq(string, len, *i)) return i;
-  if (i == &amp;atomtable[MAXATOMS-1]) abort();
+  if (i == &atomtable[MAXATOMS-1]) abort();
   *i = strndup(string, len);
   return i;
 }
 atom as_atom(pair *x) {
   atom i = (atom)x;
-  if (i &gt;= atomtable &amp;&amp; i &lt; &amp;atomtable[MAXATOMS]) return i;
+  if (i >= atomtable && i < &atomtable[MAXATOMS]) return i;
   return 0;
 }
 void print(pair *expr) {
@@ -128,8 +100,8 @@ void print(pair *expr) {
   }
   printf("(");
   while (expr) {
-    print(expr-&gt;car);
-    expr = expr-&gt;cdr;
+    print(expr->car);
+    expr = expr->cdr;
     if (expr) printf(" ");
   }
   printf(")");
@@ -138,7 +110,7 @@ void print(pair *expr) {
 /* now "read": =============================================== */
 
 int is_atom_char(char c) {
-  return (c &amp;&amp; c != ')' &amp;&amp; c != '(' &amp;&amp; c != ' ');
+  return (c && c != ')' && c != '(' && c != ' ');
 }
 pair *lread_atom(char **in) {
   char *org = *in;
@@ -195,39 +167,39 @@ void init() {
 pair *truth_value_of(int x) { return x ? (pair*)t_atom : 0; }
 
 /* apply[fn;x;a] = */
-/*      [atom[fn] -&gt; [eq[fn;CAR] -&gt; caar[x]; */
-/*                    eq[fn;CDR] -&gt; cdar[x]; */
-/*                    eq[fn;CONS] -&gt; cons[car[x];cadr[x]]; */
-/*                    eq[fn;ATOM] -&gt; atom[car[x]]; */
-/*                    eq[fn;EQ] -&gt; eq[car[x];cadr[x]]; */
-/*                    T -&gt; apply[eval[fn;a];x;a]]; */
-/*       eq[car[fn];LAMBDA] -&gt; eval[caddr[fn];pairlis[cadr[fn];x;a]]; */
-/*       eq[car[fn];LABEL] -&gt; apply[caddr[fn];x;cons[cons[cadr[fn]; */
+/*      [atom[fn] -> [eq[fn;CAR] -> caar[x]; */
+/*                    eq[fn;CDR] -> cdar[x]; */
+/*                    eq[fn;CONS] -> cons[car[x];cadr[x]]; */
+/*                    eq[fn;ATOM] -> atom[car[x]]; */
+/*                    eq[fn;EQ] -> eq[car[x];cadr[x]]; */
+/*                    T -> apply[eval[fn;a];x;a]]; */
+/*       eq[car[fn];LAMBDA] -> eval[caddr[fn];pairlis[cadr[fn];x;a]]; */
+/*       eq[car[fn];LABEL] -> apply[caddr[fn];x;cons[cons[cadr[fn]; */
 /*                                                   caddr[fn]];a]]] */
 
 pair *eval(pair *fn, pair *a);
 pair *pairlis(pair *x, pair *y, pair *a);
 pair *apply(pair *fn, pair *x, pair *a) {
   atom fn_atom = as_atom(fn);
-  if (fn_atom == car_atom) return x-&gt;car-&gt;car;
-  if (fn_atom == cdr_atom) return x-&gt;car-&gt;cdr;
-  if (fn_atom == cons_atom) return cons(x-&gt;car, x-&gt;cdr-&gt;car);
-  if (fn_atom == atom_atom) return truth_value_of(!!as_atom(x-&gt;car));
-  if (fn_atom == eq_atom) return truth_value_of(x-&gt;car == x-&gt;cdr-&gt;car);
+  if (fn_atom == car_atom) return x->car->car;
+  if (fn_atom == cdr_atom) return x->car->cdr;
+  if (fn_atom == cons_atom) return cons(x->car, x->cdr->car);
+  if (fn_atom == atom_atom) return truth_value_of(!!as_atom(x->car));
+  if (fn_atom == eq_atom) return truth_value_of(x->car == x->cdr->car);
   if (fn_atom) return apply(eval(fn, a), x, a);
-  if (as_atom(fn-&gt;car) == lambda_atom) 
-    return eval(fn-&gt;cdr-&gt;cdr-&gt;car, pairlis(fn-&gt;cdr-&gt;car, x, a));
-  if (as_atom(fn-&gt;car) == label_atom)
-    return apply(fn-&gt;cdr-&gt;cdr-&gt;car, x, cons(cons(fn-&gt;cdr-&gt;car, fn-&gt;cdr-&gt;cdr-&gt;car), a));
+  if (as_atom(fn->car) == lambda_atom) 
+    return eval(fn->cdr->cdr->car, pairlis(fn->cdr->car, x, a));
+  if (as_atom(fn->car) == label_atom)
+    return apply(fn->cdr->cdr->car, x, cons(cons(fn->cdr->car, fn->cdr->cdr->car), a));
   return 0;
 }
 
-/* eval[e;a] = [atom[e] -&gt; cdr[assoc[e;a]]; */
-/*       atom[car[e]] -&gt;  */
-/*               [eq[car[e],QUOTE] -&gt; cadr[e]; */
-/*               eq[car[e];COND] -&gt; evcon[cdr[e];a]; */
-/*               T -&gt; apply[car[e];evlis[cdr[e];a];a]]; */
-/*       T -&gt; apply[car[e];evlis[cdr[e];a];a]] */
+/* eval[e;a] = [atom[e] -> cdr[assoc[e;a]]; */
+/*       atom[car[e]] ->  */
+/*               [eq[car[e],QUOTE] -> cadr[e]; */
+/*               eq[car[e];COND] -> evcon[cdr[e];a]; */
+/*               T -> apply[car[e];evlis[cdr[e];a];a]]; */
+/*       T -> apply[car[e];evlis[cdr[e];a];a]] */
 /* (note i am using assq rather than assoc so i don't need equal) */
 
 pair *assq(pair *e, pair *a);
@@ -235,44 +207,44 @@ pair *evcon(pair *c, pair *a);
 pair *evlis(pair *m, pair *a);
 pair *eval(pair *e, pair *a) {
   atom ea;
-  if (as_atom(e)) return assq(e, a)-&gt;cdr;
-  ea = as_atom(e-&gt;car);
+  if (as_atom(e)) return assq(e, a)->cdr;
+  ea = as_atom(e->car);
   if (ea)
-    if (ea == quote_atom) return e-&gt;cdr-&gt;car;
-    else if (ea == cond_atom) return evcon(e-&gt;cdr, a);
+    if (ea == quote_atom) return e->cdr->car;
+    else if (ea == cond_atom) return evcon(e->cdr, a);
   /* duplicated case condensed */
-  return apply(e-&gt;car, evlis(e-&gt;cdr, a), a);
+  return apply(e->car, evlis(e->cdr, a), a);
 }
 
-/* evcon[c;a] = [eval[caar[c];a] -&gt; eval[cadar[c];a]; */
-/*               T -&gt; evcon[cdr[c];a]] */
+/* evcon[c;a] = [eval[caar[c];a] -> eval[cadar[c];a]; */
+/*               T -> evcon[cdr[c];a]] */
 
 pair *evcon(pair *c, pair *a) {
-  if (eval(c-&gt;car-&gt;car, a)) return eval(c-&gt;car-&gt;cdr-&gt;car, a);
-  else return evcon(c-&gt;cdr, a);
+  if (eval(c->car->car, a)) return eval(c->car->cdr->car, a);
+  else return evcon(c->cdr, a);
 }
 
-/* evlis[m;a] = [null[m] -&gt; NIL; */
-/*                T -&gt; cons[eval[car[m];a];evlis[cdr[m];a]]] */
+/* evlis[m;a] = [null[m] -> NIL; */
+/*                T -> cons[eval[car[m];a];evlis[cdr[m];a]]] */
 
 pair *evlis(pair *m, pair *a) {
   if (!m) return 0;
-  return cons(eval(m-&gt;car, a), evlis(m-&gt;cdr, a));
+  return cons(eval(m->car, a), evlis(m->cdr, a));
 }
 
-/* pairlis[x;y;a] = [null[x]-&gt;a;T-&gt;cons[cons[car[x];car[y]]; */
+/* pairlis[x;y;a] = [null[x]->a;T->cons[cons[car[x];car[y]]; */
 /*                  pairlis[cdr[x];cdr[y];a]]] */
 
 pair *pairlis(pair *x, pair *y, pair *a) {
   if (!x) return a;
-  return cons(cons(x-&gt;car, y-&gt;car), pairlis(x-&gt;cdr, y-&gt;cdr, a));
+  return cons(cons(x->car, y->car), pairlis(x->cdr, y->cdr, a));
 }
 
-/* assoc[x;a] = [equal[caar[a];x]-&gt;car[a];T-&gt;assoc[x;cdr[a]]] */
+/* assoc[x;a] = [equal[caar[a];x]->car[a];T->assoc[x;cdr[a]]] */
 
 pair *assq(pair *x, pair *a) {
-  if (a-&gt;car-&gt;car == x) return a-&gt;car;
-  else return assq(x, a-&gt;cdr);
+  if (a->car->car == x) return a->car;
+  else return assq(x, a->cdr);
 }
 
 int main(int argc, char **argv) {
@@ -281,11 +253,11 @@ int main(int argc, char **argv) {
   for (;;) {
     char buf[1024];
     char *c;
-    printf("Â» ");
+    printf("» ");
     fflush(stdout);
     if (!fgets(buf, sizeof(buf), stdin)) break;
     c = buf;
-    expr = lread(&amp;c);
+    expr = lread(&c);
     print(expr);
     printf("\n");
     print(eval(expr, basic_env));
@@ -298,17 +270,17 @@ Here's the lightly compressed version that gets below 4K (3909
 characters):
 
 #define _GNU_SOURCE
-#include &lt;string.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdarg.h&gt;
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #define MAXATOMS 1024
 
 typedef struct p { struct p *l; struct p *r; } p;
 p *cons(p *l, p *r) {
   p *rv = malloc(sizeof(*rv));
-  rv-&gt;l = l;
-  rv-&gt;r = r;
+  rv->l = l;
+  rv->r = r;
   return rv;
 }
 int streq(char *string, int len, char *ref) {
@@ -321,13 +293,13 @@ t intern(char *string, int len) {
   t i;
   for (i = atomtable; *i; i++)
     if (streq(string, len, *i)) return i;
-  if (i == &amp;atomtable[MAXATOMS-1]) abort();
+  if (i == &atomtable[MAXATOMS-1]) abort();
   *i = strndup(string, len);
   return i;
 }
 t as_atom(p *x) {
   t i = (t)x;
-  if (i &gt;= atomtable &amp;&amp; i &lt; &amp;atomtable[MAXATOMS]) return i;
+  if (i >= atomtable && i < &atomtable[MAXATOMS]) return i;
   return 0;
 }
 void print(p *expr) {
@@ -338,14 +310,14 @@ void print(p *expr) {
   }
   printf("(");
   while (expr) {
-    print(expr-&gt;l);
-    expr = expr-&gt;r;
+    print(expr->l);
+    expr = expr->r;
     if (expr) printf(" ");
   }
   printf(")");
 }
 int is_atom_char(char c) {
-  return (c &amp;&amp; c != ')' &amp;&amp; c != '(' &amp;&amp; c != ' ');
+  return (c && c != ')' && c != '(' && c != ' ');
 }
 p *lread_atom(char **in) {
   char *org = *in;
@@ -393,16 +365,16 @@ p *eval(p *fn, p *a);
 p *plis(p *x, p *y, p *a);
 p *apply(p *fn, p *x, p *a) {
   t fn_atom = as_atom(fn);
-  if (fn_atom == car_atom) return x-&gt;l-&gt;l;
-  if (fn_atom == cdr_atom) return x-&gt;l-&gt;r;
-  if (fn_atom == cons_atom) return cons(x-&gt;l, x-&gt;r-&gt;l);
-  if (fn_atom == atom_atom) return truth_value_of(!!as_atom(x-&gt;l));
-  if (fn_atom == eq_atom) return truth_value_of(x-&gt;l == x-&gt;r-&gt;l);
+  if (fn_atom == car_atom) return x->l->l;
+  if (fn_atom == cdr_atom) return x->l->r;
+  if (fn_atom == cons_atom) return cons(x->l, x->r->l);
+  if (fn_atom == atom_atom) return truth_value_of(!!as_atom(x->l));
+  if (fn_atom == eq_atom) return truth_value_of(x->l == x->r->l);
   if (fn_atom) return apply(eval(fn, a), x, a);
-  if (as_atom(fn-&gt;l) == lambda_atom) 
-    return eval(fn-&gt;r-&gt;r-&gt;l, plis(fn-&gt;r-&gt;l, x, a));
-  if (as_atom(fn-&gt;l) == label_atom)
-    return apply(fn-&gt;r-&gt;r-&gt;l, x, cons(cons(fn-&gt;r-&gt;l, fn-&gt;r-&gt;r-&gt;l), a));
+  if (as_atom(fn->l) == lambda_atom) 
+    return eval(fn->r->r->l, plis(fn->r->l, x, a));
+  if (as_atom(fn->l) == label_atom)
+    return apply(fn->r->r->l, x, cons(cons(fn->r->l, fn->r->r->l), a));
   return 0;
 }
 p *assq(p *e, p *a);
@@ -410,28 +382,28 @@ p *evcon(p *c, p *a);
 p *evlis(p *m, p *a);
 p *eval(p *e, p *a) {
   t ea;
-  if (as_atom(e)) return assq(e, a)-&gt;r;
-  ea = as_atom(e-&gt;l);
+  if (as_atom(e)) return assq(e, a)->r;
+  ea = as_atom(e->l);
   if (ea)
-    if (ea == quote_atom) return e-&gt;r-&gt;l;
-    else if (ea == cond_atom) return evcon(e-&gt;r, a);
-  return apply(e-&gt;l, evlis(e-&gt;r, a), a);
+    if (ea == quote_atom) return e->r->l;
+    else if (ea == cond_atom) return evcon(e->r, a);
+  return apply(e->l, evlis(e->r, a), a);
 }
 p *evcon(p *c, p *a) {
-  if (eval(c-&gt;l-&gt;l, a)) return eval(c-&gt;l-&gt;r-&gt;l, a);
-  else return evcon(c-&gt;r, a);
+  if (eval(c->l->l, a)) return eval(c->l->r->l, a);
+  else return evcon(c->r, a);
 }
 p *evlis(p *m, p *a) {
   if (!m) return 0;
-  return cons(eval(m-&gt;l, a), evlis(m-&gt;r, a));
+  return cons(eval(m->l, a), evlis(m->r, a));
 }
 p *plis(p *x, p *y, p *a) {
   if (!x) return a;
-  return cons(cons(x-&gt;l, y-&gt;l), plis(x-&gt;r, y-&gt;r, a));
+  return cons(cons(x->l, y->l), plis(x->r, y->r, a));
 }
 p *assq(p *x, p *a) {
-  if (a-&gt;l-&gt;l == x) return a-&gt;l;
-  else return assq(x, a-&gt;r);
+  if (a->l->l == x) return a->l;
+  else return assq(x, a->r);
 }
 int main(int argc, char **argv) {
   p *expr;
@@ -439,11 +411,11 @@ int main(int argc, char **argv) {
   for (;;) {
     char buf[1024];
     char *c;
-    printf("Â» ");
+    printf("» ");
     fflush(stdout);
     if (!fgets(buf, sizeof(buf), stdin)) break;
     c = buf;
-    expr = lread(&amp;c);
+    expr = lread(&c);
     print(expr);
     printf("\n");
     print(eval(expr, basic_env));
@@ -470,35 +442,13 @@ void gc() {
   tospacep = 0;
   int tovisit = 0;
   get_roots();
-  while (tovisit &lt; tospacep) {
-    gc_visit(&amp;tospace[tovisit].car);
-    gc_visit(&amp;tospace[tovisit].cdr);
+  while (tovisit < tospacep) {
+    gc_visit(&tospace[tovisit].car);
+    gc_visit(&tospace[tovisit].cdr);
     tovisit++;
   }
-  swap(&amp;fromspace, &amp;tospace);
+  swap(&fromspace, &tospace);
 }
 
 Clearly between these two functions, I changed my mind about how to
 represent conses.
-</PRE>
-
-<!--endarticle-->
-    <HR>
-    <P></P><UL>
-        <!--threads-->
-	<LI>Previous message: <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/000463.html">non-chalantly paper napkin
-</A></LI>
-	
-         <LI> <B>Messages sorted by:</B> 
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/date.html#464">[ date ]</A>
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/thread.html#464">[ thread ]</A>
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/subject.html#464">[ subject ]</A>
-              <A href="http://lists.canonical.org/pipermail/kragen-hacks/2007-September/author.html#464">[ author ]</A>
-         </LI>
-       </UL>
-
-<HR>
-<A href="http://lists.canonical.org/mailman/listinfo/kragen-hacks">More information about the Kragen-hacks
-mailing list</A><BR>
-
-</BODY></HTML>
