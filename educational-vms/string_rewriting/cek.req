@@ -1,0 +1,48 @@
+# This is loosely following Felleisen and Flatt's unpublished lecture notes:
+# "Programming Languages and Lambda Calculi",
+# specifically, page 80, the summary of the cek machine.
+#
+# environments bind names to pairs of terms and environments
+# env ::= Empty | Extend(name, term, env, env)
+#
+# terms are simple lambda calculus terms
+# term ::= Var(name) | App(term, term) | Lam(name, term)
+#
+# this continuation datastructure is nonobvious,
+# but it describes suspended "to-do" tasks, keeping enough info
+# that we can do what we intended to do.
+# cont ::= Return | Arg(term, env, cont) | Fun(name, term, env, cont)
+#
+# There's no sophisticated name-handling, and so there are certainly
+# name-capturing bugs; that wasn't the point of this exercise.
+
+# to eval a variable, look it up in the environment.
+cek(Var(?x), ?e, ?k) == lookup_and_run(?e, ?x, ?k)
+
+#lookup_and_run(Empty, ?x, ?k) == ARRGH!
+lookup_and_run(Extend(?x0, ?v, ?ve, ?e), ?x1, ?k) == if ?x0 = ?x1 then cek(?v, ?ve, ?k) else lookup_and_run(?e, ?x1, ?k)
+
+# to eval an application, eval the left term, and schedule the right for later.
+cek(App(?m, ?n), ?e, ?k) == cek(?m, ?e, Arg(?n, ?e, ?k))
+
+# to eval a "value" - effectively, a lambda for now - look at the continuation.
+cek(Lam(?x, ?m), ?e, ?k) == cek_lam_helper(?k, ?x, ?m, ?e)
+
+cek_lam_helper(Return, ?x, ?m, ?e) == Lam(?x, ?m)
+cek_lam_helper(Fun(?x, ?m, ?eprime, ?k), ?foo, ?bar, ?e) == cek(?m, Extend(?x, Lam(?foo, ?bar), ?e, ?eprime), ?k)
+cek_lam_helper(Arg(?n, ?eprime, ?k), ?foo, ?bar, ?e) == cek(?n, ?eprime, Fun(?foo, ?bar, ?e, ?k))
+
+eval_cek(?m) == cek(?m, Empty, Return)
+
+S == Lam(x, Lam(y, Lam(z, App(App(Var(x), Var(z)), App(Var(y), Var(z))))))
+K == Lam(x, Lam(y, Var(x)))
+I == Lam(x, Var(x))
+
+eval_cek(I)
+eval_cek(K)
+eval_cek(S)
+eval_cek(App(I, I))
+eval_cek(App(App(K, I), S))
+
+# does not terminate
+#eval_cek(App(Lam(x, App(Var(x), Var(x))), Lam(x, App(Var(x), Var(x)))))
