@@ -39,7 +39,7 @@ define([execute_6], [fetch($1, $3)])
 define([execute_7], [ifelse($3, 0, [fetch($1, $3)], [fetch($2, $3)])])
 
 # 8xx is branch-if-nonnegative
-define([execute_8], [ifelse(eval($3 < 0, 0, [fetch($2, $3)], [fetch($1, $3)])])
+define([execute_8], [ifelse(eval($3 < 0), 1, [fetch($2, $3)], [fetch($1, $3)])])
 
 # 9xx are primitives; we dispatch to some specific primitive
 define([execute_9], [primitive_$1($2, $3)])
@@ -60,11 +60,10 @@ define([primitive_3], [])
 store([0], [599]) # load mem[99] into accum
 # top of loop:
 store([1], [902]) # write accum
-store([2], [705]) # if accum is zero, goto done
-store([3], [298]) # subtract mem[98] into accum
-store([4], [601]) # branch to top of loop
+store([2], [298]) # subtract mem[98] into accum
+store([3], [801]) # branch to top of loop
 # done:
-store([5], [903]) # halt
+store([4], [903]) # halt
 
 # data
 store([98], [1])
