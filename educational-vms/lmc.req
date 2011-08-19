@@ -1,0 +1,57 @@
+# the LMC in req
+#
+# what makes this a "machine" as opposed to other programs, or other
+# interpreters?
+# 
+# the tail-call-ness makes the stack of whatever is running
+# this lmc program irrelevant.
+#
+# there's an identifiable instruction set - the branches of the single
+# spot where control flow splits drastically.
+# (control flow also splits in the lookup, but that's not an essential
+# part of the model)
+#
+# What makes it an accumulator-based machine?
+# The instruction set has operations for manipulating the accumulator,
+# and it does not have operations manipulating a built-in stack,
+# or other data structure.
+
+run(?m) == run3(?m, 0, 0)
+
+run3(?m, ?pc, ?a) == run4(lookup(?m, ?pc), ?m, ?pc + 1, ?a)
+
+run4(?mpc, ?m, ?pc, ?a) == run5(?m_pc div 100, ?m_pc mod 100, ?m, ?pc, ?a)
+
+# load 5
+run5(5, ?xx, ?m, ?pc, ?a) == run3(?m, ?pc, lookup(?m, ?xx))
+
+# store 3
+run5(3, ?xx, ?m, ?pc, ?a) == run3(store(?m, ?xx, ?a), ?pc, ?a)
+
+# add 1
+run5(1, ?xx, ?m, ?pc, ?a) == run3(?m, ?pc, ?a + lookup(?m, ?xx))
+
+# sub 2
+run5(2, ?xx, ?m, ?pc, ?a) == run3(?m, ?pc, ?a - lookup(?m, ?xx))
+
+# prim 9
+run5(9, ?xx, ?m, ?pc, ?a) == run_prim(?xx, ?m, ?pc, ?a)
+
+# TODO: these are not completely trivial to do inside of req;
+# so I won't do them at all.
+#run_prim(1, ?m, ?pc, ?a) == run3(?m, ?pc, read_number_from_input())
+#run_prim(2, ?m, ?pc, ?a) == write_to_output(?a) and_then run3(?m, ?pc, ?a)
+
+# branch-if-zero 7
+run5(7, ?xx, ?m, ?pc, ?a) ==
+	if ?a = 0 then run3(?m, ?xx, ?a) else run3(?m, ?pc, ?a)
+
+# branch-if-nonnegative 8
+run5(8, ?xx, ?m, ?pc, ?a) ==
+	if ?a >= 0 then run3(?m, ?xx, ?a) else run3(?m, ?pc, ?a)
+
+# branch 6
+run5(6, ?xx, ?m, ?pc, ?a) == run3(?m, ?xx, ?a)
+
+# inefficient linear search, but whatever
+lookup(store(?m, ?k1, ?v), ?k2) == if ?k1 == ?k2 then ?v else lookup(?m, ?k2)
