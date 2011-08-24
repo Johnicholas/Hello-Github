@@ -1,0 +1,42 @@
+Leszek interpreter
+==================
+
+usage: leszek source-file
+
+Here is the specification: http://esolangs.org/wiki/Leszek
+
+Features
+--------
+All implemented operators are described in the specification and vice versa.
+
+There are some limitations in this impementation:
+- the source string can never be longer than 65536 characters
+- value of any computed expression must not be longer than 1024 characters
+- integer values are implemented using "int" type, which is usually 4-byte long
+All of these limitations can be easily modified by editing the source.
+
+Bugs
+----
+There is almost no syntax/error checking... Bad programs often segfault.
+
+If you are a win/dos user, you have a problem, because a newline should be
+one character long (so it can be used for example as a delimiter with \C)
+
+There is an undocumented debug function (examine the source for more details).
+
+Disclaimer
+----------
+There is no licence. You can do anything you want with these files,
+but you can't sue me (no warranty, can explode, etc.). Be warned.
+
+Contact
+-------
+Any bugs, comments, suggestions, insults - write at
+
+  o            |  /\ ~~/ /~)               o |
+  | /\| |/\ /> |/  <  / | a' /~| |/\/\ /\| | |   /~ /\ |/\/\
+  | \/| | | \/ |\ \/ /   \_/ \_| | | | \/| | | o \_ \/ | | |
+\_/                          \_/
+
+Use your OCR abilities to get an e-mail address from ascii art
+(fixed font can be useful here)...
