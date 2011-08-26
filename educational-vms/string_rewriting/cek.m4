@@ -1,122 +1,166 @@
 divert(-1)
-# This is an implementation of the CEK machine,
-# loosely following Felleisen and Flatt's unpublished lecture notes:
-# "Programming Languages and Lambda Calculi",
-# specifically, page 80, the summary of the CEK machine.
-
-# There's no sophisticated name-handling, and so there are certainly name-capturing bugs.
-
-# In order to not make TOO much of a mess,
-# some conventions:
-# 1. If it starts with an underscore, don't invoke it from
-# far away - just locally in that immediate paragraph.
-# 2. Don't define macros starting with capitals.
-
-# Some m4 preliminaries.
-changequote
 changequote([,])
+# The CEK machine, by Felleisen and Flatt, following Hayo Thielecke's slides
+# mistakes and misunderstandings by Johnicholas
 
-# We use _gensym as a variable, holding the "next unused cell"
-define([_gensym],[0])
-# gensym returns the previous value of _gensym, and increments it.
-define([gensym],[_gensym[]define([_gensym],incr(_gensym))])
+# This uses a particular idiom for abstract data types in m4.
+# A constructor is implemented by:
+# 1. using a counter to obtain a unique name
+# 2. defining a way to dispatch or "eliminate" that name
+# 3. returning the unique name
+# 4. incrementing the counter
 
-# We use these "eat" functions as data structures;
-# This is a bit like the visitor design pattern or double-dispatch in OO.
-#
-# The idea is that a constructor invocation like Cons(foo, bar),
-# returns something like "Cons45". Then when you want to inspect that cell,
-# you call eat_Cons45([inspector_function_prefix]),
-# and eat_Cons45 calls you back at either inspector_function_prefix_nil
-# or inspector_function_prefix_cons.
+# we use just one counter for everything;
+# we could use one counter per constructor instead
+define([sym], [0])
+define([next], [sym[]define([sym], incr(sym))])
 
-# environments bind names to closures - pairs of terms and environments
-# env ::= Empty
-define([eat_Empty], [$1_empty($2, $3)])
-define([empty], [Empty])
+# terms are unit, vars, applications, lambdas
+# Aside: Unit is really a proxy for all kinds of primitives
+# term ::= Unit | Var( num ) | App( term, term ) | Lam( term )
+define([unit],[define([eat_Unit]sym,[$][1_unit(shift($][@))])Unit[]next])
+define([var],[define([eat_Var]sym,[$][1_var($1,shift($][@))])Var[]next])
+define([app],[define([eat_App]sym,[$][1_app($1,$2,shift($][@))])App[]next])
+define([lam],[define([eat_Lam]sym,[$][1_lam($1,shift($][@))])Lam[]next])
 
-# env ::= Extend(name, term, env, env)
-define([_extend], [define([eat_Extend]$1, [$][1_extend($2, $3, $][2, $][3, $][4, $][5)])Extend$1])
-define([extend], [_extend(gensym, $1, $2, $3, $4)])
+# numbers are peano integers
+# Aside: This is woefully inefficient, but I'm trying for simple, concrete,
+# and working
+# num ::= Z | S( num )
+define([z],[define([eat_Z]sym,[$][1_z(shift($][@))])Z[]next])
+define([s],[define([eat_S]sym,[$][1_s($1,shift($][@))])S[]next])
 
-# terms are simple lambda calculus terms
-# term ::= Var(name)
-define([_var], [define([eat_Var]$1, [$][1_var($2, $][2, $][3)])Var$1])
-define([var], [_var(gensym, $1)])
+# values are unit and closures.
+# Aside: remember when you're reading the closure,
+# there's an invisible Lam() around the term,
+# because all closures start with lambda
+# val ::= Unit | Clos( term , env )
+# Aside; Unit already has a constructor)
+define([clos],[define([eat_Clos]sym,[$][1_clos($1,$2,shift($][@))])Clos[]next])
 
-# term ::= App(term, term)
-define([_app], [define([eat_App]$1, [$][1_app($2, $3, $][2, $][3)])App$1])
-define([app], [_app(gensym, $1, $2)])
+# environments can be constructed empty or extended
+# env ::= Empty | Ext( val, env )
+define([empty],[define([eat_Empty]sym,[$][1_empty(shift($][@))])Empty[]next])
+define([ext],[define([eat_Ext]sym,[$][1_ext(shift($][@))])Ext[]next])
 
-# term ::= Lam(name, term)
-define([_lam], [define([eat_Lam]$1, [$][1_app($2, $3, $][2, $][3)])Lam$1])
-define([lam], [_lam(gensym, $1, $2)])
+# The kinds of continuations are a bit unmotivated, 
+# but these are what we'll turn out to need
+# cont ::= Done | Arg( term, env, cont ) | Fun( val, cont )
+define([done],[define([eat_Done]sym,[$][1_done(shift($][@))])Done[]next])
+define([arg],[define([eat_Arg]sym,[$][1_arg($1,$2,$3,shift($][@))])Arg[]next])
+define([fun],[define([eat_Fun]sym,[$][1_fun($1,$2,shift($][@))])Fun[]next])
 
-# this continuation datastructure is nonobvious,
-# but it describes suspended "to-do" tasks, keeping enough info
-# that we can do what we intended to do.
-# cont ::= Return
-define([eat_Return], [$1_return($2, $3)])
-define([return], [Return])
+# lookup is a helper function for environments
+# in req, it would look like this:
+# lookup(Z, ?env) == lookup_head(?env)
+# lookup_head(Empty) == AAAGGGGGHH!
+# lookup_head(Ext(?var, ?env)) == ?var
+# lookup(S(?num), ?env) == lookup_tail(?env, ?num)
+# lookup_tail(Empty, ?num) == AAAGGGGGHH!
+# lookup_tail(Ext(?var, ?env), ?num) == lookup(?num, ?env)
+define([lookup],[eat_$1([lookup],$2)])
+define([lookup_z],[lookup_head($1)])
+define([lookup_head],[eat_$1([lookup_head])])
+define([lookup_head_empty],[errprint([Unable to find value for variable])])
+define([lookup_head_ext],[$1])
+define([lookup_s],[lookup_tail($2,$1)])
+define([lookup_tail],[eat_$1([lookup_tail],$2)])
+define([lookup_tail_empty],[errprint([Unable to find value for variable])])
+define([lookup_tail_ext],[lookup($3, $2)])
 
-# cont ::= Arg(term, env, cont)
-define([_arg], [define([eat_Arg]$1, [$][1_arg($2, $3, $4, $][2, $][3)])Arg$1])
-define([arg], [_arg(gensym, $1, $2, $3)])
+# to eval a term, run the cek machine on it,
+# starting with the empty environment and the done continuation.
+# in req, it would look like this:
+# cek_eval(?term) == cek(?term, Empty, Done)
+define([cek_eval],[cek($1,empty,done)])
 
-# cont ::= Fun(name, term, env, cont)
-define([_fun], [define([eat_Fun]$1, [$][1_fun($2, $3, $4, $5, $][2, $][3)])Fun$1])
-define([fun], [_fun(gensym, $1, $2, $3, $4)])
+# the cek function first dispatches on the term, the first argument.
+define([cek],[eat_$1([cek],$2,$3)])
 
-# to eval a variable, look it up in the environment.
-#cek(Var(?x), ?e, ?k) == lookup_and_run(?e, ?x, ?k)
-define([_cek_var], [lookup_and_run($2, $1, $3)])
-# to eval an application, eval the left term, and schedule the right for later.
-#cek(App(?m, ?n), ?e, ?k) == cek(?m, ?e, Arg(?n, ?e, ?k))
-define([_cek_app], [cek($1, $3, arg($2, $3, $4))])
-# to eval a "value" - effectively, a lambda for now - look at the continuation.
-#cek(Lam(?x, ?m), ?e, ?k) == cek_lam_helper(?k, ?x, ?m, ?e)
-define([_cek_lam], [cek_lam_helper($4, $1, $2, $3)])
+# if the term is a variable, look it up in the env
+# in req, it would look like this:
+# cek(Var(?num), ?env, ?k) == cek(lookup(?num, ?env), ?env, ?k)
+define([cek_var],[cek(lookup($1,$2),$2,$3)])
+
+# if the term is an application, start with the left one,
+# and schedule dealing with the right one for later
+# in req, it would look like this:
+# cek(App(?m1, ?m2), ?env, ?k) == cek(?m1, ?env, Arg(?m2, ?env, ?k))
+define([cek_app],[cek($1,$3,arg($2,$3,$4))])
+
+# if the term is a lambda, then form a closure.
+# in req, it would look like this:
+# cek(Lam(?m), ?env, ?k) == cek(Clos(?m, ?env), ?env, ?k)
+define([cek_lam],[cek(clos($1,$2),$2,$3)])
+
+# if there's a value in the first part of the triple, 
+# whether that value is a closure or unit,
+# then we can't go any further in that direction.
+# in req, it would look like this:
+# cek(Clos(?mx, ?ex), ?e1, ?k) == cek_val(?k, Clos(?mx, ?ex))
+define([cek_clos],[cek_val($4,clos($1,$2))])
+# in req, it would look like this:
+# cek(Unit, ?e1, ?k) == cek_val(?k, Unit)
+define([cek_unit],[cek_val($2,unit)])
+
+# We dispatch on the continuation to decide what to do next.
+define([cek_val],[eat_$1([cek_val],$2)])
+
+# If we had planned on doing an argument next,
+# schedule that we should come back to this,
+# once we have the argument evalled.
+# in req, it would look like this:
+# cek_val(Arg(?m, ?e, ?k), ?w) == cek(?m, ?e, Fun(?w, ?k))
+define([cek_val_arg],[cek($1,$2,fun($4,$3))])
+
+# If we have both the left and the right halves of an
+# application, then we can probably go inside.
+# However, we need to check that the left half is
+# a closure - it might be unit.
+# cek_val(Fun(?w1, ?k), ?w2) == cek_val_fun_check(?w1, ?k, ?2)
+define([cek_val_fun],[cek_val_fun_check($1,$2,$3)])
+
 # dispatch
-define([cek], [eat_$1([_cek], $2, $3)])
+define([cek_val_fun_check],[eat_$1([cek_val_fun_check],$2,$3)])
 
-#lookup_and_run(Empty, ?x, ?k) == ARRGH!
-define([_lookup_and_run_empty], [errprint([Could not find a definition of $1.
-]m4exit(1))])
-#lookup_and_run(Extend(?x0, ?v, ?ve, ?e), ?x1, ?k) == if ?x0 = ?x1 then cek(?v, ?ve, ?k) else lookup_and_run(?e, ?x1, ?k)
-define([_lookup_and_run_extend], [ifelse($1, $5, [cek($2, $3, $6)], [lookup_and_run($4, $5, $6)])])
-# dispatch
-define([lookup_and_run], [eat_$1([_lookup_and_run], $2, $3)])
+# cek_val_fun_check(Unit,$k,$w) == AGGGHGH!
+define([cek_val_fun_check_unit],[errprint([Attempted to apply unit to something])])
+# cek_val_fun_check(Clos(?m,?e),?k,$w) == cek(?m, Ext(?w, ?e), ?k)
+define([cek_val_fun_check_clos],[cek($1,ext($4,$2),$3)])
 
-#cek_lam_helper(Return, ?x, ?m, ?e) == Lam(?x, ?m)
-define([_cek_lam_helper_return], [lam($1, $2)])
-#cek_lam_helper(Fun(?x, ?m, ?eprime, ?k), ?foo, ?bar, ?e) == cek(?m, Extend(?x, Lam(?foo, ?bar), ?e, ?eprime), ?k)
-define([_cek_lam_helper_fun], [cek($2, extend($1, lam($5, $6), $7, $3), $4)])
-#cek_lam_helper(Arg(?n, ?eprime, ?k), ?foo, ?bar, ?e) == cek(?n, ?eprime, Fun(?foo, ?bar, ?e, ?k))
-define([_cek_lam_helper_arg], [cek($1, $2, fun($4, $5, $6, $3))])
-# dispatch
-define([cek_lam_helper], [eat_$1([_cek_lam_helper], $2, $3, $4)])
+# If we don't have anything scheduled,
+# then return the value.
+# in req, it would look like this:
+# cek_val(Done,?w) == ?w
+define([cek_val_done],[$1])
 
-#eval_cek(?m) == cek(?m, Empty, Return)
-define([eval_cek], [cek($1, empty, return)])
+divert
+# tests
 
-#S == Lam(x, Lam(y, Lam(z, App(App(Var(x), Var(z)), App(Var(y), Var(z))))))
-define(s, lam(x, lam(y, lam(z, app(app(var(x), var(z)), app(var(y), var(z)))))))
-#K == Lam(x, Lam(y, Var(x)))
-define(k, lam(x, lam(y, var(x))))
-#I == Lam(x, Var(x))
-define(i, lam(x, var(x)))
+# test the identity function, applied to itself.
+# should be a closure:
+app(lam(var(z)),lam(var(z)))
+cek_app(Lam2,Lam5,empty,done)
 
-divert[]dnl
+#eat(
+#cek(app(lam(var(z)),lam(var(z))),empty,done)
+#eat_(app
 
-i
-eval_cek(i)
-k
-eval_cek(k)
-s
-eval_cek(s)
-#eval_cek(app(i, i))
-#eval_cek(app(app(k, i), s))
+cek_eval(app(lam(var(z)),lam(var(z))))
+
+# should be unit:
+cek_eval(app(lam(var(z)),unit))
+
+# define some combinators
+define([s],lam(lam(lam(app(app(var(s(s(z))),var(z)),app(var(s(z)),var(z)))))))
+define([k],lam(lam(var(s(z)))))
+define([i],app(app(s,k),k))
+
+# same tests using the sk version of the identity function
+# should be a closure:
+cek_eval(app(i,i))
+# should be unit:
+cek_eval(app(i,unit))
 
 # does not terminate
-#eval_cek(app(lam(x, app(var(x), var(x))), lam(x, app(var(x), var(x)))))
-
+#cek_eval(app(lam(app(var(z),var(z))),lam(app(var(z),var(z)))))
