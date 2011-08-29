@@ -1,0 +1,91 @@
+# The CEK machine, by Felleisen and Flatt,
+# following Hayo Thielecke's slides.
+#
+# mistakes and misunderstandings by Johnicholas
+#
+# if I understand Danvy's Rational Deconstruction correctly,
+# the CEK machine is analogous to the SECD machine,
+# but without a particular wrongheadedness
+
+# This is trying to be VERY VERY CONCRETE even if that means
+# specifying some woeful inefficiencies and uglinesses
+
+# terms are booleans, vars, applications, lambdas
+# Aside: these "booleans" are pretty useless,
+# because we can't inspect them.
+# they're really just for output,
+# so I could convince myself that this was working.
+# term ::= True | False | Var( num ) | App( term, term ) | Lam( term )
+# numbers are peano integers
+# num ::= Z | S( num )
+# values are booleans and closures.
+# Note that when you're reading the closure, there's an invisible Lam()
+# around the term - all closures start with lambda
+# val ::= True | False | Clos( term , env )
+# environments can be constructed empty or extended
+# env ::= Empty | Extend( val, env )
+# there's a helper function, lookup, for environments
+lookup(Z, Extend(?var, ?env)) == ?var
+lookup(S(?num), Extend(?var, ?env)) == lookup(?num, ?env)
+# lookup(?x, Empty) == AAAGGGGGHH!
+# The kinds of continuations are a bit unmotivated, 
+# but these are what we'll turn out to need
+# cont ::= Done | Arg( term, env, cont ) | Fun( val, cont )
+
+# to eval a term, run the cek machine on it,
+# starting with the empty environment and the done continuation.
+cek_eval(?term) == cek(?term, Empty, Done)
+
+# if the term is a variable, look it up in the env
+cek(Var(?num), ?env, ?k) == cek(lookup(?num, ?env), ?env, ?k)
+
+# if the term is an application, start with the left one,
+# and schedule dealing with the right one for later
+cek(App(?m1, ?m2), ?env, ?k) == cek(?m1, ?env, Arg(?m2, ?env, ?k))
+
+# if the term is a lambda, then form a closure.
+cek(Lam(?m), ?env, ?k) == cek(Clos(?m, ?env), ?env, ?k)
+
+# if there's a value in the first part of the triple, 
+# then we can't go any further in that direction;
+# dispatch on the continuation to decide what to do next.
+
+# If we had planned on doing an argument next, schedule
+# coming back to this once we have the argument evalled
+# and start evalling the argument
+cek(Clos(?mx, ?ex), ?e1, Arg(?m, ?e2, ?k)) == cek(?m, ?e2, Fun(Clos(?mx, ?ex), ?k))
+cek(True, ?e1, Arg(?m, ?e2, ?k)) == cek(?m, ?e2, Fun(True, ?k))
+cek(False, ?e1, Arg(?m, ?e2, ?k)) == cek(?m, ?e2, Fun(False, ?k))
+
+# If we have both the left and the right halves of an
+# application, then we can go inside.
+cek(Clos(?mx, ?ex), ?e1, Fun(Clos(?m, ?e2), ?k)) == cek(?m, Extend(Clos(?mx, ?ex), ?e2), ?k)
+cek(True, ?e1, Fun(Clos(?m, ?e2), ?k)) == cek(?m, Extend(True, ?e2), ?k)
+cek(False, ?e1, Fun(Clos(?m, ?e2), ?k)) == cek(?m, Extend(False, ?e2), ?k)
+
+# If we don't have anything scheduled, and all we have is a closure,
+# something has gone wrong; return an "error message"
+cek(Clos(?mx, ?ex), ?e1, Done) == Function
+# Otherwise, return the value we computed
+cek(True, ?e1, Done) == True
+cek(False, ?e1, Done) == False
+
+# test the identity function, applied to itself.
+cek_eval(App(Lam(Var(Z)), Lam(Var(Z)))) = Function
+# test identity function applied to True
+cek_eval(App(Lam(Var(Z)), True)) = True
+# test identity function applied to False
+cek_eval(App(Lam(Var(Z)), False)) = False
+
+# define some combinators
+s == Lam(Lam(Lam(App(App(Var(S(S(Z))), Var(Z)), App(Var(S(Z)), Var(Z))))))
+k == Lam(Lam(Var(S(Z))))
+i == App(App(s, k), k)
+
+# same tests using the sk version of the identity function
+cek_eval(App(i, i)) = Function
+cek_eval(App(i, True)) = True
+cek_eval(App(i, False)) = False
+
+# does not terminate
+#cek_eval(App(Lam(App(Var(Z), Var(Z))), Lam(App(Var(Z), Var(Z)))))

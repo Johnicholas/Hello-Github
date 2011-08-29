@@ -1,0 +1,62 @@
+# The CEK machine, by Felleisen and Flatt,
+# following Hayo Thielecke's slides,
+# but trying to code in an "OO" style
+# - that is, pattern matching only on the first argument.
+#
+# mistakes and misunderstandings by Johnicholas
+
+# helper function for environments
+lookup(Z, ?env) == lookup_head(?env)
+lookup_head(Ext(?val, ?env)) == ?val
+lookup(S(?num), ?env) == lookup_tail(?env, ?num)
+lookup_tail(Ext(?val, ?env), ?num) == lookup(?num, ?env)
+
+# to eval a term, run the cek machine on it,
+# starting with the empty environment and the done continuation.
+cek_eval(?term) == cek(?term, Empty, Done)
+
+# if the term is a variable, look it up in the env
+cek(Var(?num), ?env, ?k) == cek(lookup(?num, ?env), ?env, ?k)
+
+# if the term is an application, start with the left one,
+# and schedule dealing with the right one for later
+cek(App(?m1, ?m2), ?env, ?k) == cek(?m1, ?env, Arg(?m2, ?env, ?k))
+
+# if the term is a lambda, then form a closure.
+cek(Lam(?m), ?env, ?k) == cek(Clos(?m, ?env), ?env, ?k)
+
+# if there's a value in the first part of the triple, 
+# then we can't go any further in that direction;
+# dispatch on the continuation to decide what to do next.
+cek(Clos(?m, ?e1), ?e2, ?k) == cek_val(?k, Clos(?m, ?e1))
+cek(Unit, ?e2, ?k) == cek_val(?k, Unit)
+
+# If we had planned on doing an argument next, schedule
+# coming back to this once we have the argument evalled
+# and start evalling the argument
+cek_val(Arg(?m, ?e, ?k), ?w) == cek(?m, ?e, Fun(?w, ?k))
+
+# If we have both the left and the right halves of an
+# application, then we can go inside.
+cek_val(Fun(?w1, ?k), ?w2) == cek_val_check(?w1, ?k, ?w2)
+cek_val_check(Clos(?m, ?e), ?k, ?w) == cek(?m, Ext(?w, ?e), ?k)
+
+# If we don't have anything scheduled, return what we have
+cek_val(Done, ?w) == ?w
+
+# test the identity function, applied to itself.
+cek_eval(App(Lam(Var(Z)), Lam(Var(Z))))
+# test identity function applied to Unit
+cek_eval(App(Lam(Var(Z)), Unit))
+
+# define some combinators
+s == Lam(Lam(Lam(App(App(Var(S(S(Z))), Var(Z)), App(Var(S(Z)), Var(Z))))))
+k == Lam(Lam(Var(S(Z))))
+i == App(App(s, k), k)
+
+# same tests using the sk version of the identity function
+cek_eval(App(i, i))
+cek_eval(App(i, Unit))
+
+# does not terminate
+#cek_eval(App(Lam(App(Var(Z), Var(Z))), Lam(App(Var(Z), Var(Z)))))

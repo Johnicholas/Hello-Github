@@ -1,0 +1,25 @@
+init0 : k - init1 init3
+init1 : r + init2
+init2 : t + init0
+init3 : t - init4 init5
+init4 : k + init3
+init5 : r - init6 "ERROR k is 0"
+init6 : i + init7
+init7 : n - loop0 "ERROR n is 0"
+loop0 : n - loop1 "Ok"
+loop1 : i + loop2
+loop2 : k - loop3 loop5
+loop3 : r + loop4
+loop4 : t + loop2
+loop5 : t - loop6 loop7
+loop6 : k + loop5
+loop7 : i - loop8 loopa
+loop8 : r - loop9 loopc
+loop9 : t + loop7
+loopa : t - loopb loop7
+loopb : i + loopa
+loopc : t - loopd loopf
+loopd : i + loope
+loope : r + loopc
+loopf : i + loop0
+n=40 k=3
