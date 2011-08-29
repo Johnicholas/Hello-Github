@@ -1,0 +1,7 @@
+init : t - init d0
+d0 : a - d1 a0
+d1 : b + d2
+d2 : t + d0
+a0 : t - a1 "Ok"
+a1 : a + a0
+a=3 b=4
