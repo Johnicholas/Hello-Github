@@ -20,6 +20,10 @@ simple_2.c: keith_randall.py simple_2_example.txt
 	astyle $@
 TO_CLEAN += simple_2.c
 
+minsky_register_machine.c minsky_register_machine.h: minsky_register_machine.lemon
+	lemon minsky_register_machine.lemon
+TO_CLEAN += minsky_register_machine.c minsky_register_machine.h
+
 # executables
 
 josephus: josephus.c
@@ -30,6 +34,10 @@ TO_CLEAN += simple_1
 
 simple_2: simple_2.c
 TO_CLEAN += simple_2
+
+mrm: mrm_driver.c minsky_register_machine.o
+	gcc $^ -o $@
+TO_CLEAN += mrm
 
 # convenience
 

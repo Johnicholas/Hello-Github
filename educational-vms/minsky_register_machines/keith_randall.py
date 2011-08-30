@@ -1,56 +1,69 @@
+# This is taken from:
+# http://codegolf.stackexchange.com/questions/1864/simulate-a-minsky-register-machine-i
+# Peter Taylor was the author of the question.
+# Keith Randall was the author of the answer that I took and modified.
+#
+# Small changes (mostly making it bigger and worse) by Johnicholas
+
 import sys, os, shlex
 
-G= shlex.shlex(sys.stdin).get_token
+GetToken= shlex.shlex(sys.stdin).get_token
 
-A= ''
-B= ''
+Init= ''
+Flow= ''
 
-C= 'done:'
+Vars= {}
 
-V= {}
-
-def J( x ):
+def JumpTo( x ):
   if x[0] != '"':
     return 'goto ' + x + ';\n'
   else: 
     return 'puts(' + x + ');\ngoto done;\n'
 
 while 1:
-  L= G()
-  c= G()
+  Label= GetToken()
+  c= GetToken()
   if c == '':
     break
   if c == ':':
-    v= G()
-    d= G()
-    V[v]= 1
-    B += L + c + v + d + d + ';\n'
+    var= GetToken()
+    d= GetToken()
+    Vars[var]= 1
+    Flow += Label + ':\n'
     if d == '+':
-      B += J(G())
+      Flow += var + '++;\n'
+      Flow += JumpTo(GetToken())
     else:
-      B += 'if(' + v + '>= 0) {\n'
-      B += J(G())
-      B += '} else {'
-      B += v + '= 0;\n'
-      B += J(G())
-      B += '}'
+      assert d == '-'
+      Flow += 'if (' + var + ' > 0) {\n'
+      Flow += var + '--;\n'
+      Flow += JumpTo(GetToken())
+      Flow += '} else {'
+      Flow += JumpTo(GetToken())
+      Flow += '}'
   else:
-    A += L + c + G() + ';\n'
-
-C += 'printf("'
-first= True
-for v in sorted(V.keys()):
-  if first:
-    first= False
-  else:
-    C += ' '
-  C += (v + '=%d')
-C += '\\n"'
-for v in sorted(V.keys()):
-  C += (', ' + v)
-C += ');\n'
-
-sys.stdout.write('#include <stdio.h>\n');
-sys.stdout.write('int ' + ', '.join(V) + ';\nmain(){' + A + B + C + '}\n')
+    assert c == '='
+    # in this circumstance, Label is actually a var
+    Init += Label + '=' + GetToken() + ';\n'
 
 
+sys.stdout.write('#include <stdio.h>\n')
+
+sys.stdout.write('int ' + ', '.join(Vars) + ';\n')
+
+sys.stdout.write('int main() {\n')
+
+sys.stdout.write(Init)
+
+sys.stdout.write(Flow)
+
+sys.stdout.write('done:\n')
+
+# report the ending values of the variables
+sys.stdout.write('printf("')
+sys.stdout.write(' '.join(map(lambda x: x + '=%d', sorted(Vars))))
+sys.stdout.write('\\n", ')
+sys.stdout.write(', '.join(sorted(Vars)))
+sys.stdout.write(');\n')
+
+sys.stdout.write('}\n')
