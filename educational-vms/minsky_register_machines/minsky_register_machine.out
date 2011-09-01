@@ -1,0 +1,214 @@
+State 0:
+          machine ::= * lines initials
+          lines ::= * line
+          lines ::= * lines line
+          line ::= * NEWLINE
+          line ::= * front_of_line rest_of_line NEWLINE
+          front_of_line ::= * ID COLON
+
+                       NEWLINE shift  17
+                            ID shift  12
+                       machine accept
+                         lines shift  1
+                          line shift  26
+                 front_of_line shift  6
+
+State 1:
+          machine ::= lines * initials
+          lines ::= lines * line
+          line ::= * NEWLINE
+          line ::= * front_of_line rest_of_line NEWLINE
+          front_of_line ::= * ID COLON
+          reg ::= * ID
+          initials ::= * initial
+          initials ::= * initials initial
+          initial ::= * reg EQUALS NUMBER
+
+                       NEWLINE shift  17
+                            ID shift  11
+                      initials shift  5
+                          line shift  16
+                 front_of_line shift  6
+                           reg shift  8
+                       initial shift  25
+
+State 2:
+          rest_of_line ::= reg PLUS * state
+          state ::= * label
+          state ::= * STRING
+          label ::= * ID
+
+                            ID shift  22
+                        STRING shift  21
+                         state shift  19
+                         label shift  20
+
+State 3:
+          rest_of_line ::= reg MINUS * state state
+          state ::= * label
+          state ::= * STRING
+          label ::= * ID
+
+                            ID shift  22
+                        STRING shift  21
+                         state shift  4
+                         label shift  20
+
+State 4:
+          rest_of_line ::= reg MINUS state * state
+          state ::= * label
+          state ::= * STRING
+          label ::= * ID
+
+                            ID shift  22
+                        STRING shift  21
+                         state shift  23
+                         label shift  20
+
+State 5:
+      (0) machine ::= lines initials *
+          reg ::= * ID
+          initials ::= initials * initial
+          initial ::= * reg EQUALS NUMBER
+
+                            ID shift  13
+                           reg shift  8
+                       initial shift  14
+                     {default} reduce 0
+
+State 6:
+          line ::= front_of_line * rest_of_line NEWLINE
+          rest_of_line ::= * reg PLUS state
+          rest_of_line ::= * reg MINUS state state
+          reg ::= * ID
+
+                            ID shift  13
+                  rest_of_line shift  10
+                           reg shift  7
+
+State 7:
+          rest_of_line ::= reg * PLUS state
+          rest_of_line ::= reg * MINUS state state
+
+                          PLUS shift  2
+                         MINUS shift  3
+
+State 8:
+          initial ::= reg * EQUALS NUMBER
+
+                        EQUALS shift  9
+
+State 9:
+          initial ::= reg EQUALS * NUMBER
+
+                        NUMBER shift  15
+
+State 10:
+          line ::= front_of_line rest_of_line * NEWLINE
+
+                       NEWLINE shift  18
+
+State 11:
+          front_of_line ::= ID * COLON
+     (11) reg ::= ID *
+
+                         COLON shift  24
+                     {default} reduce 11
+
+State 12:
+          front_of_line ::= ID * COLON
+
+                         COLON shift  24
+
+State 13:
+     (11) reg ::= ID *
+
+                     {default} reduce 11
+
+State 14:
+     (13) initials ::= initials initial *
+
+                     {default} reduce 13
+
+State 15:
+     (14) initial ::= reg EQUALS NUMBER *
+
+                     {default} reduce 14
+
+State 16:
+      (2) lines ::= lines line *
+
+                     {default} reduce 2
+
+State 17:
+      (3) line ::= NEWLINE *
+
+                     {default} reduce 3
+
+State 18:
+      (4) line ::= front_of_line rest_of_line NEWLINE *
+
+                     {default} reduce 4
+
+State 19:
+      (6) rest_of_line ::= reg PLUS state *
+
+                     {default} reduce 6
+
+State 20:
+      (8) state ::= label *
+
+                     {default} reduce 8
+
+State 21:
+      (9) state ::= STRING *
+
+                     {default} reduce 9
+
+State 22:
+     (10) label ::= ID *
+
+                     {default} reduce 10
+
+State 23:
+      (7) rest_of_line ::= reg MINUS state state *
+
+                     {default} reduce 7
+
+State 24:
+      (5) front_of_line ::= ID COLON *
+
+                     {default} reduce 5
+
+State 25:
+     (12) initials ::= initial *
+
+                     {default} reduce 12
+
+State 26:
+      (1) lines ::= line *
+
+                     {default} reduce 1
+
+----------------------------------------------------
+Symbols:
+    0: $:
+    1: NEWLINE
+    2: ID
+    3: COLON
+    4: PLUS
+    5: MINUS
+    6: STRING
+    7: EQUALS
+    8: NUMBER
+    9: error:
+   10: machine: NEWLINE ID
+   11: lines: NEWLINE ID
+   12: initials: ID
+   13: line: NEWLINE ID
+   14: front_of_line: ID
+   15: rest_of_line: ID
+   16: reg: ID
+   17: state: ID STRING
+   18: label: ID
+   19: initial: ID

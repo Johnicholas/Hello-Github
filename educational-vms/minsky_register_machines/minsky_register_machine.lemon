@@ -1,0 +1,28 @@
+
+%include {
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+}
+
+%syntax_error {
+  fprintf(stderr, "Syntax error!\n");
+}
+
+%token_type {void*}
+
+machine ::= lines initials . { done(); }
+lines ::= line .
+lines ::= lines line .
+line ::= NEWLINE . // lines can be blank
+line ::= front_of_line rest_of_line NEWLINE .
+front_of_line ::= ID(A) COLON . { set_label(A); }
+rest_of_line ::= reg(A) PLUS state(B) . { inc(A, B); }
+rest_of_line ::= reg(A) MINUS state(B) state(C) . { dec(A, B, C); }
+state(A) ::= label(B) . { A= B; }
+state(A) ::= STRING(B) . { A= make_printable(B); }
+label(A) ::= ID(B) . { A= make_label(B); }
+reg(A) ::= ID(B) . { A= make_var(B); }
+initials ::= initial .
+initials ::= initials initial .
+initial ::= reg(A) EQUALS NUMBER(B) . { initialize(A, B); }

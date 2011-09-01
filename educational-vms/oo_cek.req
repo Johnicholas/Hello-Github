@@ -29,7 +29,7 @@ cek(Lam(?m), ?env, ?k) == cek(Clos(?m, ?env), ?env, ?k)
 # then we can't go any further in that direction;
 # dispatch on the continuation to decide what to do next.
 cek(Clos(?m, ?e1), ?e2, ?k) == cek_val(?k, Clos(?m, ?e1))
-cek(Unit, ?e2, ?k) == cek_val(?k, Unit)
+cek(Unit, ?e, ?k) == cek_val(?k, Unit)
 
 # If we had planned on doing an argument next, schedule
 # coming back to this once we have the argument evalled
