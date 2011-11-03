@@ -6,7 +6,7 @@
 # except you can increment a skew number in O(1) rather than O(log(bits)).
 # Skew numbers represent numbers as sum of numbers of the form 2^n-1.
 #
-# http://yuml.me/diagram/scruffy/class[Skew%7C%7CtoInteger();successor();successorhelper(rank);print()]%5E[Zero],[Skew]%5E[Nonzero%7Crank;rest%7C],[Nonzero]++-Skew].
+# http://yuml.me/diagram/scruffy/class/[Skew%7C%7CtoInteger();successor();successorhelper(rank);print()]%5E[Zero],[Skew]%5E[Nonzero%7Crank;rest%7C],[Nonzero]++-[Skew].
 
 module Skew
 
