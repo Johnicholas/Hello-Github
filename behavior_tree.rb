@@ -1,8 +1,8 @@
 #!/usr/bin/ruby -w
 #
 # This is a first stab at implementing behavior trees,
-# as described by Damian Isla, Chris Hecker, Alex Champandard,
-# and Bjoern Knafla.
+# as described by Damian Isla, Chris Hecker,
+# Alex Champandard, and Bjoern Knafla.
 #
 # I'm incompetent in Ruby,
 # so it probably looks very awkward.
@@ -16,9 +16,7 @@
 # down the tree to whatever was taking so long,
 # if you call its step method and pass in the tree.
 
-
 module BehaviorTree
-
   class And
     attr_reader :left, :right
 
@@ -107,44 +105,42 @@ module BehaviorTree
 
   class Running
     def initialize
-      @stack = []
+      @stack = [Proc.new do |tree, path|
+        tree.resume
+      end]
     end
 
     def and(right)
-      @stack.unshift(Proc.new do |tree, path|
+      @stack.push(Proc.new do |tree, path|
         path.step(tree.left).and(tree.right)
       end)
       self
     end
 
     def and_right
-      @stack.unshift(Proc.new { |tree, path|
+      @stack.push(Proc.new { |tree, path|
         path.step(tree.right).and_right
       })
       self
     end
 
     def or(right)
-      @stack.unshift(Proc.new { |tree, path|
+      @stack.push(Proc.new { |tree, path|
         path.step(tree.left).or(tree.right)
       })
       self
     end
 
     def or_right
-      @stack.unshift(Proc.new { |tree, path|
+      @stack.push(Proc.new { |tree, path|
         path.step(tree.right).or_right
       })
       self
     end
 
     def step(tree)
-      if @stack.empty?
-        tree.resume
-      else
-        first = @stack.shift
-        first.call(tree, self)
-      end
+      first = @stack.pop
+      first.call(tree, self)
     end
   end
 end
@@ -189,18 +185,33 @@ if __FILE__ == $0
       assert_equal Success, success_or_erroneous.start.class
     end
 
-    def test_can_delay_outside
+    def test_and_can_delay_outside
       outside = Delay.new(And.new(Leaf.new(Success), Leaf.new(Success)))
       assert_equal Success, outside.start.step(outside).class
     end
 
-    def test_can_delay_in_left_branch
+    def test_and_can_delay_in_left_branch
       left = And.new(Delay.new(Leaf.new(Success)), Leaf.new(Success))
       assert_equal Success, left.start.step(left).class
     end
 
-    def test_can_delay_in_right_branch
+    def test_and_can_delay_in_right_branch
       right = And.new(Leaf.new(Success), Delay.new(Leaf.new(Success)))
+      assert_equal Success, right.start.step(right).class
+    end
+
+    def test_or_can_delay_outside
+      outside = Delay.new(Or.new(Leaf.new(Success), Leaf.new(Success)))
+      assert_equal Success, outside.start.step(outside).class
+    end
+
+    def test_or_can_delay_in_left_branch
+      left = Or.new(Delay.new(Leaf.new(Success)), Leaf.new(Success))
+      assert_equal Success, left.start.step(left).class
+    end
+
+    def test_or_can_delay_in_right_branch
+      right = Or.new(Leaf.new(Failure), Delay.new(Leaf.new(Success)))
       assert_equal Success, right.start.step(right).class
     end
   end
