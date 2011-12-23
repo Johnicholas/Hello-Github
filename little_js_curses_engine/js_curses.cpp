@@ -72,9 +72,7 @@ Handle<Value> Quit(const Arguments& args) {
 
 Handle<Value> Start(const Arguments& args) {
   assert(args.Length() == 1);
-  Handle<Object> game_constructor = args[0]->ToObject();
-  assert(game_constructor->IsFunction());
-  Handle<Object> game = Handle<Function>::Cast(game_constructor)->NewInstance();
+  Handle<Object> game = args[0]->ToObject();
   // Setup
   Handle<Value> setup_value = game->Get(String::New("setup"));
   if (setup_value->IsFunction()) {

@@ -1,57 +1,56 @@
 // Based on Steven Fuerst's obfuscated, 512-byte roguelike "Monster Cave".
-function Game() {
-    // parameters
-    var rows = 25
-    var cols = 80
-    var rooms = 50
-    var monsters = 10
+MonsterCave = {
+    rows : 25,
+    cols : 80,
+    rooms : 50,
+    monsters : 10,
+    map : [],
+    loc : [],
+    hp : [],
 
-    var map = []
-    var loc = []
-    var hp = []
-    var turns = 0
-
-    this.setup = function () {
+    setup : function () {
 	var row = 0;
 	var col = 0;
-	// each cell in the map
-	for (row = 0; row < rows; ++row) {
-	    map[row] = []
-	    for (col = 0; col < cols; ++col) {
-		map[row][col] = '#' // a wall
+
+	// for each cell in the map
+	for (row = 0; row < this.rows; ++row) {
+	    this.map[row] = []
+	    for (col = 0; col < this.cols; ++col) {
+		// put a wall
+		this.map[row][col] = '#'
 	    }
 	}
 
 	// make a messy cave by opening out a lot of rectangles
 	var i
-	for (i = 0; i < rooms; ++i) {
+	for (i = 0; i < this.rooms; ++i) {
 	    var height = rand(3, 6)
 	    var width = rand(1, 25)
-	    var top = rand(1, rows - height - 1)
-	    var left = rand(1, cols - width - 1)
+	    var top = rand(1, this.rows - height - 1)
+	    var left = rand(1, this.cols - width - 1)
 	    var bottom = top + height
 	    var right = left + width
 	    for (row = top; row <= bottom; ++row) {
 		for (col = left; col <= right; ++col) {
-		    map[row][col] = '.'
+		    this.map[row][col] = '.'
 		}
 	    }
 	}
 	// place entities (player and monsters)
 	var i
-	for (i = 0; i < monsters + 1; ++i) {
+	for (i = 0; i < this.monsters + 1; ++i) {
 	    while (true) {
-		var row = rand(1, rows - 1)
-		var col = rand(1, cols - 1)
-		if (map[row][col] == '.') {
-		    loc[i] = { row : row, col : col }
+		var row = rand(1, this.rows - 1)
+		var col = rand(1, this.cols - 1)
+		if (this.map[row][col] == '.') {
+		    this.loc[i] = { row : row, col : col }
 		    if (i == 0) {
 			// the player
-			map[row][col] = '@'
-			hp[i] = 5
+			this.map[row][col] = '@'
+			this.hp[i] = 5
 		    } else {
-			map[row][col] = 'M'
-			hp[i] = 2
+			this.map[row][col] = 'M'
+			this.hp[i] = 2
 		    }
 		    break
 		}
@@ -59,34 +58,36 @@ function Game() {
 	}
 	// place the stairway
 	while (true) {
-	    var row = rand(1, rows - 1)
-	    var col = rand(1, cols - 1)
-	    if (map[row][col] == '.') {
-		map[row][col] = '>'
+	    var row = rand(1, this.rows - 1)
+	    var col = rand(1, this.cols - 1)
+	    if (this.map[row][col] == '.') {
+		this.map[row][col] = '>'
 		break
 	    }
 	}
-    }
+    },
 
-    this.draw = function () {
+    draw : function () {
 	var row = 0;
 	var col = 0;
-	for (row = 0; row < rows; ++row) {
+	for (row = 0; row < this.rows; ++row) {
 	    move(row, 0);
-	    for (col = 0; col < cols; ++col) {
-		addch(map[row][col])
+	    for (col = 0; col < this.cols; ++col) {
+		addch(this.map[row][col])
 	    }
 	}
-    }
+	// put the cursor on the player
+	move(this.loc[0].row, this.loc[0].col)
+    },
 
-    this.update = function (key) {
+    update : function (key) {
 	if (key) {
 	    // move entities (player and monsters)
 	    var i
-	    for (i = 0; i < monsters + 1; ++i) {
-		var oldrow = loc[i].row
+	    for (i = 0; i < this.monsters + 1; ++i) {
+		var oldrow = this.loc[i].row
 		var newrow = oldrow
-		var oldcol = loc[i].col
+		var oldcol = this.loc[i].col
 		var newcol = oldcol
 		if (i == 0) {
 		    // move the player
@@ -99,34 +100,34 @@ function Game() {
 		    } else if (key == 'd') {
 			++newcol;
 		    }
-		    if (map[newrow][newcol] == '>') {
+		    if (this.map[newrow][newcol] == '>') {
 			// going down is just like starting over! :P
 			this.setup()
 			return
 		    }
 		    var j
-		    for (j = 1; j < monsters; ++j) {
-			if (loc[j].row == newrow && loc[j].col == newcol) {
+		    for (j = 1; j < this.monsters; ++j) {
+			if (this.loc[j].row == newrow && this.loc[j].col == newcol) {
 			    // player stepped on a monster
-			    if (hp[j] > 0) {
+			    if (this.hp[j] > 0) {
 				// it was alive at the time
-				hp[j] = hp[j] - 1
-				if (hp[j] == 0) {
+				this.hp[j] = this.hp[j] - 1
+				if (this.hp[j] == 0) {
 				    // now it's dead...
-				    map[loc[j].row][loc[j].col] = 'D'
+				    this.map[this.loc[j].row][this.loc[j].col] = 'D'
 				}
 			    }
 			}
 		    }
 		} else {
-		    if (hp[i] > 0) {
+		    if (this.hp[i] > 0) {
 			// move a monster
 			newrow += rand(0, 3) - 1
 			newcol += rand(0, 3) - 1
-			if (newrow == loc[0].row && newcol == loc[0].col) {
+			if (newrow == this.loc[0].row && newcol == this.loc[0].col) {
 			    // monster stepped on the player
-			    hp[0] = hp[0] - 1
-			    if (hp[0] == 0) {
+			    this.hp[0] = this.hp[0] - 1
+			    if (this.hp[0] == 0) {
 				// monster killed the player
 				quit()
 			    }
@@ -134,14 +135,14 @@ function Game() {
 		    }
 		}
 		// regardless, if an entity moved, the map needs to be updated
-		if (map[newrow][newcol] == '.') {
-		    loc[i] = { row : newrow, col : newcol }
-		    map[newrow][newcol] = map[oldrow][oldcol]
-		    map[oldrow][oldcol] = '.'
+		if (this.map[newrow][newcol] == '.') {
+		    this.loc[i] = { row : newrow, col : newcol }
+		    this.map[newrow][newcol] = this.map[oldrow][oldcol]
+		    this.map[oldrow][oldcol] = '.'
 		}
 	    }
 	}
     }
 }
 
-start(Game)
+start(MonsterCave)
