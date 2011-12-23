@@ -1,0 +1,10 @@
+To run this, you need a Linux machine with libv8 installed.
+
+To install libv8, something like 'sudo apt-get install libv8' ought to work, depending on your distribution.
+
+Then 'make js_curses' ought to make a binary named 'js_curses'.
+
+Then './js_curses game_loop.js' ought to show a little roguelike-ish thing (wasd to move, control-C to quit).
+
+The setup / draw / update structure was taken from ippa's JawsJS.
+The game loop was based on Steven Fuerst's 512-byte roguelike.
