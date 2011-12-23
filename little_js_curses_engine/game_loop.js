@@ -44,7 +44,7 @@ function Game() {
 		var row = rand(1, rows - 1)
 		var col = rand(1, cols - 1)
 		if (map[row][col] == '.') {
-		    loc[i] = [row, col]
+		    loc[i] = { row : row, col : col }
 		    if (i == 0) {
 			// the player
 			map[row][col] = '@'
@@ -71,25 +71,25 @@ function Game() {
     this.draw = function () {
 	var row = 0;
 	var col = 0;
-	for (row = 0; row < 25; ++row) {
+	for (row = 0; row < rows; ++row) {
 	    move(row, 0);
-	    for (col = 0; col < 80; ++col) {
+	    for (col = 0; col < cols; ++col) {
 		addch(map[row][col])
 	    }
 	}
     }
 
     this.update = function (key) {
-	// move entities (player and monsters)
-	var i
-	for (i = 0; i < monsters + 1; ++i) {
-	    var oldrow = loc[i][0]
-	    var newrow = loc[i][0]
-	    var oldcol = loc[i][1]
-	    var newcol = loc[i][1]
-	    if (i == 0) {
-		// move the player
-		if (key) {
+	if (key) {
+	    // move entities (player and monsters)
+	    var i
+	    for (i = 0; i < monsters + 1; ++i) {
+		var oldrow = loc[i].row
+		var newrow = oldrow
+		var oldcol = loc[i].col
+		var newcol = oldcol
+		if (i == 0) {
+		    // move the player
 		    if (key == 'w') {
 			--newrow;
 		    } else if (key == 'a') {
@@ -99,24 +99,46 @@ function Game() {
 		    } else if (key == 'd') {
 			++newcol;
 		    }
+		    if (map[newrow][newcol] == '>') {
+			// going down is just like starting over! :P
+			this.setup()
+			return
+		    }
+		    var j
+		    for (j = 1; j < monsters; ++j) {
+			if (loc[j].row == newrow && loc[j].col == newcol) {
+			    // player stepped on a monster
+			    if (hp[j] > 0) {
+				// it was alive at the time
+				hp[j] = hp[j] - 1
+				if (hp[j] == 0) {
+				    // now it's dead...
+				    map[loc[j].row][loc[j].col] = 'D'
+				}
+			    }
+			}
+		    }
+		} else {
+		    if (hp[i] > 0) {
+			// move a monster
+			newrow += rand(0, 3) - 1
+			newcol += rand(0, 3) - 1
+			if (newrow == loc[0].row && newcol == loc[0].col) {
+			    // monster stepped on the player
+			    hp[0] = hp[0] - 1
+			    if (hp[0] == 0) {
+				// monster killed the player
+				quit()
+			    }
+			}
+		    }
 		}
-		if (map[newrow][newcol] == '>') {
-		    this.setup()
+		// regardless, if an entity moved, the map needs to be updated
+		if (map[newrow][newcol] == '.') {
+		    loc[i] = { row : newrow, col : newcol }
+		    map[newrow][newcol] = map[oldrow][oldcol]
+		    map[oldrow][oldcol] = '.'
 		}
-		// TODO: check whether player stepped on a monster
-		// TODO: check whether player killed a monster
-	    } else {
-		// move a monster
-		newrow += rand(0, 3) - 1
-		newcol += rand(0, 3) - 1
-		// TODO: check whether monster stepped on a player
-		// TODO: check whether monster killed a player
-	    }
-	    // regardless, if an entity moved, the map needs to be updated
-	    if (map[newrow][newcol] == '.') {
-		loc[i] = [newrow, newcol]
-		map[newrow][newcol] = map[oldrow][oldcol]
-		map[oldrow][oldcol] = '.'
 	    }
 	}
     }

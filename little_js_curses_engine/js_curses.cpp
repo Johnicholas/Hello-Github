@@ -32,6 +32,15 @@ Handle<Value> Move(const Arguments& args) {
   return Undefined();
 }
 
+Handle<Value> Rand(const Arguments& args) {
+  assert(args.Length() == 2);
+  Handle<Number> min = args[0]->ToNumber();
+  Handle<Number> max = args[1]->ToNumber();
+  int min_as_int = round(min->Value());
+  int max_as_int = round(max->Value());
+  return Number::New(rand() % (max_as_int - min_as_int) + min_as_int);
+}
+
 // From v8 sample shell.cc
 Handle<String> ReadFile(const char* name) {
   FILE* file = fopen(name, "rb");
@@ -107,6 +116,7 @@ int main(int argc, char* argv[]) {
   global->Set(String::New("addch"), FunctionTemplate::New(Addch));
   global->Set(String::New("getch"), FunctionTemplate::New(Getch));
   global->Set(String::New("move"), FunctionTemplate::New(Move));
+  global->Set(String::New("rand"), FunctionTemplate::New(Rand));
   global->Set(String::New("start"), FunctionTemplate::New(Start));
   global->Set(String::New("quit"), FunctionTemplate::New(Quit));
 
@@ -121,6 +131,8 @@ int main(int argc, char* argv[]) {
   noecho(); // don't echo user input.
   halfdelay(1); // getch returns ERR if they take more than a tenth of a second
   keypad(stdscr, TRUE); // don't ignore function keys F1, F2, etc.
+  // TODO: seed the random number generator with the time
+  
   Handle<Value> result = byte_code->Run();
   context.Dispose();
   return 0;
