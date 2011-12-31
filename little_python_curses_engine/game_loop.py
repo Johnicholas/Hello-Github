@@ -1,6 +1,6 @@
 # todo: add a game loop here
 
-import curses
-curses.addch("h")
-curses.addch("i")
+from little_curses import addch
+addch("h")
+addch("i")
 

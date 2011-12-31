@@ -1,7 +1,8 @@
+#include <Python.h>
 #include <cassert>
 #include <cstdio>
 #include <curses.h>
-#include <Python.h>
+
 
 static PyObject* my_addch(PyObject* self, PyObject* args) {
   char to_add;
@@ -10,13 +11,13 @@ static PyObject* my_addch(PyObject* self, PyObject* args) {
   return Py_BuildValue("");
 }
 
-static PyMethodDef curses_methods[] = {
+static PyMethodDef my_curses_methods[] = {
   { "addch", my_addch, METH_VARARGS, "add a character to the screen" },
   { 0, 0, 0, 0 }
 };
 
 PyMODINIT_FUNC init_extensions() {
-  Py_InitModule("curses", curses_methods);
+  Py_InitModule("little_curses", my_curses_methods);
 }
 
 int main(int argc, char* argv[]) {

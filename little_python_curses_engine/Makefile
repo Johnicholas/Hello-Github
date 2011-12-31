@@ -1,5 +1,6 @@
-CXXFLAGS += -I/usr/include/python2.6
-LDLIBS += -lpython2.6
+PYTHON_VERSION = 2.7
+CXXFLAGS += -I/usr/include/python${PYTHON_VERSION}
+LDLIBS += -lpython${PYTHON_VERSION}
 LDLIBS += -lcurses
 
 default: py_curses
