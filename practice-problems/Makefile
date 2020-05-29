@@ -1,11 +1,12 @@
-test-results.txt: gold-output.txt output.txt
-	diff -Naur gold-output.txt output.txt
+.PHONY: run-test
+run-test: test-driver
+	./test-driver
 
-output.txt: testsuite gold-input.txt
-	cat gold-input.txt | ./testsuite > output.txt
+test-driver: googletest-master/bazel-bin/libgtest_main.a people_indexes_test.o people.o googletest-master/bazel-bin/libgtest.a
+	g++ -o test-driver googletest-master/bazel-bin/libgtest_main.a people_indexes_test.o people.o googletest-master/bazel-bin/libgtest.a -lpthread
 
-testsuite: test-driver.cpp people.o
-	g++ -o testsuite test-driver.cpp people.o
+people_indexes_test.o: googletest-master/googletest/include/gtest/gtest.h googletest-master/googlemock/include/gmock/gmock.h people_indexes_test.cpp
+	g++ -c -o people_indexes_test.o -Igoogletest-master/googletest/include -Igoogletest-master/googlemock/include people_indexes_test.cpp
 
 people.o: people.cpp
 	g++ -c -o people.o people.cpp
