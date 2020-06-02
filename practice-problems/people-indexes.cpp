@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-#include "people.h"
+#include "people-indexes.h"
 
 using namespace std;
 

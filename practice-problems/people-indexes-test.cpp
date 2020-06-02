@@ -1,4 +1,4 @@
-#include "people.h"
+#include "people-indexes.h"
 
 #include <iostream>
 #include <string>
