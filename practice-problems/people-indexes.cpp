@@ -7,14 +7,24 @@ using namespace std;
 
 class Problem {
 private:
-  vector<vector<string>>& f;
+  vector<vector<string>> favorites;
 public:
-  Problem(vector<vector<string>>& f) : f(f) {}
+  // add a new person, with an initially empty set of favorite companies
+  // mutator
+  void addPerson() {
+    favorites.emplace_back();
+  }
 
-  // returns true if f[i] is a subset of f[j]
+  // add a new favorite company, to the most recently-added person
+  // mutator
+  void addCompany(string company) {
+    favorites.back().push_back(company);
+  }
+
+  // returns true if favorites[i] is a subset of favorites[j]
   bool isSubsetOf(int i, int j) {
-    return all_of(f[i].begin(), f[i].end(), [&](const string& companyName1) {
-	return any_of(f[j].begin(), f[j].end(), [&](const string& companyName2) {
+    return all_of(favorites[i].begin(), favorites[i].end(), [&](const string& companyName1) {
+	return any_of(favorites[j].begin(), favorites[j].end(), [&](const string& companyName2) {
 	    return companyName1 == companyName2;
 	  });
       });
@@ -23,14 +33,19 @@ public:
 
 
 
-vector<int> Solution::peopleIndexes(vector<vector<string>>& f) {
-  Problem p(f);
-  
+vector<int> Solution::peopleIndexes(vector<vector<string>>& favorites) {
+  Problem p;
+  for (const auto& person : favorites) {
+    p.addPerson();
+    for (const auto& company : person) {
+      p.addCompany(company);
+    }
+  }
+      
   vector<int> a;
-  for (int i = 0; i < f.size(); i++) {
-    // found j such that f[i] is a subset of f[j]
+  for (int i = 0; i < favorites.size(); i++) {
     bool found = false;
-    for (int j = 0; j < f.size() && !found; j++) {
+    for (int j = 0; j < favorites.size() && !found; j++) {
       if (i == j) {
 	continue;
       }
