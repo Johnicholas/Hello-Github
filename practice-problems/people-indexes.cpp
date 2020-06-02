@@ -29,9 +29,20 @@ public:
 	  });
       });
   }
+
+  bool aSubsetOfAnyOther(int i) {
+    bool found = false;
+    for (int j = 0; j < favorites.size(); j++) {
+      if (i == j) {
+	continue;
+      }
+      if (isSubsetOf(i, j)) {
+	found = true;
+      }
+    }
+    return found;
+  }
 };
-
-
 
 vector<int> Solution::peopleIndexes(vector<vector<string>>& favorites) {
   Problem p;
@@ -44,16 +55,7 @@ vector<int> Solution::peopleIndexes(vector<vector<string>>& favorites) {
       
   vector<int> a;
   for (int i = 0; i < favorites.size(); i++) {
-    bool found = false;
-    for (int j = 0; j < favorites.size() && !found; j++) {
-      if (i == j) {
-	continue;
-      }
-      if (p.isSubsetOf(i, j)) {
-	found = true;
-      }
-    }
-    if (!found) {
+    if (!p.aSubsetOfAnyOther(i)) {
       a.push_back(i);
     }
   }
