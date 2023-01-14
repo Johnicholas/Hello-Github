@@ -1,0 +1,23 @@
+{
+  "name": "learn-jsverify-and-mocha",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "testMocha": "mocha",
+    "test": "jasmine-browser-runner runSpecs --browser=palemoon"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jasmine-browser-runner": "^1.2.0",
+    "jasmine-core": "^4.5.0",
+    "jsverify": "^0.8.4",
+    "mocha": "^10.2.0"
+  },
+  "dependencies": {
+    "browserify": "^17.0.0",
+    "uniq": "^1.0.1"
+  }
+}
